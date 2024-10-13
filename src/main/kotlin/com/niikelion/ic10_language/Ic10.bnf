@@ -1,0 +1,45 @@
+{
+    parserClass="com.niikelion.ic10_language.parser.Ic10Parser"
+    extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+    psiClassPrefix="Ic10"
+    psiImplClassSuffix="Impl"
+    psiPackage="com.niikelion.ic10_language.psi"
+    psiImplPackage="com.niikelion.ic10_language.psi.impl"
+
+    elementTypeHolderClass="com.niikelion.ic10_language.psi.Ic10Types"
+    elementTypeClass="com.niikelion.ic10_language.psi.Ic10ElementType"
+    tokenTypeClass="com.niikelion.ic10_language.psi.Ic10TokenType"
+}
+
+ic10File ::= (line_ (CRLF line_)*)?
+
+private line_ ::= line? COMMENT?
+
+line ::= label | operation
+
+label ::= NAME COLON
+
+operation ::=   hcfOp |
+                yieldOp |
+                sleepOp |
+                defineOp |
+                aliasOp |
+                unOp |
+                binOp
+
+hcfOp ::= OP_HCF
+yieldOp ::= OP_YIELD
+sleepOp ::= OP_SLEEP value
+defineOp ::= OP_DEFINE NAME value
+aliasOp ::= OP_ALIAS NAME NAME
+unOp ::= unOpName variable value
+binOp ::= binOpName variable value value
+
+unOpName ::= OP_MOVE | OP_NOT
+binOpName ::= OP_ADD | OP_SUB | OP_MUL | OP_DIV | OP_MOD | OP_AND | OP_OR | OP_XOR
+
+value ::= variable | number | hash
+number ::= DECIMAL | FLOAT
+variable ::= NAME
+hash ::= HASHSTART HASHCONTENT HASHEND
