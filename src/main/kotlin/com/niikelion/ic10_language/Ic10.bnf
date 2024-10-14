@@ -25,21 +25,102 @@ operation ::=   hcfOp |
                 sleepOp |
                 defineOp |
                 aliasOp |
+                clrOp |
+                clrdOp |
+                getOp |
+                getDOp |
+                lOp |
+                lbOp |
+                lbnOp |
+                lbnsOp |
+                lbsOp |
+                ldOp |
+                lrOp |
+                lsOp |
+                peekOp |
+                pokeOp |
+                popOp |
+                pushOp |
+                putOp |
+                putdOp |
+                randOp |
+                rmapOp |
+                sbOp |
+                sbnOp |
+                sbsOp |
+                sdOp |
+                sOp |
+                sdnsOp |
+                sdseOp |
+                ssOp |
                 unOp |
-                binOp
+                binOp |
+                branchOpDev |
+                branchOp4 |
+                branchOp3 |
+                branchOp2 |
+                branchOp1 |
+                selectOp3 |
+                selectOp2 |
+                selectOp1
 
 hcfOp ::= OP_HCF
 yieldOp ::= OP_YIELD
 sleepOp ::= OP_SLEEP value
 defineOp ::= OP_DEFINE NAME value
 aliasOp ::= OP_ALIAS NAME NAME
+clrOp ::= OP_CLR device
+clrdOp ::= OP_CLRD value
+getOp ::= OP_GET variable device value
+getDOp ::= OP_GETD variable value value
+lOp ::= OP_L variable device value
+lbOp ::= OP_LB variable value value value
+lbnOp ::= OP_LBN variable value value value
+lbnsOp ::= OP_LBNS variable value value value value
+lbsOp ::= OP_LBS variable value value value value
+ldOp ::= OP_LD variable value value
+lrOp ::= OP_LR variable device value value
+lsOp ::= OP_LS variable device value value
+peekOp ::= OP_PEEK variable
+pokeOp ::= OP_POKE value value
+popOp ::= OP_POP variable
+pushOp ::= OP_PUSH value
+putOp ::= OP_PUT device value value
+putdOp ::= OP_PUTD value value value
+randOp ::= OP_RAND variable
+rmapOp ::= OP_RMAP variable device value
+sOp ::= OP_S device value value
+sbOp ::= OP_SB value value value
+sbnOp ::= OP_SBN value value value value
+sbsOp ::= OP_SBS value value value value
+sdOp ::= OP_SD value value value
+sdnsOp ::= OP_SDNS variable device
+sdseOp ::= OP_SDSE variable device
+ssOp ::= OP_SS device value value value
 unOp ::= unOpName variable value
 binOp ::= binOpName variable value value
+branchOpDev ::= branchOpDevName device value
+branchOp4 ::= branchOp4Name value value value value
+branchOp3 ::= branchOp3Name value value value
+branchOp2 ::= branchOp2Name value value
+branchOp1 ::= branchOp1Name value
+selectOp3 ::= selectOp3Name variable value value value
+selectOp2 ::= selectOp2Name variable value value
+selectOp1 ::= selectOp1Name variable value
+unOpName ::= OP_ABS | OP_ACOS | OP_ASIN | OP_ATAN | OP_CEIL | OP_COS | OP_EXP | OP_FLOOR | OP_LOG | OP_MOVE | OP_NOT | OP_ROUND | OP_SIN | OP_SQRT | OP_TAN | OP_TRUNC
+binOpName ::= OP_ADD | OP_AND | OP_ATAN2 | OP_DIV | OP_MAX | OP_MIN | OP_MOD | OP_MUL | OP_NOR | OP_OR | OP_SLA | OP_SLL | OP_SRA | OP_SRL | OP_SUB | OP_XOR
+branchOpDevName ::= OP_BDNS | OP_BDNSAL | OP_BDSE | OP_BDSEAL | OP_BRDNS | OP_BRDSE
+branchOp4Name ::= OP_BAP | OP_BAPAL | OP_BNA | OP_BNAAL | OP_BRAP | OP_BRNA
+branchOp3Name ::= OP_BAPZ | OP_BAPZAL | OP_BEQ | OP_BEQAL | OP_BGE | OP_BGEAL | OP_BGT | OP_BGTAL | OP_BLE | OP_BLEAL | OP_BLT | OP_BLTAL | OP_BNAZ | OP_BNAZAL | OP_BNE | OP_BNEAL | OP_BRAPZ | OP_BREQ | OP_BRGE | OP_BRGT | OP_BRLE | OP_BRLT | OP_BRNAZ | OP_BRNE
+branchOp2Name ::= OP_BEQZ | OP_BEQZAL | OP_BGEZ | OP_BGEZAL | OP_BGTZ | OP_BGTZAL | OP_BLEZ | OP_BLEZAL | OP_BLTZ | OP_BLTZAL | OP_BNAN | OP_BNEZ | OP_BNEZAL | OP_BREQZ | OP_BRGEZ | OP_BRGTZ | OP_BRLEZ | OP_BRLTZ | OP_BRNAN | OP_BRNEZ
+branchOp1Name ::= OP_J | OP_JAL | OP_JR
 
-unOpName ::= OP_MOVE | OP_NOT
-binOpName ::= OP_ADD | OP_SUB | OP_MUL | OP_DIV | OP_MOD | OP_AND | OP_OR | OP_XOR
+selectOp3Name ::= OP_SAP | OP_SELECT | OP_SNA
+selectOp2Name ::= OP_SAPZ | OP_SEQ | OP_SGE | OP_SGT | OP_SLE | OP_SLT | OP_SNAZ | OP_SNE
+selectOp1Name ::= OP_SEQZ | OP_SGEZ | OP_SGTZ | OP_SLEZ | OP_SLTZ | OP_SNAN | OP_SNANZ | OP_SNEZ
 
 value ::= variable | number | hash
-number ::= DECIMAL | FLOAT
+number ::= BINARY | DECIMAL | HEXADECIMAL | FLOAT
 variable ::= NAME
+device ::= NAME
 hash ::= HASHSTART HASHCONTENT HASHEND

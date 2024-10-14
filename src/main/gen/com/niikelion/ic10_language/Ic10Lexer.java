@@ -66,13 +66,14 @@ class Ic10Lexer implements FlexLexer {
 
   private static final String ZZ_CMAP_BLOCKS_PACKED_0 =
     "\11\0\1\1\1\2\2\3\1\4\22\0\1\5\1\0"+
-    "\1\6\1\7\3\0\1\10\1\11\1\12\4\0\1\13"+
-    "\1\0\12\14\1\15\6\0\1\16\6\17\1\20\12\17"+
-    "\1\21\7\17\4\0\1\17\1\0\1\22\1\23\1\24"+
-    "\1\25\1\26\1\27\1\17\1\30\1\31\2\17\1\32"+
-    "\1\33\1\34\1\35\1\36\1\17\1\37\1\40\1\41"+
-    "\1\42\1\43\1\17\1\44\1\45\1\17\12\0\1\3"+
-    "\u01a2\0\2\3\326\0";
+    "\1\6\1\7\1\10\1\11\1\0\1\12\1\13\1\14"+
+    "\4\0\1\15\1\0\2\16\1\17\7\20\1\21\6\0"+
+    "\1\22\5\23\1\24\1\25\12\24\1\26\7\24\4\0"+
+    "\1\27\1\0\1\30\1\31\1\32\1\33\1\34\1\35"+
+    "\1\36\1\37\1\40\1\41\1\42\1\43\1\44\1\45"+
+    "\1\46\1\47\1\50\1\51\1\52\1\53\1\54\1\55"+
+    "\1\24\1\56\1\57\1\60\12\0\1\3\u01a2\0\2\3"+
+    "\326\0";
 
   private static int [] zzUnpackcmap_blocks() {
     int [] result = new int[768];
@@ -99,15 +100,36 @@ class Ic10Lexer implements FlexLexer {
   private static final int [] ZZ_ACTION = zzUnpackAction();
 
   private static final String ZZ_ACTION_PACKED_0 =
-    "\2\0\1\1\1\2\2\3\1\4\1\1\1\5\1\6"+
-    "\12\7\1\10\1\1\2\0\11\7\1\11\4\7\2\0"+
-    "\1\12\1\13\1\7\1\14\1\7\1\15\1\16\1\17"+
-    "\1\7\1\20\1\21\1\7\1\22\1\23\1\7\2\0"+
-    "\2\7\1\24\2\7\1\25\1\0\1\26\1\7\1\27"+
-    "\1\30\1\0\1\31\1\0\1\32";
+    "\2\0\1\1\1\2\2\3\1\4\3\1\1\5\1\6"+
+    "\11\7\1\10\1\11\5\7\1\12\3\7\1\13\1\1"+
+    "\1\14\1\15\2\0\30\7\1\16\1\17\1\20\1\7"+
+    "\1\21\1\22\5\7\1\23\7\7\1\24\1\25\7\7"+
+    "\1\26\5\7\4\0\1\27\1\30\1\7\1\31\1\7"+
+    "\1\32\2\7\1\33\2\7\1\34\1\35\1\36\1\37"+
+    "\1\40\1\41\1\42\7\7\1\43\1\44\1\7\1\45"+
+    "\1\46\1\7\1\47\1\50\1\51\1\52\1\53\1\54"+
+    "\1\55\1\56\1\57\1\7\1\60\1\61\1\62\2\7"+
+    "\1\63\1\7\1\64\3\7\1\65\1\66\1\67\3\7"+
+    "\1\70\1\71\1\72\1\73\1\74\1\75\1\76\1\77"+
+    "\1\100\1\101\1\7\1\102\1\103\1\104\1\105\1\7"+
+    "\1\106\1\7\2\0\1\107\1\7\1\110\1\111\1\7"+
+    "\1\112\1\113\1\114\1\7\1\115\1\7\1\116\1\7"+
+    "\1\117\1\7\1\120\1\7\1\121\1\7\1\122\1\123"+
+    "\1\7\1\124\1\125\2\7\1\126\1\127\1\130\1\131"+
+    "\1\132\1\133\1\134\1\135\1\136\2\7\1\137\1\140"+
+    "\1\141\1\142\1\143\1\144\1\145\1\146\1\147\1\7"+
+    "\1\150\1\151\1\152\1\7\1\153\1\154\1\155\1\7"+
+    "\1\156\1\157\1\160\1\161\1\162\1\163\2\7\1\164"+
+    "\1\0\1\165\1\166\1\167\3\7\1\170\1\7\1\171"+
+    "\1\7\1\172\1\7\1\173\1\7\1\174\1\7\1\175"+
+    "\1\7\1\176\1\7\1\177\1\200\1\201\1\202\1\203"+
+    "\1\204\1\205\1\206\1\207\1\210\1\211\1\7\1\212"+
+    "\1\213\1\7\1\214\1\215\1\216\1\217\1\0\1\220"+
+    "\1\221\1\222\1\223\1\224\1\225\1\226\1\227\1\230"+
+    "\1\231\1\232\1\233\1\0\1\234";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[72];
+    int [] result = new int[297];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -132,18 +154,47 @@ class Ic10Lexer implements FlexLexer {
   private static final int [] ZZ_ROWMAP = zzUnpackRowMap();
 
   private static final String ZZ_ROWMAP_PACKED_0 =
-    "\0\0\0\46\0\114\0\162\0\114\0\230\0\276\0\344"+
-    "\0\u010a\0\114\0\u0130\0\u0156\0\u017c\0\u01a2\0\u01c8\0\u01ee"+
-    "\0\u0214\0\u023a\0\u0260\0\u0286\0\u02ac\0\u02d2\0\u02f8\0\u031e"+
-    "\0\u0344\0\u036a\0\u0390\0\u03b6\0\u03dc\0\u0402\0\u0428\0\u044e"+
-    "\0\u0474\0\u0130\0\u049a\0\u04c0\0\u04e6\0\u050c\0\u0532\0\u0558"+
-    "\0\u031e\0\u0130\0\u057e\0\u0130\0\u05a4\0\u0130\0\u0130\0\u0130"+
-    "\0\u05ca\0\u0130\0\u0130\0\u05f0\0\u0130\0\u0130\0\u0616\0\u063c"+
-    "\0\u0662\0\u0688\0\u06ae\0\u0130\0\u06d4\0\u06fa\0\114\0\u0720"+
-    "\0\u0130\0\u0746\0\u0130\0\u0130\0\u076c\0\u0130\0\u0792\0\114";
+    "\0\0\0\61\0\142\0\223\0\142\0\304\0\365\0\u0126"+
+    "\0\u0157\0\u0188\0\u01b9\0\142\0\u01ea\0\u021b\0\u024c\0\u027d"+
+    "\0\u02ae\0\u02df\0\u0310\0\u0341\0\u0372\0\u03a3\0\u03d4\0\u0405"+
+    "\0\u0436\0\u0467\0\u0498\0\u04c9\0\u04fa\0\u052b\0\u055c\0\u058d"+
+    "\0\u05be\0\u05ef\0\u0620\0\u0651\0\u0682\0\u06b3\0\u06e4\0\u0715"+
+    "\0\u0746\0\u0777\0\u07a8\0\u07d9\0\u080a\0\u083b\0\u086c\0\u089d"+
+    "\0\u08ce\0\u08ff\0\u0930\0\u0961\0\u0992\0\u09c3\0\u09f4\0\u0a25"+
+    "\0\u0a56\0\u0a87\0\u0ab8\0\u0ae9\0\u0b1a\0\u0b4b\0\u01ea\0\u0b7c"+
+    "\0\u01ea\0\u0bad\0\u01ea\0\u01ea\0\u0bde\0\u0c0f\0\u0c40\0\u0c71"+
+    "\0\u0ca2\0\u01ea\0\u0cd3\0\u0d04\0\u0d35\0\u0d66\0\u0d97\0\u0dc8"+
+    "\0\u0df9\0\u0e2a\0\u0e5b\0\u0e8c\0\u0ebd\0\u0eee\0\u0f1f\0\u0f50"+
+    "\0\u0f81\0\u0fb2\0\u01ea\0\u0fe3\0\u1014\0\u1045\0\u1076\0\u10a7"+
+    "\0\u10d8\0\u0126\0\u0157\0\u1109\0\u06b3\0\u01ea\0\u113a\0\u01ea"+
+    "\0\u116b\0\u01ea\0\u119c\0\u11cd\0\u11fe\0\u122f\0\u1260\0\u1291"+
+    "\0\u12c2\0\u12f3\0\u1324\0\u1355\0\u1386\0\u13b7\0\u13e8\0\u1419"+
+    "\0\u144a\0\u147b\0\u14ac\0\u14dd\0\u150e\0\u153f\0\u01ea\0\u1570"+
+    "\0\u01ea\0\u01ea\0\u15a1\0\u15d2\0\u01ea\0\u01ea\0\u1603\0\u01ea"+
+    "\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u1634\0\u01ea\0\u01ea\0\u01ea"+
+    "\0\u1665\0\u1696\0\u01ea\0\u16c7\0\u16f8\0\u1729\0\u175a\0\u178b"+
+    "\0\u17bc\0\u01ea\0\u01ea\0\u17ed\0\u181e\0\u184f\0\u1880\0\u18b1"+
+    "\0\u18e2\0\u01ea\0\u01ea\0\u1913\0\u01ea\0\u1944\0\u1975\0\u19a6"+
+    "\0\u19d7\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u1a08\0\u01ea\0\u1a39"+
+    "\0\u1a6a\0\u1a9b\0\u01ea\0\u1acc\0\u01ea\0\u1afd\0\u1b2e\0\u1b5f"+
+    "\0\u1b90\0\u1bc1\0\u1bf2\0\u1c23\0\u1c54\0\u1c85\0\u1cb6\0\u1ce7"+
+    "\0\u1d18\0\u1d49\0\u1d7a\0\u1dab\0\u1ddc\0\u01ea\0\u1e0d\0\u1e3e"+
+    "\0\u1e6f\0\u1ea0\0\u1ed1\0\u1f02\0\u1f33\0\u1f64\0\u1f95\0\u1fc6"+
+    "\0\u1ff7\0\u2028\0\u2059\0\u01ea\0\u01ea\0\u208a\0\u20bb\0\u01ea"+
+    "\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea"+
+    "\0\u20ec\0\u01ea\0\u01ea\0\u01ea\0\u211d\0\u01ea\0\u01ea\0\u01ea"+
+    "\0\u214e\0\u01ea\0\u01ea\0\u217f\0\u01ea\0\u01ea\0\u01ea\0\u21b0"+
+    "\0\u21e1\0\142\0\u2212\0\u01ea\0\u01ea\0\u01ea\0\u2243\0\u2274"+
+    "\0\u22a5\0\u01ea\0\u22d6\0\u01ea\0\u2307\0\u01ea\0\u2338\0\u01ea"+
+    "\0\u2369\0\u01ea\0\u239a\0\u01ea\0\u23cb\0\u01ea\0\u23fc\0\u01ea"+
+    "\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea"+
+    "\0\u01ea\0\u01ea\0\u242d\0\u01ea\0\u01ea\0\u245e\0\u01ea\0\u01ea"+
+    "\0\u01ea\0\u01ea\0\u248f\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea"+
+    "\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u01ea\0\u24c0"+
+    "\0\142";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[72];
+    int [] result = new int[297];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -167,44 +218,164 @@ class Ic10Lexer implements FlexLexer {
 
   private static final String ZZ_TRANS_PACKED_0 =
     "\1\3\1\4\2\5\1\6\1\4\1\3\1\7\1\10"+
-    "\3\3\1\11\1\12\4\13\1\14\2\13\1\15\2\13"+
-    "\1\16\2\13\1\17\1\20\1\21\2\13\1\22\3\13"+
-    "\1\23\1\24\5\3\1\25\2\3\1\26\3\3\1\25"+
-    "\1\3\30\25\47\0\1\4\3\0\1\4\42\0\1\5"+
-    "\43\0\2\7\1\0\1\7\1\0\41\7\20\0\1\27"+
-    "\40\0\1\30\1\11\45\0\1\13\1\0\30\13\14\0"+
-    "\1\13\1\0\7\13\1\31\4\13\1\32\1\13\1\33"+
-    "\11\13\14\0\1\13\1\0\10\13\1\34\2\13\1\35"+
-    "\14\13\14\0\1\13\1\0\6\13\1\36\21\13\14\0"+
-    "\1\13\1\0\17\13\1\37\4\13\1\40\3\13\14\0"+
-    "\1\13\1\0\17\13\1\41\10\13\14\0\1\13\1\0"+
-    "\21\13\1\42\6\13\14\0\1\13\1\0\14\13\1\43"+
-    "\7\13\1\44\3\13\14\0\1\13\1\0\17\13\1\45"+
-    "\10\13\14\0\1\13\1\0\13\13\1\46\14\13\5\0"+
-    "\1\25\6\0\1\25\1\0\30\25\6\0\1\47\55\0"+
-    "\1\50\43\0\1\51\45\0\1\13\1\0\7\13\1\52"+
-    "\20\13\14\0\1\13\1\0\13\13\1\53\14\13\14\0"+
-    "\1\13\1\0\7\13\1\54\20\13\14\0\1\13\1\0"+
-    "\11\13\1\55\16\13\14\0\1\13\1\0\25\13\1\56"+
-    "\2\13\14\0\1\13\1\0\11\13\1\57\16\13\14\0"+
-    "\1\13\1\0\7\13\1\60\15\13\1\61\2\13\14\0"+
-    "\1\13\1\0\14\13\1\62\13\13\14\0\1\13\1\0"+
-    "\23\13\1\63\4\13\14\0\1\13\1\0\10\13\1\64"+
-    "\17\13\14\0\1\13\1\0\5\13\1\65\22\13\14\0"+
-    "\1\13\1\0\21\13\1\66\6\13\14\0\1\13\1\0"+
-    "\10\13\1\67\17\13\12\0\1\70\54\0\1\71\40\0"+
-    "\1\13\1\0\4\13\1\72\23\13\14\0\1\13\1\0"+
-    "\13\13\1\73\14\13\14\0\1\13\1\0\10\13\1\74"+
-    "\17\13\14\0\1\13\1\0\10\13\1\75\17\13\14\0"+
-    "\1\13\1\0\14\13\1\76\13\13\10\0\1\77\55\0"+
-    "\1\100\41\0\1\13\1\0\22\13\1\101\5\13\14\0"+
-    "\1\13\1\0\16\13\1\102\11\13\14\0\1\13\1\0"+
-    "\20\13\1\103\7\13\14\0\1\13\1\0\7\13\1\104"+
-    "\20\13\11\0\1\105\50\0\1\13\1\0\10\13\1\106"+
-    "\17\13\6\0\1\107\47\0\1\110\35\0";
+    "\1\11\1\12\3\3\3\13\1\14\6\15\1\16\1\17"+
+    "\1\20\1\21\1\22\1\23\1\24\1\25\1\15\1\26"+
+    "\1\15\1\27\1\30\1\31\1\32\1\33\1\15\1\34"+
+    "\1\35\1\36\2\15\1\37\1\40\1\15\5\3\1\41"+
+    "\4\3\1\42\3\3\3\41\1\3\37\41\62\0\1\4"+
+    "\3\0\1\4\55\0\1\5\56\0\2\7\1\0\1\7"+
+    "\1\0\54\7\16\0\3\43\1\0\2\43\53\0\1\44"+
+    "\67\0\1\45\50\0\1\46\3\13\56\0\3\15\1\0"+
+    "\37\15\16\0\3\15\1\0\7\15\1\47\1\50\1\51"+
+    "\7\15\1\52\1\15\1\53\4\15\1\54\1\55\5\15"+
+    "\16\0\3\15\1\0\6\15\1\56\2\15\1\57\1\60"+
+    "\1\15\1\61\4\15\1\62\1\15\1\63\3\15\1\64"+
+    "\7\15\16\0\3\15\1\0\12\15\1\65\6\15\1\66"+
+    "\2\15\1\67\12\15\16\0\3\15\1\0\12\15\1\70"+
+    "\3\15\1\71\20\15\16\0\3\15\1\0\34\15\1\72"+
+    "\2\15\16\0\3\15\1\0\21\15\1\73\15\15\16\0"+
+    "\3\15\1\0\12\15\1\74\24\15\16\0\3\15\1\0"+
+    "\10\15\1\75\26\15\16\0\3\15\1\0\6\15\1\76"+
+    "\20\15\1\77\7\15\16\0\3\15\1\0\7\15\1\100"+
+    "\1\15\1\101\12\15\1\102\2\15\1\103\1\104\6\15"+
+    "\16\0\3\15\1\0\6\15\1\105\7\15\1\106\5\15"+
+    "\1\107\5\15\1\110\4\15\16\0\3\15\1\0\24\15"+
+    "\1\111\12\15\16\0\3\15\1\0\27\15\1\112\7\15"+
+    "\16\0\3\15\1\0\12\15\1\113\11\15\1\114\5\15"+
+    "\1\115\4\15\16\0\3\15\1\0\6\15\1\116\13\15"+
+    "\1\117\1\15\1\120\12\15\16\0\3\15\1\0\6\15"+
+    "\1\121\1\122\1\15\1\123\1\124\1\15\1\125\1\15"+
+    "\1\126\2\15\1\127\1\15\1\130\2\15\1\131\1\132"+
+    "\1\133\1\15\1\134\4\15\16\0\3\15\1\0\6\15"+
+    "\1\135\20\15\1\136\7\15\16\0\3\15\1\0\24\15"+
+    "\1\137\12\15\16\0\3\15\1\0\16\15\1\140\20\15"+
+    "\5\0\1\41\10\0\3\41\1\0\37\41\6\0\1\141"+
+    "\70\0\3\43\1\0\2\43\3\0\1\142\47\0\1\44"+
+    "\10\0\1\143\53\0\1\144\54\0\3\145\56\0\3\15"+
+    "\1\0\30\15\1\146\6\15\16\0\3\15\1\0\24\15"+
+    "\1\147\12\15\16\0\3\15\1\0\11\15\1\150\25\15"+
+    "\16\0\3\15\1\0\16\15\1\151\20\15\16\0\3\15"+
+    "\1\0\11\15\1\152\25\15\16\0\3\15\1\0\16\15"+
+    "\1\153\20\15\16\0\3\15\1\0\6\15\1\154\30\15"+
+    "\16\0\3\15\1\0\25\15\1\155\11\15\16\0\3\15"+
+    "\1\0\23\15\1\156\4\15\1\157\6\15\16\0\3\15"+
+    "\1\0\26\15\1\160\10\15\16\0\3\15\1\0\12\15"+
+    "\1\161\16\15\1\162\5\15\16\0\3\15\1\0\12\15"+
+    "\1\163\16\15\1\164\5\15\16\0\3\15\1\0\6\15"+
+    "\1\165\3\15\1\166\24\15\16\0\3\15\1\0\6\15"+
+    "\1\167\2\15\1\170\1\171\1\15\1\172\4\15\1\173"+
+    "\1\15\1\174\13\15\16\0\3\15\1\0\16\15\1\175"+
+    "\20\15\16\0\3\15\1\0\27\15\1\176\7\15\16\0"+
+    "\3\15\1\0\30\15\1\177\6\15\16\0\3\15\1\0"+
+    "\13\15\1\200\23\15\16\0\3\15\1\0\33\15\1\201"+
+    "\3\15\16\0\3\15\1\0\25\15\1\202\11\15\16\0"+
+    "\3\15\1\0\24\15\1\203\12\15\16\0\3\15\1\0"+
+    "\31\15\1\204\5\15\16\0\3\15\1\0\13\15\1\205"+
+    "\23\15\16\0\3\15\1\0\21\15\1\206\15\15\16\0"+
+    "\3\15\1\0\23\15\1\207\4\15\1\210\6\15\16\0"+
+    "\3\15\1\0\14\15\1\211\22\15\16\0\3\15\1\0"+
+    "\34\15\1\212\2\15\16\0\3\15\1\0\23\15\1\213"+
+    "\13\15\16\0\3\15\1\0\11\15\1\214\21\15\1\215"+
+    "\3\15\16\0\3\15\1\0\21\15\1\216\15\15\16\0"+
+    "\3\15\1\0\27\15\1\217\1\15\1\220\5\15\16\0"+
+    "\3\15\1\0\12\15\1\221\24\15\16\0\3\15\1\0"+
+    "\20\15\1\222\4\15\1\223\11\15\16\0\3\15\1\0"+
+    "\30\15\1\224\1\225\5\15\16\0\3\15\1\0\23\15"+
+    "\1\226\13\15\16\0\3\15\1\0\6\15\1\227\30\15"+
+    "\16\0\3\15\1\0\32\15\1\230\4\15\16\0\3\15"+
+    "\1\0\25\15\1\231\11\15\16\0\3\15\1\0\23\15"+
+    "\1\232\4\15\1\233\6\15\16\0\3\15\1\0\23\15"+
+    "\1\234\4\15\1\235\6\15\16\0\3\15\1\0\21\15"+
+    "\1\236\4\15\1\237\10\15\16\0\3\15\1\0\12\15"+
+    "\1\240\16\15\1\241\5\15\16\0\3\15\1\0\23\15"+
+    "\1\242\13\15\16\0\3\15\1\0\6\15\1\243\3\15"+
+    "\1\244\6\15\1\245\7\15\1\246\5\15\16\0\3\15"+
+    "\1\0\6\15\1\247\3\15\1\250\24\15\16\0\3\15"+
+    "\1\0\27\15\1\251\7\15\16\0\3\15\1\0\6\15"+
+    "\1\252\12\15\1\253\15\15\16\0\3\15\1\0\7\15"+
+    "\1\254\27\15\16\0\3\15\1\0\23\15\1\255\13\15"+
+    "\16\0\3\15\1\0\32\15\1\256\4\15\16\0\3\15"+
+    "\1\0\27\15\1\257\7\15\16\0\3\15\1\0\12\15"+
+    "\1\260\24\15\14\0\1\261\72\0\1\262\50\0\3\15"+
+    "\1\0\30\15\1\263\6\15\16\0\3\15\1\0\6\15"+
+    "\1\264\30\15\16\0\3\15\1\0\23\15\1\265\13\15"+
+    "\16\0\3\15\1\0\23\15\1\266\13\15\16\0\3\15"+
+    "\1\0\6\15\1\267\27\15\1\270\16\0\3\15\1\0"+
+    "\30\15\1\271\6\15\16\0\3\15\1\0\12\15\1\272"+
+    "\24\15\16\0\3\15\1\0\6\15\1\273\27\15\1\274"+
+    "\16\0\3\15\1\0\6\15\1\275\27\15\1\276\16\0"+
+    "\3\15\1\0\6\15\1\277\27\15\1\300\16\0\3\15"+
+    "\1\0\6\15\1\301\27\15\1\302\16\0\3\15\1\0"+
+    "\6\15\1\303\27\15\1\304\16\0\3\15\1\0\6\15"+
+    "\1\305\14\15\1\306\12\15\1\307\16\0\3\15\1\0"+
+    "\6\15\1\310\27\15\1\311\16\0\3\15\1\0\25\15"+
+    "\1\312\11\15\16\0\3\15\1\0\23\15\1\313\4\15"+
+    "\1\314\6\15\16\0\3\15\1\0\26\15\1\315\10\15"+
+    "\16\0\3\15\1\0\12\15\1\316\16\15\1\317\5\15"+
+    "\16\0\3\15\1\0\12\15\1\320\16\15\1\321\5\15"+
+    "\16\0\3\15\1\0\6\15\1\322\3\15\1\323\24\15"+
+    "\16\0\3\15\1\0\21\15\1\324\15\15\16\0\3\15"+
+    "\1\0\11\15\1\325\25\15\16\0\3\15\1\0\16\15"+
+    "\1\326\20\15\16\0\3\15\1\0\24\15\1\327\12\15"+
+    "\16\0\3\15\1\0\11\15\1\330\25\15\16\0\3\15"+
+    "\1\0\30\15\1\331\6\15\16\0\3\15\1\0\12\15"+
+    "\1\332\24\15\16\0\3\15\1\0\20\15\1\333\16\15"+
+    "\16\0\3\15\1\0\12\15\1\334\24\15\16\0\3\15"+
+    "\1\0\15\15\1\335\21\15\16\0\3\15\1\0\11\15"+
+    "\1\336\25\15\16\0\3\15\1\0\11\15\1\337\25\15"+
+    "\16\0\3\15\1\0\25\15\1\340\11\15\16\0\3\15"+
+    "\1\0\23\15\1\341\13\15\16\0\3\15\1\0\36\15"+
+    "\1\342\16\0\3\15\1\0\30\15\1\343\6\15\16\0"+
+    "\3\15\1\0\12\15\1\344\24\15\16\0\3\15\1\0"+
+    "\12\15\1\345\24\15\16\0\3\15\1\0\36\15\1\346"+
+    "\16\0\3\15\1\0\36\15\1\347\16\0\3\15\1\0"+
+    "\36\15\1\350\16\0\3\15\1\0\12\15\1\351\23\15"+
+    "\1\352\16\0\3\15\1\0\36\15\1\353\16\0\3\15"+
+    "\1\0\23\15\1\354\12\15\1\355\16\0\3\15\1\0"+
+    "\36\15\1\356\16\0\3\15\1\0\31\15\1\357\5\15"+
+    "\16\0\3\15\1\0\23\15\1\360\13\15\16\0\3\15"+
+    "\1\0\21\15\1\361\15\15\12\0\1\362\73\0\1\363"+
+    "\51\0\3\15\1\0\30\15\1\364\6\15\16\0\1\15"+
+    "\1\365\1\15\1\0\37\15\16\0\3\15\1\0\21\15"+
+    "\1\366\15\15\16\0\3\15\1\0\6\15\1\367\30\15"+
+    "\16\0\3\15\1\0\6\15\1\370\30\15\16\0\3\15"+
+    "\1\0\6\15\1\371\30\15\16\0\3\15\1\0\21\15"+
+    "\1\372\15\15\16\0\3\15\1\0\6\15\1\373\30\15"+
+    "\16\0\3\15\1\0\21\15\1\374\15\15\16\0\3\15"+
+    "\1\0\6\15\1\375\30\15\16\0\3\15\1\0\21\15"+
+    "\1\376\15\15\16\0\3\15\1\0\6\15\1\377\30\15"+
+    "\16\0\3\15\1\0\21\15\1\u0100\15\15\16\0\3\15"+
+    "\1\0\6\15\1\u0101\30\15\16\0\3\15\1\0\21\15"+
+    "\1\u0102\15\15\16\0\3\15\1\0\6\15\1\u0103\30\15"+
+    "\16\0\3\15\1\0\21\15\1\u0104\15\15\16\0\3\15"+
+    "\1\0\6\15\1\u0105\30\15\16\0\3\15\1\0\21\15"+
+    "\1\u0106\15\15\16\0\3\15\1\0\6\15\1\u0107\30\15"+
+    "\16\0\3\15\1\0\36\15\1\u0108\16\0\3\15\1\0"+
+    "\30\15\1\u0109\6\15\16\0\3\15\1\0\12\15\1\u010a"+
+    "\24\15\16\0\3\15\1\0\36\15\1\u010b\16\0\3\15"+
+    "\1\0\36\15\1\u010c\16\0\3\15\1\0\36\15\1\u010d"+
+    "\16\0\3\15\1\0\36\15\1\u010e\16\0\3\15\1\0"+
+    "\36\15\1\u010f\16\0\3\15\1\0\23\15\1\u0110\12\15"+
+    "\1\u0111\16\0\3\15\1\0\36\15\1\u0112\16\0\3\15"+
+    "\1\0\23\15\1\u0113\13\15\16\0\3\15\1\0\27\15"+
+    "\1\u0114\7\15\16\0\3\15\1\0\11\15\1\u0115\25\15"+
+    "\16\0\3\15\1\0\10\15\1\u0116\26\15\16\0\3\15"+
+    "\1\0\25\15\1\u0117\11\15\16\0\3\15\1\0\36\15"+
+    "\1\u0118\16\0\3\15\1\0\10\15\1\u0119\26\15\16\0"+
+    "\3\15\1\0\11\15\1\u011a\25\15\13\0\1\u011b\63\0"+
+    "\3\15\1\0\21\15\1\u011c\15\15\16\0\3\15\1\0"+
+    "\21\15\1\u011d\15\15\16\0\3\15\1\0\21\15\1\u011e"+
+    "\15\15\16\0\3\15\1\0\21\15\1\u011f\15\15\16\0"+
+    "\3\15\1\0\21\15\1\u0120\15\15\16\0\3\15\1\0"+
+    "\21\15\1\u0121\15\15\16\0\3\15\1\0\21\15\1\u0122"+
+    "\15\15\16\0\3\15\1\0\21\15\1\u0123\15\15\16\0"+
+    "\3\15\1\0\21\15\1\u0124\15\15\16\0\3\15\1\0"+
+    "\21\15\1\u0125\15\15\16\0\3\15\1\0\12\15\1\u0126"+
+    "\24\15\16\0\3\15\1\0\31\15\1\u0127\5\15\6\0"+
+    "\1\u0128\64\0\1\u0129\46\0";
 
   private static int [] zzUnpacktrans() {
-    int [] result = new int[1976];
+    int [] result = new int[9457];
     int offset = 0;
     offset = zzUnpacktrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -242,12 +413,12 @@ class Ic10Lexer implements FlexLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\2\0\1\11\1\1\1\11\4\1\1\11\14\1\2\0"+
-    "\16\1\2\0\17\1\2\0\5\1\1\11\1\0\4\1"+
-    "\1\0\1\1\1\0\1\11";
+    "\2\0\1\11\1\1\1\11\6\1\1\11\30\1\2\0"+
+    "\72\1\4\0\114\1\2\0\77\1\1\11\1\0\47\1"+
+    "\1\0\14\1\1\0\1\11";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[72];
+    int [] result = new int[297];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -572,132 +743,782 @@ class Ic10Lexer implements FlexLexer {
             { return TokenType.BAD_CHARACTER;
             }
           // fall through
-          case 27: break;
+          case 157: break;
           case 2:
             { yybegin(YYINITIAL); return TokenType.WHITE_SPACE;
             }
           // fall through
-          case 28: break;
+          case 158: break;
           case 3:
             { yybegin(YYINITIAL); return Ic10Types.CRLF;
             }
           // fall through
-          case 29: break;
+          case 159: break;
           case 4:
             { yybegin(YYINITIAL); return Ic10Types.COMMENT;
             }
           // fall through
-          case 30: break;
+          case 160: break;
           case 5:
             { yybegin(YYINITIAL); return Ic10Types.DECIMAL;
             }
           // fall through
-          case 31: break;
+          case 161: break;
           case 6:
             { yybegin(YYINITIAL); return Ic10Types.COLON;
             }
           // fall through
-          case 32: break;
+          case 162: break;
           case 7:
             { yybegin(YYINITIAL); return Ic10Types.NAME;
             }
           // fall through
-          case 33: break;
+          case 163: break;
           case 8:
+            { yybegin(YYINITIAL); return Ic10Types.OP_J;
+            }
+          // fall through
+          case 164: break;
+          case 9:
+            { yybegin(YYINITIAL); return Ic10Types.OP_L;
+            }
+          // fall through
+          case 165: break;
+          case 10:
+            { yybegin(YYINITIAL); return Ic10Types.OP_S;
+            }
+          // fall through
+          case 166: break;
+          case 11:
             { yybegin(HASH_VALUE); return Ic10Types.HASHCONTENT;
             }
           // fall through
-          case 34: break;
-          case 9:
+          case 167: break;
+          case 12:
+            { yybegin(YYINITIAL); return Ic10Types.HEXADECIMAL;
+            }
+          // fall through
+          case 168: break;
+          case 13:
+            { yybegin(YYINITIAL); return Ic10Types.BINARY;
+            }
+          // fall through
+          case 169: break;
+          case 14:
+            { yybegin(YYINITIAL); return Ic10Types.OP_JR;
+            }
+          // fall through
+          case 170: break;
+          case 15:
+            { yybegin(YYINITIAL); return Ic10Types.OP_LB;
+            }
+          // fall through
+          case 171: break;
+          case 16:
+            { yybegin(YYINITIAL); return Ic10Types.OP_LD;
+            }
+          // fall through
+          case 172: break;
+          case 17:
+            { yybegin(YYINITIAL); return Ic10Types.OP_LR;
+            }
+          // fall through
+          case 173: break;
+          case 18:
+            { yybegin(YYINITIAL); return Ic10Types.OP_LS;
+            }
+          // fall through
+          case 174: break;
+          case 19:
             { yybegin(YYINITIAL); return Ic10Types.OP_OR;
             }
           // fall through
-          case 35: break;
-          case 10:
+          case 175: break;
+          case 20:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SB;
+            }
+          // fall through
+          case 176: break;
+          case 21:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SD;
+            }
+          // fall through
+          case 177: break;
+          case 22:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SS;
+            }
+          // fall through
+          case 178: break;
+          case 23:
             { yybegin(YYINITIAL); return Ic10Types.FLOAT;
             }
           // fall through
-          case 36: break;
-          case 11:
+          case 179: break;
+          case 24:
+            { yybegin(YYINITIAL); return Ic10Types.OP_ABS;
+            }
+          // fall through
+          case 180: break;
+          case 25:
             { yybegin(YYINITIAL); return Ic10Types.OP_ADD;
             }
           // fall through
-          case 37: break;
-          case 12:
+          case 181: break;
+          case 26:
             { yybegin(YYINITIAL); return Ic10Types.OP_AND;
             }
           // fall through
-          case 38: break;
-          case 13:
+          case 182: break;
+          case 27:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BAP;
+            }
+          // fall through
+          case 183: break;
+          case 28:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BEQ;
+            }
+          // fall through
+          case 184: break;
+          case 29:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BGE;
+            }
+          // fall through
+          case 185: break;
+          case 30:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BGT;
+            }
+          // fall through
+          case 186: break;
+          case 31:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BLE;
+            }
+          // fall through
+          case 187: break;
+          case 32:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BLT;
+            }
+          // fall through
+          case 188: break;
+          case 33:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BNA;
+            }
+          // fall through
+          case 189: break;
+          case 34:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BNE;
+            }
+          // fall through
+          case 190: break;
+          case 35:
+            { yybegin(YYINITIAL); return Ic10Types.OP_CLR;
+            }
+          // fall through
+          case 191: break;
+          case 36:
+            { yybegin(YYINITIAL); return Ic10Types.OP_COS;
+            }
+          // fall through
+          case 192: break;
+          case 37:
             { yybegin(YYINITIAL); return Ic10Types.OP_DIV;
             }
           // fall through
-          case 39: break;
-          case 14:
+          case 193: break;
+          case 38:
+            { yybegin(YYINITIAL); return Ic10Types.OP_EXP;
+            }
+          // fall through
+          case 194: break;
+          case 39:
+            { yybegin(YYINITIAL); return Ic10Types.OP_GET;
+            }
+          // fall through
+          case 195: break;
+          case 40:
             { yybegin(YYINITIAL); return Ic10Types.OP_HCF;
             }
           // fall through
-          case 40: break;
-          case 15:
+          case 196: break;
+          case 41:
+            { yybegin(YYINITIAL); return Ic10Types.OP_JAL;
+            }
+          // fall through
+          case 197: break;
+          case 42:
+            { yybegin(YYINITIAL); return Ic10Types.OP_LBN;
+            }
+          // fall through
+          case 198: break;
+          case 43:
+            { yybegin(YYINITIAL); return Ic10Types.OP_LBS;
+            }
+          // fall through
+          case 199: break;
+          case 44:
+            { yybegin(YYINITIAL); return Ic10Types.OP_LOG;
+            }
+          // fall through
+          case 200: break;
+          case 45:
+            { yybegin(YYINITIAL); return Ic10Types.OP_MAX;
+            }
+          // fall through
+          case 201: break;
+          case 46:
+            { yybegin(YYINITIAL); return Ic10Types.OP_MIN;
+            }
+          // fall through
+          case 202: break;
+          case 47:
             { yybegin(YYINITIAL); return Ic10Types.OP_MOD;
             }
           // fall through
-          case 41: break;
-          case 16:
+          case 203: break;
+          case 48:
             { yybegin(YYINITIAL); return Ic10Types.OP_MUL;
             }
           // fall through
-          case 42: break;
-          case 17:
+          case 204: break;
+          case 49:
+            { yybegin(YYINITIAL); return Ic10Types.OP_NOR;
+            }
+          // fall through
+          case 205: break;
+          case 50:
             { yybegin(YYINITIAL); return Ic10Types.OP_NOT;
             }
           // fall through
-          case 43: break;
-          case 18:
+          case 206: break;
+          case 51:
+            { yybegin(YYINITIAL); return Ic10Types.OP_POP;
+            }
+          // fall through
+          case 207: break;
+          case 52:
+            { yybegin(YYINITIAL); return Ic10Types.OP_PUT;
+            }
+          // fall through
+          case 208: break;
+          case 53:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SAP;
+            }
+          // fall through
+          case 209: break;
+          case 54:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SBN;
+            }
+          // fall through
+          case 210: break;
+          case 55:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SBS;
+            }
+          // fall through
+          case 211: break;
+          case 56:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SEQ;
+            }
+          // fall through
+          case 212: break;
+          case 57:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SGE;
+            }
+          // fall through
+          case 213: break;
+          case 58:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SGT;
+            }
+          // fall through
+          case 214: break;
+          case 59:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SIN;
+            }
+          // fall through
+          case 215: break;
+          case 60:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SLA;
+            }
+          // fall through
+          case 216: break;
+          case 61:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SLE;
+            }
+          // fall through
+          case 217: break;
+          case 62:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SLL;
+            }
+          // fall through
+          case 218: break;
+          case 63:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SLT;
+            }
+          // fall through
+          case 219: break;
+          case 64:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SNA;
+            }
+          // fall through
+          case 220: break;
+          case 65:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SNE;
+            }
+          // fall through
+          case 221: break;
+          case 66:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SRA;
+            }
+          // fall through
+          case 222: break;
+          case 67:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SRL;
+            }
+          // fall through
+          case 223: break;
+          case 68:
             { yybegin(YYINITIAL); return Ic10Types.OP_SUB;
             }
           // fall through
-          case 44: break;
-          case 19:
+          case 224: break;
+          case 69:
+            { yybegin(YYINITIAL); return Ic10Types.OP_TAN;
+            }
+          // fall through
+          case 225: break;
+          case 70:
             { yybegin(YYINITIAL); return Ic10Types.OP_XOR;
             }
           // fall through
-          case 45: break;
-          case 20:
+          case 226: break;
+          case 71:
+            { yybegin(YYINITIAL); return Ic10Types.OP_ACOS;
+            }
+          // fall through
+          case 227: break;
+          case 72:
+            { yybegin(YYINITIAL); return Ic10Types.OP_ASIN;
+            }
+          // fall through
+          case 228: break;
+          case 73:
+            { yybegin(YYINITIAL); return Ic10Types.OP_ATAN;
+            }
+          // fall through
+          case 229: break;
+          case 74:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BAPZ;
+            }
+          // fall through
+          case 230: break;
+          case 75:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BDNS;
+            }
+          // fall through
+          case 231: break;
+          case 76:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BDSE;
+            }
+          // fall through
+          case 232: break;
+          case 77:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BEQZ;
+            }
+          // fall through
+          case 233: break;
+          case 78:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BGEZ;
+            }
+          // fall through
+          case 234: break;
+          case 79:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BGTZ;
+            }
+          // fall through
+          case 235: break;
+          case 80:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BLEZ;
+            }
+          // fall through
+          case 236: break;
+          case 81:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BLTZ;
+            }
+          // fall through
+          case 237: break;
+          case 82:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BNAN;
+            }
+          // fall through
+          case 238: break;
+          case 83:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BNAZ;
+            }
+          // fall through
+          case 239: break;
+          case 84:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BNEZ;
+            }
+          // fall through
+          case 240: break;
+          case 85:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRAP;
+            }
+          // fall through
+          case 241: break;
+          case 86:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BREQ;
+            }
+          // fall through
+          case 242: break;
+          case 87:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRGE;
+            }
+          // fall through
+          case 243: break;
+          case 88:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRGT;
+            }
+          // fall through
+          case 244: break;
+          case 89:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRLE;
+            }
+          // fall through
+          case 245: break;
+          case 90:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRLT;
+            }
+          // fall through
+          case 246: break;
+          case 91:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRNA;
+            }
+          // fall through
+          case 247: break;
+          case 92:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRNE;
+            }
+          // fall through
+          case 248: break;
+          case 93:
+            { yybegin(YYINITIAL); return Ic10Types.OP_CEIL;
+            }
+          // fall through
+          case 249: break;
+          case 94:
+            { yybegin(YYINITIAL); return Ic10Types.OP_CLRD;
+            }
+          // fall through
+          case 250: break;
+          case 95:
+            { yybegin(YYINITIAL); return Ic10Types.OP_GETD;
+            }
+          // fall through
+          case 251: break;
+          case 96:
+            { yybegin(YYINITIAL); return Ic10Types.OP_LBNS;
+            }
+          // fall through
+          case 252: break;
+          case 97:
             { yybegin(YYINITIAL); return Ic10Types.OP_MOVE;
             }
           // fall through
-          case 46: break;
-          case 21:
+          case 253: break;
+          case 98:
+            { yybegin(YYINITIAL); return Ic10Types.OP_PEEK;
+            }
+          // fall through
+          case 254: break;
+          case 99:
+            { yybegin(YYINITIAL); return Ic10Types.OP_POKE;
+            }
+          // fall through
+          case 255: break;
+          case 100:
+            { yybegin(YYINITIAL); return Ic10Types.OP_PUSH;
+            }
+          // fall through
+          case 256: break;
+          case 101:
+            { yybegin(YYINITIAL); return Ic10Types.OP_PUTD;
+            }
+          // fall through
+          case 257: break;
+          case 102:
+            { yybegin(YYINITIAL); return Ic10Types.OP_RAND;
+            }
+          // fall through
+          case 258: break;
+          case 103:
+            { yybegin(YYINITIAL); return Ic10Types.OP_RMAP;
+            }
+          // fall through
+          case 259: break;
+          case 104:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SAPZ;
+            }
+          // fall through
+          case 260: break;
+          case 105:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SDNS;
+            }
+          // fall through
+          case 261: break;
+          case 106:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SDSE;
+            }
+          // fall through
+          case 262: break;
+          case 107:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SEQZ;
+            }
+          // fall through
+          case 263: break;
+          case 108:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SGEZ;
+            }
+          // fall through
+          case 264: break;
+          case 109:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SGTZ;
+            }
+          // fall through
+          case 265: break;
+          case 110:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SLEZ;
+            }
+          // fall through
+          case 266: break;
+          case 111:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SLTZ;
+            }
+          // fall through
+          case 267: break;
+          case 112:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SNAN;
+            }
+          // fall through
+          case 268: break;
+          case 113:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SNAZ;
+            }
+          // fall through
+          case 269: break;
+          case 114:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SNEZ;
+            }
+          // fall through
+          case 270: break;
+          case 115:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SQRT;
+            }
+          // fall through
+          case 271: break;
+          case 116:
             { yybegin(YYINITIAL); return Ic10Types.HASHEND;
             }
           // fall through
-          case 47: break;
-          case 22:
+          case 272: break;
+          case 117:
             { yybegin(YYINITIAL); return Ic10Types.OP_ALIAS;
             }
           // fall through
-          case 48: break;
-          case 23:
+          case 273: break;
+          case 118:
+            { yybegin(YYINITIAL); return Ic10Types.OP_ATAN2;
+            }
+          // fall through
+          case 274: break;
+          case 119:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BAPAL;
+            }
+          // fall through
+          case 275: break;
+          case 120:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BEQAL;
+            }
+          // fall through
+          case 276: break;
+          case 121:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BGEAL;
+            }
+          // fall through
+          case 277: break;
+          case 122:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BGTAL;
+            }
+          // fall through
+          case 278: break;
+          case 123:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BLEAL;
+            }
+          // fall through
+          case 279: break;
+          case 124:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BLTAL;
+            }
+          // fall through
+          case 280: break;
+          case 125:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BNAAL;
+            }
+          // fall through
+          case 281: break;
+          case 126:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BNEAL;
+            }
+          // fall through
+          case 282: break;
+          case 127:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRAPZ;
+            }
+          // fall through
+          case 283: break;
+          case 128:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRDNS;
+            }
+          // fall through
+          case 284: break;
+          case 129:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRDSE;
+            }
+          // fall through
+          case 285: break;
+          case 130:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BREQZ;
+            }
+          // fall through
+          case 286: break;
+          case 131:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRGEZ;
+            }
+          // fall through
+          case 287: break;
+          case 132:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRGTZ;
+            }
+          // fall through
+          case 288: break;
+          case 133:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRLEZ;
+            }
+          // fall through
+          case 289: break;
+          case 134:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRLTZ;
+            }
+          // fall through
+          case 290: break;
+          case 135:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRNAN;
+            }
+          // fall through
+          case 291: break;
+          case 136:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRNAZ;
+            }
+          // fall through
+          case 292: break;
+          case 137:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BRNEZ;
+            }
+          // fall through
+          case 293: break;
+          case 138:
+            { yybegin(YYINITIAL); return Ic10Types.OP_FLOOR;
+            }
+          // fall through
+          case 294: break;
+          case 139:
+            { yybegin(YYINITIAL); return Ic10Types.OP_ROUND;
+            }
+          // fall through
+          case 295: break;
+          case 140:
             { yybegin(YYINITIAL); return Ic10Types.OP_SLEEP;
             }
           // fall through
-          case 49: break;
-          case 24:
+          case 296: break;
+          case 141:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SNANZ;
+            }
+          // fall through
+          case 297: break;
+          case 142:
+            { yybegin(YYINITIAL); return Ic10Types.OP_TRUNC;
+            }
+          // fall through
+          case 298: break;
+          case 143:
             { yybegin(YYINITIAL); return Ic10Types.OP_YIELD;
             }
           // fall through
-          case 50: break;
-          case 25:
+          case 299: break;
+          case 144:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BAPZAL;
+            }
+          // fall through
+          case 300: break;
+          case 145:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BDNSAL;
+            }
+          // fall through
+          case 301: break;
+          case 146:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BDSEAL;
+            }
+          // fall through
+          case 302: break;
+          case 147:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BEQZAL;
+            }
+          // fall through
+          case 303: break;
+          case 148:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BGEZAL;
+            }
+          // fall through
+          case 304: break;
+          case 149:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BGTZAL;
+            }
+          // fall through
+          case 305: break;
+          case 150:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BLEZAL;
+            }
+          // fall through
+          case 306: break;
+          case 151:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BLTZAL;
+            }
+          // fall through
+          case 307: break;
+          case 152:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BNAZAL;
+            }
+          // fall through
+          case 308: break;
+          case 153:
+            { yybegin(YYINITIAL); return Ic10Types.OP_BNEZAL;
+            }
+          // fall through
+          case 309: break;
+          case 154:
             { yybegin(YYINITIAL); return Ic10Types.OP_DEFINE;
             }
           // fall through
-          case 51: break;
-          case 26:
+          case 310: break;
+          case 155:
+            { yybegin(YYINITIAL); return Ic10Types.OP_SELECT;
+            }
+          // fall through
+          case 311: break;
+          case 156:
             { yybegin(HASH_VALUE); return Ic10Types.HASHSTART;
             }
           // fall through
-          case 52: break;
+          case 312: break;
           default:
             zzScanError(ZZ_NO_MATCH);
           }
