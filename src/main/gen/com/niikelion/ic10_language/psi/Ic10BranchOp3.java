@@ -11,6 +11,9 @@ public interface Ic10BranchOp3 extends PsiElement {
   Ic10BranchOp3Name getBranchOp3Name();
 
   @NotNull
+  Ic10JumpTarget getJumpTarget();
+
+  @NotNull
   List<Ic10Value> getValueList();
 
 }

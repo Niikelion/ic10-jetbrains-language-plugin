@@ -27,4 +27,10 @@ public class Ic10LabelImpl extends ASTWrapperPsiElement implements Ic10Label {
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public Ic10LabelName getLabelName() {
+    return findNotNullChildByClass(Ic10LabelName.class);
+  }
+
 }

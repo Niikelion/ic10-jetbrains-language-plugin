@@ -11,14 +11,14 @@ import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10BranchOp3Impl extends ASTWrapperPsiElement implements Ic10BranchOp3 {
+public class Ic10JumpTargetImpl extends ASTWrapperPsiElement implements Ic10JumpTarget {
 
-  public Ic10BranchOp3Impl(@NotNull ASTNode node) {
+  public Ic10JumpTargetImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull Ic10Visitor visitor) {
-    visitor.visitBranchOp3(this);
+    visitor.visitJumpTarget(this);
   }
 
   @Override
@@ -29,20 +29,8 @@ public class Ic10BranchOp3Impl extends ASTWrapperPsiElement implements Ic10Branc
 
   @Override
   @NotNull
-  public Ic10BranchOp3Name getBranchOp3Name() {
-    return findNotNullChildByClass(Ic10BranchOp3Name.class);
-  }
-
-  @Override
-  @NotNull
-  public Ic10JumpTarget getJumpTarget() {
-    return findNotNullChildByClass(Ic10JumpTarget.class);
-  }
-
-  @Override
-  @NotNull
-  public List<Ic10Value> getValueList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, Ic10Value.class);
+  public Ic10Value getValue() {
+    return findNotNullChildByClass(Ic10Value.class);
   }
 
 }

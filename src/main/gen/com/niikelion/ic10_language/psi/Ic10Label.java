@@ -7,4 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface Ic10Label extends PsiElement {
 
+  @NotNull
+  Ic10LabelName getLabelName();
+
 }

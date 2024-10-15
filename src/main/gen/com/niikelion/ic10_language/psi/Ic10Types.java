@@ -28,8 +28,11 @@ public interface Ic10Types {
   IElementType GET_D_OP = new Ic10ElementType("GET_D_OP");
   IElementType GET_OP = new Ic10ElementType("GET_OP");
   IElementType HASH = new Ic10ElementType("HASH");
+  IElementType HASH_VALUE = new Ic10ElementType("HASH_VALUE");
   IElementType HCF_OP = new Ic10ElementType("HCF_OP");
+  IElementType JUMP_TARGET = new Ic10ElementType("JUMP_TARGET");
   IElementType LABEL = new Ic10ElementType("LABEL");
+  IElementType LABEL_NAME = new Ic10ElementType("LABEL_NAME");
   IElementType LBNS_OP = new Ic10ElementType("LBNS_OP");
   IElementType LBN_OP = new Ic10ElementType("LBN_OP");
   IElementType LBS_OP = new Ic10ElementType("LBS_OP");
@@ -71,16 +74,16 @@ public interface Ic10Types {
   IElementType YIELD_OP = new Ic10ElementType("YIELD_OP");
 
   IElementType BINARY = new Ic10TokenType("BINARY");
+  IElementType CLOSEBRACKET = new Ic10TokenType("CLOSEBRACKET");
   IElementType COLON = new Ic10TokenType("COLON");
   IElementType COMMENT = new Ic10TokenType("COMMENT");
   IElementType CRLF = new Ic10TokenType("CRLF");
   IElementType DECIMAL = new Ic10TokenType("DECIMAL");
   IElementType FLOAT = new Ic10TokenType("FLOAT");
   IElementType HASHCONTENT = new Ic10TokenType("HASHCONTENT");
-  IElementType HASHEND = new Ic10TokenType("HASHEND");
-  IElementType HASHSTART = new Ic10TokenType("HASHSTART");
   IElementType HEXADECIMAL = new Ic10TokenType("HEXADECIMAL");
   IElementType NAME = new Ic10TokenType("NAME");
+  IElementType OPENBRACKET = new Ic10TokenType("OPENBRACKET");
   IElementType OP_ABS = new Ic10TokenType("OP_ABS");
   IElementType OP_ACOS = new Ic10TokenType("OP_ACOS");
   IElementType OP_ADD = new Ic10TokenType("OP_ADD");
@@ -288,11 +291,20 @@ public interface Ic10Types {
       else if (type == HASH) {
         return new Ic10HashImpl(node);
       }
+      else if (type == HASH_VALUE) {
+        return new Ic10HashValueImpl(node);
+      }
       else if (type == HCF_OP) {
         return new Ic10HcfOpImpl(node);
       }
+      else if (type == JUMP_TARGET) {
+        return new Ic10JumpTargetImpl(node);
+      }
       else if (type == LABEL) {
         return new Ic10LabelImpl(node);
+      }
+      else if (type == LABEL_NAME) {
+        return new Ic10LabelNameImpl(node);
       }
       else if (type == LBNS_OP) {
         return new Ic10LbnsOpImpl(node);

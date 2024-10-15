@@ -27,4 +27,10 @@ public class Ic10HashImpl extends ASTWrapperPsiElement implements Ic10Hash {
     else super.accept(visitor);
   }
 
+  @Override
+  @NotNull
+  public Ic10HashValue getHashValue() {
+    return findNotNullChildByClass(Ic10HashValue.class);
+  }
+
 }

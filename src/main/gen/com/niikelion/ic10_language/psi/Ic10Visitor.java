@@ -87,7 +87,15 @@ public class Ic10Visitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitHashValue(@NotNull Ic10HashValue o) {
+    visitPsiElement(o);
+  }
+
   public void visitHcfOp(@NotNull Ic10HcfOp o) {
+    visitPsiElement(o);
+  }
+
+  public void visitJumpTarget(@NotNull Ic10JumpTarget o) {
     visitPsiElement(o);
   }
 
@@ -96,6 +104,10 @@ public class Ic10Visitor extends PsiElementVisitor {
   }
 
   public void visitLabel(@NotNull Ic10Label o) {
+    visitPsiElement(o);
+  }
+
+  public void visitLabelName(@NotNull Ic10LabelName o) {
     visitPsiElement(o);
   }
 
@@ -120,7 +132,7 @@ public class Ic10Visitor extends PsiElementVisitor {
   }
 
   public void visitLine(@NotNull Ic10Line o) {
-    visitPsiElement(o);
+    visitNamedElement(o);
   }
 
   public void visitLrOp(@NotNull Ic10LrOp o) {
@@ -244,10 +256,14 @@ public class Ic10Visitor extends PsiElementVisitor {
   }
 
   public void visitVariable(@NotNull Ic10Variable o) {
-    visitPsiElement(o);
+    visitNamedElement(o);
   }
 
   public void visitYieldOp(@NotNull Ic10YieldOp o) {
+    visitPsiElement(o);
+  }
+
+  public void visitNamedElement(@NotNull Ic10NamedElement o) {
     visitPsiElement(o);
   }
 

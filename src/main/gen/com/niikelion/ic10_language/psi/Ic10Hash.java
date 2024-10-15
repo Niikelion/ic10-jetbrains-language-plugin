@@ -7,4 +7,7 @@ import com.intellij.psi.PsiElement;
 
 public interface Ic10Hash extends PsiElement {
 
+  @NotNull
+  Ic10HashValue getHashValue();
+
 }

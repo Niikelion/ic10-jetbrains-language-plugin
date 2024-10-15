@@ -35,8 +35,14 @@ public class Ic10BranchOp2Impl extends ASTWrapperPsiElement implements Ic10Branc
 
   @Override
   @NotNull
-  public List<Ic10Value> getValueList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, Ic10Value.class);
+  public Ic10JumpTarget getJumpTarget() {
+    return findNotNullChildByClass(Ic10JumpTarget.class);
+  }
+
+  @Override
+  @NotNull
+  public Ic10Value getValue() {
+    return findNotNullChildByClass(Ic10Value.class);
   }
 
 }

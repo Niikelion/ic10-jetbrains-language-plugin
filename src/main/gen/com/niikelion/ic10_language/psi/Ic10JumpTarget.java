@@ -5,15 +5,9 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface Ic10BranchOpDev extends PsiElement {
+public interface Ic10JumpTarget extends PsiElement {
 
   @NotNull
-  Ic10BranchOpDevName getBranchOpDevName();
-
-  @NotNull
-  Ic10Device getDevice();
-
-  @NotNull
-  Ic10JumpTarget getJumpTarget();
+  Ic10Value getValue();
 
 }

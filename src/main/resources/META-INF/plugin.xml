@@ -43,5 +43,21 @@
       language="Ic10"
       implementationClass="com.niikelion.ic10_language.Ic10Annotator"
     />
+    <codeInsight.lineMarkerProvider
+      language="Ic10"
+      implementationClass="com.niikelion.ic10_language.Ic10NameSourceLineMarkerProvider"
+    />
+    <codeInsight.lineMarkerProvider
+      language="Ic10"
+      implementationClass="com.niikelion.ic10_language.Ic10LabelLineMarkerProvider"
+    />
+    <completion.contributor
+      language="Ic10"
+      implementationClass="com.niikelion.ic10_language.Ic10CompletionContributor"
+    />
+    <psi.referenceContributor
+      language="Ic10"
+      implementation="com.niikelion.ic10_language.Ic10ReferenceContributor"
+    />
   </extensions>
 </idea-plugin>

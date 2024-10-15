@@ -88,13 +88,13 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // branchOp1Name value
+  // branchOp1Name jumpTarget
   public static boolean branchOp1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "branchOp1")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, BRANCH_OP_1, "<branch op 1>");
     r = branchOp1Name(b, l + 1);
-    r = r && value(b, l + 1);
+    r = r && jumpTarget(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -113,14 +113,14 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // branchOp2Name value value
+  // branchOp2Name value jumpTarget
   public static boolean branchOp2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "branchOp2")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, BRANCH_OP_2, "<branch op 2>");
     r = branchOp2Name(b, l + 1);
     r = r && value(b, l + 1);
-    r = r && value(b, l + 1);
+    r = r && jumpTarget(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -156,7 +156,7 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // branchOp3Name value value value
+  // branchOp3Name value value jumpTarget
   public static boolean branchOp3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "branchOp3")) return false;
     boolean r;
@@ -164,7 +164,7 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
     r = branchOp3Name(b, l + 1);
     r = r && value(b, l + 1);
     r = r && value(b, l + 1);
-    r = r && value(b, l + 1);
+    r = r && jumpTarget(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -204,7 +204,7 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // branchOp4Name value value value value
+  // branchOp4Name value value value jumpTarget
   public static boolean branchOp4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "branchOp4")) return false;
     boolean r;
@@ -213,7 +213,7 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
     r = r && value(b, l + 1);
     r = r && value(b, l + 1);
     r = r && value(b, l + 1);
-    r = r && value(b, l + 1);
+    r = r && jumpTarget(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -235,14 +235,14 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // branchOpDevName device value
+  // branchOpDevName device jumpTarget
   public static boolean branchOpDev(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "branchOpDev")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, BRANCH_OP_DEV, "<branch op dev>");
     r = branchOpDevName(b, l + 1);
     r = r && device(b, l + 1);
-    r = r && value(b, l + 1);
+    r = r && jumpTarget(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -345,14 +345,28 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // HASHSTART HASHCONTENT HASHEND
+  // OPENBRACKET hashValue CLOSEBRACKET
   public static boolean hash(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "hash")) return false;
-    if (!nextTokenIs(b, HASHSTART)) return false;
+    if (!nextTokenIs(b, OPENBRACKET)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, HASHSTART, HASHCONTENT, HASHEND);
+    r = consumeToken(b, OPENBRACKET);
+    r = r && hashValue(b, l + 1);
+    r = r && consumeToken(b, CLOSEBRACKET);
     exit_section_(b, m, HASH, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // HASHCONTENT
+  public static boolean hashValue(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "hashValue")) return false;
+    if (!nextTokenIs(b, HASHCONTENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, HASHCONTENT);
+    exit_section_(b, m, HASH_VALUE, r);
     return r;
   }
 
@@ -369,25 +383,25 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (line_ (CRLF line_)*)?
+  // (line (CRLF line)*)?
   static boolean ic10File(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ic10File")) return false;
     ic10File_0(b, l + 1);
     return true;
   }
 
-  // line_ (CRLF line_)*
+  // line (CRLF line)*
   private static boolean ic10File_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ic10File_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = line_(b, l + 1);
+    r = line(b, l + 1);
     r = r && ic10File_0_1(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // (CRLF line_)*
+  // (CRLF line)*
   private static boolean ic10File_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ic10File_0_1")) return false;
     while (true) {
@@ -398,14 +412,25 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // CRLF line_
+  // CRLF line
   private static boolean ic10File_0_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ic10File_0_1_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, CRLF);
-    r = r && line_(b, l + 1);
+    r = r && line(b, l + 1);
     exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // value
+  public static boolean jumpTarget(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "jumpTarget")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, JUMP_TARGET, "<jump target>");
+    r = value(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 
@@ -425,14 +450,27 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // NAME COLON
+  // labelName COLON
   public static boolean label(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "label")) return false;
     if (!nextTokenIs(b, NAME)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = consumeTokens(b, 0, NAME, COLON);
+    r = labelName(b, l + 1);
+    r = r && consumeToken(b, COLON);
     exit_section_(b, m, LABEL, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // NAME
+  public static boolean labelName(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "labelName")) return false;
+    if (!nextTokenIs(b, NAME)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, NAME);
+    exit_section_(b, m, LABEL_NAME, r);
     return r;
   }
 
@@ -518,39 +556,36 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // label | operation
+  // (label | operation)? COMMENT?
   public static boolean line(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "line")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, LINE, "<line>");
-    r = label(b, l + 1);
-    if (!r) r = operation(b, l + 1);
+    r = line_0(b, l + 1);
+    r = r && line_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  /* ********************************************************** */
-  // line? COMMENT?
-  static boolean line_(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "line_")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = line__0(b, l + 1);
-    r = r && line__1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // line?
-  private static boolean line__0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "line__0")) return false;
-    line(b, l + 1);
+  // (label | operation)?
+  private static boolean line_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "line_0")) return false;
+    line_0_0(b, l + 1);
     return true;
   }
 
+  // label | operation
+  private static boolean line_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "line_0_0")) return false;
+    boolean r;
+    r = label(b, l + 1);
+    if (!r) r = operation(b, l + 1);
+    return r;
+  }
+
   // COMMENT?
-  private static boolean line__1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "line__1")) return false;
+  private static boolean line_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "line_1")) return false;
     consumeToken(b, COMMENT);
     return true;
   }
@@ -1072,14 +1107,14 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // variable | number | hash
+  // hash | variable | number
   public static boolean value(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "value")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, VALUE, "<value>");
-    r = variable(b, l + 1);
+    r = hash(b, l + 1);
+    if (!r) r = variable(b, l + 1);
     if (!r) r = number(b, l + 1);
-    if (!r) r = hash(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

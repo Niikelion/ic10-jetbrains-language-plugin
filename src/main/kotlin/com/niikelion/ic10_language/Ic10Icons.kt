@@ -4,5 +4,10 @@ import com.intellij.openapi.util.IconLoader.getIcon
 import javax.swing.Icon
 
 object Ic10Icons {
-    val File: Icon = getIcon("/icons/binaryData_dark.svg", Ic10Icons::class.java)
+    @JvmField
+    val File = getIcon("/icons/binaryData.svg", javaClass)
+    @JvmField
+    val Lookup = getIcon("/icons/left.svg", javaClass)
+    @JvmField
+    val Label = getIcon("/icons/label.svg", javaClass)
 }

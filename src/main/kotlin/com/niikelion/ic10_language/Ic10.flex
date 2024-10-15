@@ -19,9 +19,9 @@ CRLF=\R
 WHITE_SPACE=[\ \t]
 COMMENT=("#")[^\r\n]*
 
-HASHSTART='HASH\(\"'
-HASHEND='\"\)'
-HASHCONTENT=[a-zA-Z0-9_ ]+
+OPENBRACKET="HASH("
+CLOSEBRACKET=")"
+HASHCONTENT=\"[a-zA-Z0-9_ ]+\"
 
 NAME=[a-zA-Z_][a-zA-Z0-9_]*
 BINARY="%"[0-1](_?[0-1])*
@@ -336,8 +336,8 @@ OP_YIELD="yield"
 
 <YYINITIAL> {CRLF} { yybegin(YYINITIAL); return Ic10Types.CRLF; }
 
-<YYINITIAL> {HASHSTART} { yybegin(HASH_VALUE); return Ic10Types.HASHSTART; }
+<YYINITIAL> {OPENBRACKET} { yybegin(HASH_VALUE); return Ic10Types.OPENBRACKET; }
+<HASH_VALUE> {CLOSEBRACKET} { yybegin(YYINITIAL); return Ic10Types.CLOSEBRACKET; }
 <HASH_VALUE> {HASHCONTENT} { yybegin(HASH_VALUE); return Ic10Types.HASHCONTENT; }
-<HASH_VALUE> {HASHEND} { yybegin(YYINITIAL); return Ic10Types.HASHEND; }
 
 [^] { return TokenType.BAD_CHARACTER; }
