@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface Ic10Label extends PsiElement {
+public interface Ic10Label extends Ic10NamedElement {
 
   @NotNull
   Ic10LabelName getLabelName();

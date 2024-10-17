@@ -5,5 +5,5 @@ import com.niikelion.ic10_language.Ic10Language
 
 class Ic10TokenType(debugName: String): IElementType(debugName, Ic10Language.Instance) {
 
-    override fun toString() = "Ic10TokenType." + super.toString()
+    override fun toString() = "Ic10Tokens." + super.toString()
 }

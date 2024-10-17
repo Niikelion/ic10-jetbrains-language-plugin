@@ -6,7 +6,7 @@ import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.findParentOfType
-import com.niikelion.ic10_language.psi.Ic10JumpTarget
+import com.niikelion.ic10_language.psi.Ic10ReferenceName
 import com.niikelion.ic10_language.psi.Ic10Types
 
 class Ic10NameSourceLineMarkerProvider: RelatedItemLineMarkerProvider() {
@@ -14,8 +14,10 @@ class Ic10NameSourceLineMarkerProvider: RelatedItemLineMarkerProvider() {
         element: PsiElement,
         result: MutableCollection<in RelatedItemLineMarkerInfo<*>>
     ) {
-        if (element.elementType == Ic10Types.NAME && element.findParentOfType<Ic10JumpTarget>() != null) {
-            val targets = Ic10PsiUtils.resolveLabels(element)
+        if (element.elementType == Ic10Types.NAME) {
+            val referenceParent = element.findParentOfType<Ic10ReferenceName>() ?: return
+
+            val targets = Ic10PsiUtils.findLabelsInFile(element.containingFile, referenceParent.name!!)
 
             if (targets.isEmpty()) return
 
@@ -24,7 +26,6 @@ class Ic10NameSourceLineMarkerProvider: RelatedItemLineMarkerProvider() {
                 .setTooltipText("Navigate to ${element.text}")
 
             result.add(builder.createLineMarkerInfo(element))
-            return
         }
     }
 }

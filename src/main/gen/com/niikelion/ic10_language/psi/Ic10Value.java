@@ -14,6 +14,6 @@ public interface Ic10Value extends PsiElement {
   Ic10Number getNumber();
 
   @Nullable
-  Ic10Variable getVariable();
+  Ic10ReferenceName getReferenceName();
 
 }

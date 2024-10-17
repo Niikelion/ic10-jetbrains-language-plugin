@@ -41,8 +41,8 @@ public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
 
   @Override
   @Nullable
-  public Ic10Variable getVariable() {
-    return findChildByClass(Ic10Variable.class);
+  public Ic10ReferenceName getReferenceName() {
+    return findChildByClass(Ic10ReferenceName.class);
   }
 
 }

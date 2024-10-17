@@ -11,14 +11,14 @@ import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10AliasOpImpl extends ASTWrapperPsiElement implements Ic10AliasOp {
+public class Ic10OperationNameImpl extends ASTWrapperPsiElement implements Ic10OperationName {
 
-  public Ic10AliasOpImpl(@NotNull ASTNode node) {
+  public Ic10OperationNameImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull Ic10Visitor visitor) {
-    visitor.visitAliasOp(this);
+    visitor.visitOperationName(this);
   }
 
   @Override

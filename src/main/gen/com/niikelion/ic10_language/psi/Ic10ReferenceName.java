@@ -5,12 +5,6 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface Ic10LbnOp extends PsiElement {
-
-  @NotNull
-  List<Ic10Value> getValueList();
-
-  @NotNull
-  Ic10Variable getVariable();
+public interface Ic10ReferenceName extends Ic10NamedElement {
 
 }
