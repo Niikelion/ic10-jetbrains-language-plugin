@@ -28,6 +28,7 @@ BINARY="%"[0-1](_?[0-1])*
 DECIMAL=[0-9]+
 HEXADECIMAL="$"[0-9A-F](_?[0-9A-F])*
 FLOAT={DECIMAL}"."{DECIMAL}
+MINUS="-"
 
 COLON=":"
 
@@ -37,9 +38,9 @@ COLON=":"
 
 <YYINITIAL> {NAME} { yybegin(YYINITIAL); return Ic10Types.NAME; }
 <YYINITIAL> {BINARY} { yybegin(YYINITIAL); return Ic10Types.BINARY; }
-<YYINITIAL> {DECIMAL} { yybegin(YYINITIAL); return Ic10Types.DECIMAL; }
+<YYINITIAL> {MINUS}?{DECIMAL} { yybegin(YYINITIAL); return Ic10Types.DECIMAL; }
 <YYINITIAL> {HEXADECIMAL} { yybegin(YYINITIAL); return Ic10Types.HEXADECIMAL; }
-<YYINITIAL> {FLOAT} { yybegin(YYINITIAL); return Ic10Types.FLOAT; }
+<YYINITIAL> {MINUS}?{FLOAT} { yybegin(YYINITIAL); return Ic10Types.FLOAT; }
 <YYINITIAL> {COLON} { yybegin(YYINITIAL); return Ic10Types.COLON; }
 
 <YYINITIAL> {COMMENT} { yybegin(YYINITIAL); return Ic10Types.COMMENT; }

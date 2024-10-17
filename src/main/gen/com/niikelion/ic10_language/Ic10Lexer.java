@@ -66,10 +66,10 @@ class Ic10Lexer implements FlexLexer {
 
   private static final String ZZ_CMAP_BLOCKS_PACKED_0 =
     "\11\0\1\1\1\2\2\3\1\4\22\0\1\5\1\0"+
-    "\1\6\1\7\1\10\1\11\2\0\1\12\1\13\4\0"+
-    "\1\14\1\0\2\15\10\16\1\17\6\0\1\20\5\21"+
-    "\1\22\1\23\12\22\1\24\7\22\4\0\1\25\1\0"+
-    "\32\22\12\0\1\3\u01a2\0\2\3\326\0";
+    "\1\6\1\7\1\10\1\11\2\0\1\12\1\13\3\0"+
+    "\1\14\1\15\1\0\2\16\10\17\1\20\6\0\1\21"+
+    "\5\22\1\23\1\24\12\23\1\25\7\23\4\0\1\26"+
+    "\1\0\32\23\12\0\1\3\u01a2\0\2\3\326\0";
 
   private static int [] zzUnpackcmap_blocks() {
     int [] result = new int[768];
@@ -96,12 +96,12 @@ class Ic10Lexer implements FlexLexer {
   private static final int [] ZZ_ACTION = zzUnpackAction();
 
   private static final String ZZ_ACTION_PACKED_0 =
-    "\2\0\1\1\1\2\2\3\1\4\2\1\1\5\1\6"+
+    "\2\0\1\1\1\2\2\3\1\4\3\1\1\5\1\6"+
     "\2\7\1\1\1\10\1\11\1\12\1\0\1\7\3\0"+
     "\1\13\1\7\1\14\1\7\1\15";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[27];
+    int [] result = new int[28];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -126,13 +126,13 @@ class Ic10Lexer implements FlexLexer {
   private static final int [] ZZ_ROWMAP = zzUnpackRowMap();
 
   private static final String ZZ_ROWMAP_PACKED_0 =
-    "\0\0\0\26\0\54\0\102\0\54\0\130\0\156\0\204"+
-    "\0\232\0\260\0\54\0\306\0\334\0\362\0\54\0\u0108"+
-    "\0\u011e\0\u0134\0\u014a\0\u0160\0\204\0\232\0\u0134\0\u0176"+
-    "\0\54\0\u018c\0\54";
+    "\0\0\0\27\0\56\0\105\0\56\0\134\0\163\0\212"+
+    "\0\241\0\270\0\317\0\56\0\346\0\375\0\u0114\0\56"+
+    "\0\u012b\0\u0142\0\u0159\0\u0170\0\u0187\0\212\0\241\0\u0159"+
+    "\0\u019e\0\56\0\u01b5\0\56";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[27];
+    int [] result = new int[28];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -156,20 +156,21 @@ class Ic10Lexer implements FlexLexer {
 
   private static final String ZZ_TRANS_PACKED_0 =
     "\1\3\1\4\2\5\1\6\1\4\1\3\1\7\1\10"+
-    "\1\11\3\3\2\12\1\13\3\14\1\15\2\14\6\3"+
-    "\1\16\4\3\1\17\12\3\27\0\1\4\3\0\1\4"+
-    "\22\0\1\5\23\0\2\7\1\0\1\7\1\0\21\7"+
-    "\15\0\2\20\1\0\2\20\21\0\1\21\24\0\1\22"+
-    "\2\12\24\0\2\14\1\0\6\14\15\0\2\14\1\0"+
-    "\1\23\5\14\5\0\1\24\7\0\2\24\1\0\6\24"+
-    "\15\0\2\20\1\0\2\20\3\0\1\25\15\0\1\21"+
-    "\7\0\1\26\15\0\2\27\24\0\2\14\1\0\4\14"+
-    "\1\30\1\14\5\0\1\24\1\31\6\0\2\24\1\0"+
-    "\6\24\15\0\2\14\1\0\3\14\1\32\2\14\12\0"+
-    "\1\33\2\0\2\14\1\0\6\14";
+    "\1\11\2\3\1\12\1\3\2\13\1\14\3\15\1\16"+
+    "\2\15\6\3\1\17\4\3\1\20\13\3\30\0\1\4"+
+    "\3\0\1\4\23\0\1\5\24\0\2\7\1\0\1\7"+
+    "\1\0\22\7\16\0\2\21\1\0\2\21\22\0\1\22"+
+    "\26\0\2\13\24\0\1\23\2\13\25\0\2\15\1\0"+
+    "\6\15\16\0\2\15\1\0\1\24\5\15\5\0\1\25"+
+    "\10\0\2\25\1\0\6\25\16\0\2\21\1\0\2\21"+
+    "\3\0\1\26\16\0\1\22\7\0\1\27\16\0\2\30"+
+    "\25\0\2\15\1\0\4\15\1\31\1\15\5\0\1\25"+
+    "\1\32\7\0\2\25\1\0\6\25\16\0\2\15\1\0"+
+    "\3\15\1\33\2\15\12\0\1\34\3\0\2\15\1\0"+
+    "\6\15";
 
   private static int [] zzUnpacktrans() {
-    int [] result = new int[418];
+    int [] result = new int[460];
     int offset = 0;
     offset = zzUnpacktrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -207,11 +208,11 @@ class Ic10Lexer implements FlexLexer {
   private static final int [] ZZ_ATTRIBUTE = zzUnpackAttribute();
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
-    "\2\0\1\11\1\1\1\11\5\1\1\11\3\1\1\11"+
+    "\2\0\1\11\1\1\1\11\6\1\1\11\3\1\1\11"+
     "\2\1\1\0\1\1\3\0\2\1\1\11\1\1\1\11";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[27];
+    int [] result = new int[28];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;

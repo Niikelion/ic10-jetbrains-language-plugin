@@ -8,13 +8,13 @@
   <name>Ic10 Language</name>
 
   <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
-  <vendor email="michal.osinski101@gmail.com" url="https://www.yourcompany.com">Niikelion</vendor>
+  <vendor email="michal.osinski101@gmail.com">Niikelion</vendor>
 
   <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
        Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
        Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
   <description><![CDATA[
-    Stationeers Ic10 language support plugin.<br/>
+    Stationeers Ic10 language support plugin.
   ]]></description>
 
   <!-- Product and plugin compatibility requirements.
