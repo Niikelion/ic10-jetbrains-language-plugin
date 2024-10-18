@@ -7,7 +7,7 @@ import com.niikelion.ic10_language.Ic10Language
 object Ic10ElementFactory {
     fun createLabel(project: Project, name: String): Ic10Label? {
         val file = createFile(project, "$name:")
-        val line = file.findChildByClass(Ic10Line::class.java) as Ic10Line?
+        val line = file.findChildByClass(Ic10Line::class.java)
 
         return line?.label
     }

@@ -13,12 +13,13 @@ import com.niikelion.ic10_language.psi.Ic10Types
 
 class Ic10SyntaxHighlighter: SyntaxHighlighterBase() {
     companion object {
+        val INSTRUCTION = createTextAttributesKey("IC10_INSTRUCTION", DefaultLanguageHighlighterColors.KEYWORD)
+        val LABEL = createTextAttributesKey("IC10_LABEL", DefaultLanguageHighlighterColors.INSTANCE_FIELD)
+        val CONSTANT = createTextAttributesKey("IC10_CONSTANT", DefaultLanguageHighlighterColors.STATIC_FIELD)
         private val COMMENT = createTextAttributesKey("IC10_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
-        val INSTRUCTION = createTextAttributesKey("IC10_INSTRUCTION", DefaultLanguageHighlighterColors.STATIC_METHOD)
-        private val NAME = createTextAttributesKey("IC10_NAME", DefaultLanguageHighlighterColors.INSTANCE_FIELD)
+        private val NAME = createTextAttributesKey("IC10_NAME", DefaultLanguageHighlighterColors.IDENTIFIER)
         private val NUMBER = createTextAttributesKey("IC10_NUMBER", DefaultLanguageHighlighterColors.NUMBER)
         private val HASH = createTextAttributesKey("IC10_HASH", DefaultLanguageHighlighterColors.STRING)
-        val CONSTANT = createTextAttributesKey("IC10_CONSTANT", DefaultLanguageHighlighterColors.GLOBAL_VARIABLE)
         private val BAD_CHARACTER: TextAttributesKey = createTextAttributesKey("IC10_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER)
 
         private val COMMENT_KEYS = arrayOf(COMMENT)

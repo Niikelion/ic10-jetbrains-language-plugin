@@ -1,6 +1,6 @@
 package com.niikelion.ic10_language
 
-data class Instruction(val name: String, val description: String, val arguments: List<Arg> = listOf()) {
+data class Instruction(val name: String, val description: String, val arguments: List<Arg> = listOf(), val isDeclaration: Boolean = false) {
     data class Arg(val name: String, val type: ArgType) {
         fun getTooltipText(): String = name
 
@@ -67,7 +67,7 @@ object Instructions {
         op("abs", 1, "|a|"),
         op("acos", 1, "arc cosine of a in radians"),
         op("add", 2, "a + b"),
-        Instruction("alias", "Creates alias for originalName", listOf(name("alias"), variable("originalName"))),
+        Instruction("alias", "Creates alias for originalName", listOf(name("alias"), variable("originalName")), true),
         op("and", 2, "a && b"),
         op("asin", 1, "arc sine of a in radians"),
         op("atan", 1, "arc tangent of a in radians"),
@@ -84,10 +84,10 @@ object Instructions {
             value("b"),
             value("c"),
         )),
-        Instruction("bdns", "Branch to line a if device d is not set", listOf(targetDevice, value("a"),)),
-        Instruction("bdnsal", "Branch to line a if device d is not set and store return pointer in ra", listOf(targetDevice, value("a"),)),
-        Instruction("bdse", "Branch to line a if device d is set", listOf(targetDevice, value("a"),)),
-        Instruction("bdseal", "Branch to line a if device d is set and store return pointer in ra", listOf(targetDevice, value("a"),)),
+        Instruction("bdns", "Branch to line a if device d is not set", listOf(targetDevice, value("a"))),
+        Instruction("bdnsal", "Branch to line a if device d is not set and store return pointer in ra", listOf(targetDevice, value("a"))),
+        Instruction("bdse", "Branch to line a if device d is set", listOf(targetDevice, value("a"))),
+        Instruction("bdseal", "Branch to line a if device d is set and store return pointer in ra", listOf(targetDevice, value("a"))),
         Instruction("beq", "Branch to line c if a == b", listOf(
             value("a"),
             value("b"),
@@ -254,7 +254,7 @@ object Instructions {
         Instruction("clr", "Clears the stack memory for the provided device", listOf(targetDevice)),
         Instruction("clrd", "Clears the stack memory for device with provided id", listOf(value("id"))),
         op("cos", 1, "cos(a)"),
-        Instruction("define", "Creates alias for constant value", listOf(name("alias"), value("value"))),
+        Instruction("define", "Creates alias for constant value", listOf(name("alias"), value("value")), true),
         op("div", 2, "a / b"),
         op("exp", 1, "exp(a)"),
         op("floor", 1, "largest integer less than a"),
@@ -300,7 +300,7 @@ object Instructions {
         op("max", 2, "max of a or b"),
         op("min", 2, "min of a or b"),
         op("mod", 2, "a mod b(not: NOT the same as a % b)"),
-        op("move", 1, "b"),
+        op("move", 1, "a"),
         op("mul", 2, "a * b"),
         op("nor", 2, "!(a || b)"),
         op("not", 1, "!a"),
