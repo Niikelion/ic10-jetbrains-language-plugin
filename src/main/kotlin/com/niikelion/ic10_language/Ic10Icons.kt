@@ -9,4 +9,12 @@ object Ic10Icons {
     val Lookup = getIcon("/icons/left.svg", javaClass)
     @JvmField
     val Label = getIcon("/icons/label.svg", javaClass)
+    @JvmField
+    val Constant = getIcon("/icons/constant.svg", javaClass)
+    @JvmField
+    val Variable = getIcon("/icons/variable.svg", javaClass)
+    @JvmField
+    val Function = getIcon("/icons/function.svg", javaClass)
+    @JvmField
+    val Edit = getIcon("/icons/edit.svg", javaClass)
 }

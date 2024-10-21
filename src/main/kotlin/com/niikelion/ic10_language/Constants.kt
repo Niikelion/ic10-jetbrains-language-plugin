@@ -27,4 +27,5 @@ object Constants {
     ).associateBy { it.name }
 
     fun get(name: String) = constants[name]
+    val all get() = constants.values
 }

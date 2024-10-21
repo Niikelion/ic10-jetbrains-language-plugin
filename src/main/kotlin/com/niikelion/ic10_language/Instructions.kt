@@ -74,165 +74,43 @@ object Instructions {
         op("atan2", 2, "counter-clockwise angle between positive x axis and ray from (0,0) to (b, a)"),
         branch("bap", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, false, false),
         branch("bapal", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, false ,true),
-        Instruction("bapz", "Branch to line c if abs(a) <= max(b * abs(a), epsilon * 8)", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bapzal", "Branch to line c if abs(a) <= max(b * abs(a), epsilon * 8) and store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
+        branch("bapz", "abs(a) <= max(b * abs(a), epsilon * 8)", 3, false, false),
+        branch("bapzal", "abs(a) <= max(b * abs(a), epsilon * 8)", 3, false, true),
         Instruction("bdns", "Branch to line a if device d is not set", listOf(targetDevice, value("a"))),
         Instruction("bdnsal", "Branch to line a if device d is not set and store return pointer in ra", listOf(targetDevice, value("a"))),
         Instruction("bdse", "Branch to line a if device d is set", listOf(targetDevice, value("a"))),
         Instruction("bdseal", "Branch to line a if device d is set and store return pointer in ra", listOf(targetDevice, value("a"))),
-        Instruction("beq", "Branch to line c if a == b", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("beqal", "Branch to line c if a == b and store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("beqz", "Branch to line b if a == 0", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("beqzal", "Branch to line b if a == 0 amd store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("bge", "Branch to line c if a >= b", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bgeal", "Branch to line c if a >= b and store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bgez", "Branch to line b if a >= 0", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("bgezal", "Branch to line b if a >= 0 and store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("bgt", "Branch to line c if a > b", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bgtal", "Branch to line c if a > b and store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bgtz", "Branch to line b if a > 0", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("bgtzal", "Branch to line b if a > 0", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("ble", "Branch to line c if a <= b", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bleal", "Branch to line c if a <= b and store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("blez", "Branch to line b if a <= 0", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("blezal", "Branch to line b if a <= 0", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("blt", "Branch to line c if a < b", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bltal", "Branch to line c if a < b and store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bltz", "Branch to line b if a < 0", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("bltzal", "Branch to line b if a < 0", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("bna", "Branch to line d if abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-            value("d"),
-        )),
-        Instruction("bnaal", "Branch to line d if abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8) and store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-            value("d"),
-        )),
-        Instruction("bnan", "Branch to line b if a is not a number (NaN)", listOf(
-            value("a"),
-            value("b")
-        )),
-        Instruction("bnaz", "Branch to line c if abs(a) > max(b * abs(a), epsilon * 8)", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bnazal", "Branch to line c if abs(a) > max(b * abs(a), epsilon * 8) and store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bne", "Branch to line c if a != b", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bneal", "Branch to line c if a != b and store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
-        Instruction("bnez", "Branch to line b if a != 0", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("bnezal", "Branch to line b if a != 0 and store return pointer in ra", listOf(
-            value("a"),
-            value("b"),
-        )),
-        Instruction("brap", "Relative branch to line d if abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-            value("d"),
-        )),
-        Instruction("brapz", "Relative branch to line c if abs(a) <= max(c * abs(a), epsilon * 8)", listOf(
-            value("a"),
-            value("b"),
-            value("c"),
-        )),
+        branch("beq", "a == b", 3, false, false),
+        branch("beqal", "a == b", 3, false, true),
+        branch("beqz", "a == 0", 2, false, false),
+        branch("beqzal", "a == 0", 2, false, true),
+        branch("bge", "a >= b", 3, false, false),
+        branch("bgeal", "a >= b", 3, false, true),
+        branch("bgez", "a >= 0", 2, false, false),
+        branch("bgezal", "a >= 0", 2, false, true),
+        branch("bgt", "a > b", 3, false, false),
+        branch("bgtal", "a > b", 3, false, true),
+        branch("bgtz", "a > 0", 2, false, false),
+        branch("bgtzal", "a > 0", 2, false, true),
+        branch("ble", "a <= b", 3, false, false),
+        branch("bleal", "a <= b", 3, false, true),
+        branch("blez", "a <= 0", 2, false, false),
+        branch("blezal", "a <= 0", 2, false, true),
+        branch("blt", "a < b", 3, false, false),
+        branch("bltal", "a < b", 3, false, true),
+        branch("bltz", "a < 0", 2, false, false),
+        branch("bltzal", "a < 0", 2, false, true),
+        branch("bna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", 4, false, false),
+        branch("bnaal", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", 4, false, true),
+        branch("bnan", "a is not a number (NaN)", 2, false, false),
+        branch("bnaz", "abs(a) > max(b * abs(a), epsilon * 8)", 3, false, false),
+        branch("bnazal", "abs(a) > max(b * abs(a), epsilon * 8)", 3, false, true),
+        branch("bne", "a != b", 3, false, false),
+        branch("bneal", "a != b", 3, false, true),
+        branch("bnez", "a != 0", 2, false, false),
+        branch("bnezal", "a != 0", 2, false, true),
+        branch("brap", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, true, false),
+        branch("brapz", "abs(a) <= max(c * abs(a), epsilon * 8)", 3, true, false),
         Instruction("brdns", "Relative jump to line a if device is not set", listOf(targetDevice, value("a"))),
         Instruction("brdse", "Relative jump to line a if device is set", listOf(targetDevice, value("a"))),
         branch("breq", "a == b", 3, true, false),
@@ -261,7 +139,7 @@ object Instructions {
         Instruction("get", "Reads the stack value of the provided value: r = d.stack[i]", listOf(resultVariable, targetDevice, value("i"))),
         Instruction("getd", "Reads the stack value of device with provided id: r = findDeviceById(id).stack[i]", listOf(resultVariable, value("id"), value("i"))),
         Instruction("hcf", "Self-destructs the device"),
-        Instruction("j", "Jump to line a", listOf(value("a"))),
+        Instruction("j", "Jump to line", listOf(value("line"))),
         Instruction("jal", "Jump to line a and store return pointer in ra", listOf(value("a"))),
         Instruction("jr", "Relative jump by a lines", listOf(value("a"))),
         Instruction(
@@ -355,4 +233,5 @@ object Instructions {
         Instruction("yield", "Pauses execution for 1 tick")
     ).associateBy { it.name }
     fun get(name: String) = operations[name]
+    val all get() = operations.values.toList()
 }

@@ -49,12 +49,12 @@
     />
     <codeInsight.lineMarkerProvider
       language="Ic10"
-      implementationClass="com.niikelion.ic10_language.Ic10LabelLineMarkerProvider"
+      implementationClass="com.niikelion.ic10_language.Ic10DefinitionLineMarkerProvider"
     />
-<!--    <completion.contributor-->
-<!--      language="Ic10"-->
-<!--      implementationClass="com.niikelion.ic10_language.Ic10CompletionContributor"-->
-<!--    />-->
+    <completion.contributor
+      language="Ic10"
+      implementationClass="com.niikelion.ic10_language.Ic10CompletionContributor"
+    />
     <psi.referenceContributor
       language="Ic10"
       implementation="com.niikelion.ic10_language.Ic10ReferenceContributor"
@@ -62,6 +62,24 @@
     <lang.refactoringSupport
       language="Ic10"
       implementationClass="com.niikelion.ic10_language.Ic10RefactoringSupportProvider"
+    />
+    <gotoSymbolContributor
+      implementation="com.niikelion.ic10_language.Ic10ChooseByNameContributor"
+    />
+    <iconProvider
+      implementation="com.niikelion.ic10_language.psi.impl.Ic10NamedElementIconProvider"
+    />
+    <lang.psiStructureViewFactory
+      language="Ic10"
+      implementationClass="com.niikelion.ic10_language.Ic10StructureViewFactory"
+    />
+    <lang.commenter
+      language="Ic10"
+      implementationClass="com.niikelion.ic10_language.Ic10Commenter"
+    />
+    <lang.documentationProvider
+      language="Ic10"
+      implementationClass="com.niikelion.ic10_language.Ic10DocumentationProvider"
     />
   </extensions>
 </idea-plugin>
