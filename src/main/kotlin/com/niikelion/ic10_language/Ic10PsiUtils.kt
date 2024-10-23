@@ -1,7 +1,9 @@
 package com.niikelion.ic10_language
 
 import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
@@ -9,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import com.niikelion.ic10_language.psi.*
+import kotlinx.collections.immutable.toImmutableMap
 import javax.swing.Icon
 
 enum class Ic10SymbolType {
@@ -18,31 +21,19 @@ enum class Ic10SymbolType {
         override val isValue = true
     }, Device {
         override val isDevice = true
-    }, Unknown;
+    };
 
     open val isValue: Boolean = false
     open val isDevice: Boolean = false
 }
 
-data class Ic10Symbol(val name: String, val element: Ic10NamedElement?, val type: Ic10SymbolType) {
+data class Ic10Symbol(val name: String, val definitionElement: Ic10NamedElement, val valueElement: PsiElement, val type: Ic10SymbolType, val unresolved: Boolean) {
     companion object {
         fun isValidRegister(name: String) = registers.contains(name)
         fun isValidDevice(name: String) = devices.contains(name)
 
-        fun from(label: Ic10Label) = Ic10Symbol(label.name!!, label, Ic10SymbolType.Constant)
-        fun from(referenceName: Ic10ReferenceName, type: Ic10SymbolType) = Ic10Symbol(referenceName.name!!, referenceName, type)
-        fun from(referenceName: Ic10ReferenceName): Ic10Symbol {
-            val name = referenceName.name!!
-
-            val constant = Constants.get(name)
-            if (constant != null) return Ic10Symbol(name, referenceName, Ic10SymbolType.Constant)
-
-            if (isValidRegister(name)) return Ic10Symbol(name, referenceName, Ic10SymbolType.Variable)
-
-            if (isValidDevice(name)) return Ic10Symbol(name, referenceName, Ic10SymbolType.Device)
-
-            return Ic10Symbol(name, referenceName, Ic10SymbolType.Unknown)
-        }
+        fun from(definitionElement: Ic10NamedElement, valueElement: PsiElement, type: Ic10SymbolType, unresolved: Boolean) = Ic10Symbol(definitionElement.name!!, definitionElement, valueElement, type, unresolved)
+        fun from(label: Ic10Label) = from(label, label, Ic10SymbolType.Constant, false)
         fun from(element: Ic10Operation): Ic10Symbol? {
             val opName = element.operationName.text
 
@@ -54,11 +45,22 @@ data class Ic10Symbol(val name: String, val element: Ic10NamedElement?, val type
             val value = element.valueList[1] ?: return null
 
             return when (opName) {
-                "define" -> Ic10Symbol(referenceName.name!!, referenceName, Ic10SymbolType.Constant)
-                "alias" -> {
-                    if (value.referenceName == null) return Ic10Symbol(referenceName.name!!, referenceName, Ic10SymbolType.Variable)
+                "define" -> {
+                    val valueReferenceName = value.referenceName
 
-                    Ic10Symbol(referenceName.name!!, referenceName, Ic10SymbolType.Variable)
+                    if (valueReferenceName != null) return from(referenceName, valueReferenceName, Ic10SymbolType.Constant, true)
+
+                    return from(referenceName, value, Ic10SymbolType.Constant, false)
+                }
+                "alias" -> {
+                    val valueReferenceName = value.referenceName ?: return null
+
+                    val valueName = valueReferenceName.name!!
+
+                    if (isValidRegister(valueName)) return from(referenceName, valueReferenceName, Ic10SymbolType.Variable, false)
+                    if (isValidDevice(valueName)) return from(referenceName, valueReferenceName, Ic10SymbolType.Device, false)
+
+                    return from(referenceName, valueReferenceName, Ic10SymbolType.Variable, true)
                 }
                 else -> null
             }
@@ -154,15 +156,26 @@ object Ic10PsiUtils {
     fun isValidRegister(element: Ic10ReferenceName) = Ic10Symbol.isValidRegister(element.name!!)
     fun isValidDevice(element: Ic10ReferenceName) = Ic10Symbol.isValidDevice(element.name!!)
 
-    fun findSymbols(file: PsiFile, name: String): Collection<Ic10Symbol> {
-        val labels = findLabelsInFile(file, name).map { Ic10Symbol(name, it, Ic10SymbolType.Constant) }
-        val aliases =
-            PsiTreeUtil.findChildrenOfType(file, Ic10Operation::class.java).filter { getDeclaredName(it) == name }
-                .map { it.valueList.first().referenceName!! }.map { Ic10Symbol(it) }
+    private fun findSymbols(file: PsiFile): Collection<Ic10Symbol> {
+        val labels = findLabelsInFile(file).map { Ic10Symbol.from(it) }
+        val aliases = PsiTreeUtil.findChildrenOfType(file, Ic10Operation::class.java).mapNotNull { Ic10Symbol.from(it) }
 
         return labels + aliases
     }
-    fun findAndResolveSymbol(file: PsiFile, name: String) {
+    private fun resolveSymbol(symbols: MutableMap<String, Ic10Symbol>, symbol: Ic10Symbol): Ic10Symbol {
+        if (!symbol.unresolved) return symbol
 
+        if (symbol.valueElement !is Ic10NamedElement) return symbol
+
+        val resolvedTargetSymbol = symbols[symbol.valueElement.name!!]?.let { resolveSymbol(symbols, it) } ?: return symbol
+
+        return Ic10Symbol.from(symbol.definitionElement, resolvedTargetSymbol.valueElement, resolvedTargetSymbol.type, resolvedTargetSymbol.unresolved).also { symbols[symbol.name] = it }
     }
+    private fun resolveSymbols(symbols: MutableMap<String, Ic10Symbol>) = symbols.values.forEach { resolveSymbol(symbols, it) }
+
+    private fun findAndResolveSymbols(file: PsiFile): Map<String, Ic10Symbol> = findSymbols(file).associateBy { it.name }.toMutableMap().also { resolveSymbols(it) }.toImmutableMap()
+    fun findAndResolveSymbol(element: Ic10NamedElement): Ic10Symbol? =
+        findAndResolveSymbols(element.containingFile).let { it[element.name!!] }
+
+    fun getLineNumber(element: PsiElement): Int = element.containingFile.viewProvider.document.getLineNumber(element.textOffset) + 1
 }

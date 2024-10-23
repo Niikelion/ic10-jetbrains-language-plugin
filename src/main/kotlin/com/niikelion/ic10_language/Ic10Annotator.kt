@@ -3,7 +3,6 @@ package com.niikelion.ic10_language
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiElement
 import com.niikelion.ic10_language.psi.*
 
@@ -17,9 +16,7 @@ class Ic10Annotator: Annotator {
     }
 
     private fun annotateLine(element: Ic10Line, holder: AnnotationHolder) {
-        val document: Document = element.containingFile.viewProvider.document
-
-        val lineNumber = document.getLineNumber(element.textOffset) + 1
+        val lineNumber = Ic10PsiUtils.getLineNumber(element)
         if (lineNumber <= 128) return
 
         holder
@@ -29,6 +26,8 @@ class Ic10Annotator: Annotator {
     private fun annotateOperation(element: Ic10Operation, holder: AnnotationHolder) {
         val instruction = Instructions.get(element.operationName.text)
             ?: return holder.newAnnotation(HighlightSeverity.ERROR, "Unknown instruction").create()
+
+        //TODO: move tooltip to documentation
 
         holder
             .newAnnotation(HighlightSeverity.INFORMATION, instruction.name)
