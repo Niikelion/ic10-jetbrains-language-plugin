@@ -71,7 +71,7 @@ class Ic10Annotator: Annotator {
 
                 if (!declarations.isEmpty()) return
 
-                if (constant != null) return annotateConstantReference(constant, element, holder)
+                if (constant != null) return annotateConstantReference(element, holder)
 
                 if (Ic10PsiUtils.isValidDevice(element) || Ic10PsiUtils.isValidRegister(element)) return
 
@@ -83,10 +83,9 @@ class Ic10Annotator: Annotator {
         if (!argument.type.acceptsValue)
             holder.newAnnotation(HighlightSeverity.ERROR, "Expected ${argument.type.name}, got value").range(value).create()
     }
-    private fun annotateConstantReference(constant: Constant, element: Ic10ReferenceName, holder: AnnotationHolder) {
+    private fun annotateConstantReference(element: Ic10ReferenceName, holder: AnnotationHolder) {
         holder
-            .newAnnotation(HighlightSeverity.INFORMATION, constant.name)
-            .tooltip(constant.getTooltipText())
+            .newSilentAnnotation(HighlightSeverity.INFORMATION)
             .textAttributes(Ic10SyntaxHighlighter.CONSTANT)
             .range(element)
             .create()

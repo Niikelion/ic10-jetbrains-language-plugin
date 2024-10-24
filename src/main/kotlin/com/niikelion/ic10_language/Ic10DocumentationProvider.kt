@@ -2,29 +2,28 @@ package com.niikelion.ic10_language
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.findParentOfType
-import com.niikelion.ic10_language.DocMarkup.value
+import com.niikelion.ic10_language.DocMarkup.br
 import com.niikelion.ic10_language.DocMarkup.content
 import com.niikelion.ic10_language.DocMarkup.definition
 import com.niikelion.ic10_language.DocMarkup.doc
 import com.niikelion.ic10_language.DocMarkup.keyword
 import com.niikelion.ic10_language.DocMarkup.text
-import com.niikelion.ic10_language.psi.Ic10Label
-import com.niikelion.ic10_language.psi.Ic10Operation
-import com.niikelion.ic10_language.psi.Ic10OperationName
-import com.niikelion.ic10_language.psi.Ic10ReferenceName
-import com.niikelion.ic10_language.psi.Ic10Value
+import com.niikelion.ic10_language.DocMarkup.value
+import com.niikelion.ic10_language.psi.*
 
 class Ic10DocumentationProvider: AbstractDocumentationProvider() {
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
         return when(element) {
             is Ic10Value -> renderValueDoc(element)
             is Ic10Label -> renderLabelDoc(element)
-            is Ic10ReferenceName -> renderVariableReference(element)
             else -> null
         }
     }
@@ -57,7 +56,100 @@ class Ic10DocumentationProvider: AbstractDocumentationProvider() {
     }
 
     private fun renderValueDoc(element: Ic10Value): String? {
-        return "value"
+        //TODO: add parameter name rendering
+        val hash = element.hash
+
+        if (hash != null)
+            return renderHashDoc(hash)
+
+        val name = element.referenceName
+
+        if (name != null)
+            return renderReferenceNameDoc(name)
+
+        return null
+    }
+
+    private fun renderHashDoc(hash: Ic10Hash): String {
+        val value = Ic10PsiUtils.calculateHash(hash)
+
+        return doc(value(text(value.toString())))
+    }
+
+    private fun renderReferenceNameDoc(element: Ic10ReferenceName): String? {
+        val symbol = Ic10PsiUtils.findAndResolveSymbol(element) ?: return null
+
+        return when (symbol.type) {
+            Ic10SymbolType.Constant -> {
+                val valueElement = symbol.valueElement
+
+                if (symbol.unresolved) return doc(
+                    keyword(text("const")),
+                    text(" ${symbol.name}")
+                )
+
+                fun getValue(): Pair<String, String?> {
+                    if (valueElement is Ic10Label) return Pair(
+                        Ic10PsiUtils.getLineNumber(valueElement).toString(),
+                        null
+                    )
+                    if (valueElement is Ic10Value) {
+                        val hash = valueElement.hash?.let { Ic10PsiUtils.calculateHash(it).toString() }
+                        if (hash != null) return Pair(hash, null)
+
+                        val constant = valueElement.referenceName?.let { Constants.get(it.name!!) }
+                        if (constant != null) return Pair(
+                            constant.value?.toString() ?: constant.name,
+                            constant.description
+                        )
+                    }
+
+                    return Pair(valueElement.text, null)
+                }
+
+                val value = getValue()
+
+                if (value.second != null) return doc(
+                    content(
+                        keyword(text("const")),
+                        text(" ${symbol.name} = "),
+                        value(text(value.first))
+                    ),
+                    content(text(value.second!!))
+                )
+
+                doc(
+                    keyword(text("const")),
+                    text(" ${symbol.name} = "),
+                    value(text(value.first))
+                )
+            }
+            Ic10SymbolType.Device -> {
+                if (symbol.unresolved) return doc(
+                    keyword(text("device ")),
+                    text(symbol.name)
+                )
+                return doc(
+                    keyword(text("device ")),
+                    text(symbol.name),
+                    text(" = "),
+                    text(symbol.valueElement.text)
+                )
+            }
+            Ic10SymbolType.Variable -> {
+                if (symbol.unresolved) return doc(
+                    keyword(text("variable ")),
+                    text(symbol.name)
+                )
+
+                return doc(
+                    keyword(text("variable ")),
+                    text(symbol.name),
+                    text(" = "),
+                    text(symbol.valueElement.text)
+                )
+            }
+        }
     }
 
     private fun renderVariableReference(element: Ic10ReferenceName): String? {
@@ -79,14 +171,19 @@ class Ic10DocumentationProvider: AbstractDocumentationProvider() {
 }
 
 object DocMarkup {
+    private val colorScheme get() = EditorColorsManager.getInstance().schemeForCurrentUITheme
+
+    private fun getColor(key: TextAttributesKey) = "#${Integer.toHexString(colorScheme.getAttributes(key).foregroundColor.rgb)}"
+
     fun doc(vararg children: HtmlChunk): String = StringBuilder().let { sb -> children.forEach { child -> child.appendTo(sb) }; sb.toString() }
     fun definition(vararg children: HtmlChunk) = DocumentationMarkup.DEFINITION_ELEMENT.children(*children)
     fun content(vararg children: HtmlChunk) = DocumentationMarkup.CONTENT_ELEMENT.children(*children)
     fun text(text: String) = HtmlChunk.text(text)
+    fun br() = HtmlChunk.br()
 
     fun value(vararg children: HtmlChunk) = valueTag.children(*children)
     fun keyword(vararg children: HtmlChunk) = keywordTag.children(*children)
 
-    private val valueTag = HtmlChunk.span().attr("style", "color: #54a4ef;")
-    private val keywordTag = HtmlChunk.span().attr("style", "color: #cb8b6b;")
+    private val valueTag = HtmlChunk.span().attr("style", "color: ${getColor(DefaultLanguageHighlighterColors.NUMBER)};")
+    private val keywordTag = HtmlChunk.span().attr("style", "color: ${getColor(DefaultLanguageHighlighterColors.KEYWORD)};")
 }

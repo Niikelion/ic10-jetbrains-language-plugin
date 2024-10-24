@@ -10,8 +10,12 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import com.niikelion.ic10_language.DocMarkup.doc
+import com.niikelion.ic10_language.DocMarkup.text
+import com.niikelion.ic10_language.DocMarkup.value
 import com.niikelion.ic10_language.psi.*
 import kotlinx.collections.immutable.toImmutableMap
+import java.util.zip.CRC32
 import javax.swing.Icon
 
 enum class Ic10SymbolType {
@@ -48,7 +52,7 @@ data class Ic10Symbol(val name: String, val definitionElement: Ic10NamedElement,
                 "define" -> {
                     val valueReferenceName = value.referenceName
 
-                    if (valueReferenceName != null) return from(referenceName, valueReferenceName, Ic10SymbolType.Constant, true)
+                    if (valueReferenceName != null) return from(referenceName, value, Ic10SymbolType.Constant, true)
 
                     return from(referenceName, value, Ic10SymbolType.Constant, false)
                 }
@@ -57,10 +61,10 @@ data class Ic10Symbol(val name: String, val definitionElement: Ic10NamedElement,
 
                     val valueName = valueReferenceName.name!!
 
-                    if (isValidRegister(valueName)) return from(referenceName, valueReferenceName, Ic10SymbolType.Variable, false)
-                    if (isValidDevice(valueName)) return from(referenceName, valueReferenceName, Ic10SymbolType.Device, false)
+                    if (isValidRegister(valueName)) return from(referenceName, value, Ic10SymbolType.Variable, false)
+                    if (isValidDevice(valueName)) return from(referenceName, value, Ic10SymbolType.Device, false)
 
-                    return from(referenceName, valueReferenceName, Ic10SymbolType.Variable, true)
+                    return from(referenceName, value, Ic10SymbolType.Variable, true)
                 }
                 else -> null
             }
@@ -165,17 +169,42 @@ object Ic10PsiUtils {
     private fun resolveSymbol(symbols: MutableMap<String, Ic10Symbol>, symbol: Ic10Symbol): Ic10Symbol {
         if (!symbol.unresolved) return symbol
 
-        if (symbol.valueElement !is Ic10NamedElement) return symbol
+        if (symbol.valueElement !is Ic10Value) return symbol
 
-        val resolvedTargetSymbol = symbols[symbol.valueElement.name!!]?.let { resolveSymbol(symbols, it) } ?: return symbol
+        val name = symbol.valueElement.referenceName?.name ?: symbol
+
+        val resolvedTargetSymbol = symbols[name]?.let { resolveSymbol(symbols, it) } ?: return symbol
 
         return Ic10Symbol.from(symbol.definitionElement, resolvedTargetSymbol.valueElement, resolvedTargetSymbol.type, resolvedTargetSymbol.unresolved).also { symbols[symbol.name] = it }
     }
     private fun resolveSymbols(symbols: MutableMap<String, Ic10Symbol>) = symbols.values.forEach { resolveSymbol(symbols, it) }
 
     private fun findAndResolveSymbols(file: PsiFile): Map<String, Ic10Symbol> = findSymbols(file).associateBy { it.name }.toMutableMap().also { resolveSymbols(it) }.toImmutableMap()
-    fun findAndResolveSymbol(element: Ic10NamedElement): Ic10Symbol? =
-        findAndResolveSymbols(element.containingFile).let { it[element.name!!] }
+    fun findAndResolveSymbol(element: Ic10ReferenceName): Ic10Symbol? {
+        val symbol = findAndResolveSymbols(element.containingFile).let { it[element.name!!] }
+
+        if (symbol != null) return symbol
+
+        if (isValidDevice(element))
+            return Ic10Symbol.from(element, element.parent, Ic10SymbolType.Device, false)
+
+        if (isValidRegister(element))
+            return Ic10Symbol.from(element, element.parent, Ic10SymbolType.Variable, false)
+
+        Constants.get(element.name!!) ?: return null
+
+        return Ic10Symbol.from(element, element.parent, Ic10SymbolType.Constant, false)
+    }
 
     fun getLineNumber(element: PsiElement): Int = element.containingFile.viewProvider.document.getLineNumber(element.textOffset) + 1
+
+    fun calculateHash(hash: Ic10Hash): Long {
+        val rawText = hash.hashValue.text
+        val text = rawText.substring(1, rawText.length - 1)
+
+        val crc32 = CRC32()
+        crc32.update(text.toByteArray())
+
+        return crc32.value
+    }
 }

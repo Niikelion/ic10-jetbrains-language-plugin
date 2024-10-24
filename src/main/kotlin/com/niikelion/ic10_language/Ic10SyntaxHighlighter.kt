@@ -18,7 +18,7 @@ class Ic10SyntaxHighlighter: SyntaxHighlighterBase() {
         val CONSTANT = createTextAttributesKey("IC10_CONSTANT", DefaultLanguageHighlighterColors.STATIC_FIELD)
         private val COMMENT = createTextAttributesKey("IC10_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
         private val NAME = createTextAttributesKey("IC10_NAME", DefaultLanguageHighlighterColors.IDENTIFIER)
-        private val NUMBER = createTextAttributesKey("IC10_NUMBER", DefaultLanguageHighlighterColors.NUMBER)
+        val NUMBER = createTextAttributesKey("IC10_NUMBER", DefaultLanguageHighlighterColors.NUMBER)
         private val HASH = createTextAttributesKey("IC10_HASH", DefaultLanguageHighlighterColors.STRING)
         private val BAD_CHARACTER: TextAttributesKey = createTextAttributesKey("IC10_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER)
 

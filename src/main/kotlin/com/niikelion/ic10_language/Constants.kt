@@ -1,12 +1,6 @@
 package com.niikelion.ic10_language
 
-data class Constant(val name: String, val description: String, val value: Number? = null) {
-    private val htmlForName = "<b>$name</b>${if (value != null) " = <span style=\"color: cyan;\">$value</span>" else ""}"
-    private val htmlForDescription = "<i>$description</i>"
-    private fun wrapInHtml(content: String) = "<html><body>$content</body></html>"
-
-    fun getTooltipText(): String = wrapInHtml("$htmlForName<br/>$htmlForDescription")
-}
+data class Constant(val name: String, val description: String, val value: Number? = null)
 
 object Constants {
     private val constants = arrayOf(
