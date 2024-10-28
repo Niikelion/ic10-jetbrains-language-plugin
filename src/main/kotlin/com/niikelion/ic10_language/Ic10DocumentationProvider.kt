@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.findParentOfType
 import com.niikelion.ic10_language.DocMarkup.br
 import com.niikelion.ic10_language.DocMarkup.content
+import com.niikelion.ic10_language.DocMarkup.div
 import com.niikelion.ic10_language.DocMarkup.doc
 import com.niikelion.ic10_language.DocMarkup.keyword
 import com.niikelion.ic10_language.DocMarkup.text
@@ -180,10 +181,14 @@ class Ic10DocumentationProvider: AbstractDocumentationProvider() {
         val operation = Instructions.get(element.text) ?: return null
 
         return doc(
-            keyword(text("operation")),
-            text(" "),
-            text(operation.name),
-            *(operation.arguments.flatMap { listOf(text(" "), text(it.name)) }.toTypedArray())
+            div(
+                keyword(text("operation")),
+                text(" "),
+                text(operation.name),
+                *(operation.arguments.flatMap { listOf(text(" "), text(it.name)) }.toTypedArray())
+            ),
+            br(),
+            text(operation.description)
         )
     }
 }
@@ -194,8 +199,8 @@ object DocMarkup {
     private fun getColor(key: TextAttributesKey) = "#${Integer.toHexString(colorScheme.getAttributes(key).foregroundColor.rgb)}"
 
     fun doc(vararg children: HtmlChunk): String = StringBuilder().let { sb -> children.forEach { child -> child.appendTo(sb) }; sb.toString() }
-    fun definition(vararg children: HtmlChunk) = DocumentationMarkup.DEFINITION_ELEMENT.children(*children)
     fun content(vararg children: HtmlChunk) = DocumentationMarkup.CONTENT_ELEMENT.children(*children)
+    fun div(vararg children: HtmlChunk) = HtmlChunk.div().children(*children)
     fun text(text: String) = HtmlChunk.text(text)
     fun br() = HtmlChunk.br()
 
