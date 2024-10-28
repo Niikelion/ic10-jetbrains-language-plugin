@@ -2,8 +2,6 @@ package com.niikelion.ic10_language
 
 data class Instruction(val name: String, val description: String, val arguments: List<Arg> = listOf(), val isDeclaration: Boolean = false) {
     data class Arg(val name: String, val type: ArgType) {
-        fun getTooltipText(): String = name
-
         companion object {
             fun name(name: String) = Arg(name, ArgType.Name)
             fun device(name: String) = Arg(name, ArgType.Device)
@@ -31,14 +29,9 @@ data class Instruction(val name: String, val description: String, val arguments:
         open val acceptsValue: Boolean = false
         open val acceptsVariable: Boolean = false
     }
-
-    private val htmlForName = "<b>$name ${arguments.joinToString(" ") { it.getTooltipText() }}</b>"
-    private val htmlForDescription = "<i>$description</i>"
-    private fun wrapInHtml(content: String) = "<html><body>$content</body></html>"
-
-    fun getTooltipText(): String = wrapInHtml("$htmlForName<br/>$htmlForDescription")
 }
 
+@Suppress("SameParameterValue")
 object Instructions {
     private fun name(name: String) = Instruction.Arg.name(name)
     private fun device(name: String) = Instruction.Arg.device(name)

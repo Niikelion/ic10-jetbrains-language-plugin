@@ -12,7 +12,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.findParentOfType
 import com.niikelion.ic10_language.DocMarkup.br
 import com.niikelion.ic10_language.DocMarkup.content
-import com.niikelion.ic10_language.DocMarkup.definition
 import com.niikelion.ic10_language.DocMarkup.doc
 import com.niikelion.ic10_language.DocMarkup.keyword
 import com.niikelion.ic10_language.DocMarkup.text
@@ -24,6 +23,7 @@ class Ic10DocumentationProvider: AbstractDocumentationProvider() {
         return when(element) {
             is Ic10Value -> renderValueDoc(element)
             is Ic10Label -> renderLabelDoc(element)
+            is Ic10OperationName -> renderOperationNameDoc(element)
             else -> null
         }
     }
@@ -56,18 +56,42 @@ class Ic10DocumentationProvider: AbstractDocumentationProvider() {
     }
 
     private fun renderValueDoc(element: Ic10Value): String? {
-        //TODO: add parameter name rendering
         val hash = element.hash
 
-        if (hash != null)
-            return renderHashDoc(hash)
+        fun renderOnlyValueDoc(): String? {
+            if (hash != null)
+                return renderHashDoc(hash)
 
-        val name = element.referenceName
+            val name = element.referenceName
 
-        if (name != null)
-            return renderReferenceNameDoc(name)
+            if (name != null)
+                return renderReferenceNameDoc(name)
 
-        return null
+            return null
+        }
+
+        fun renderOnlyParameterDoc(): String? {
+            val operationElement = element.findParentOfType<Ic10Operation>()!!
+
+            val operationName = operationElement.operationName.text
+
+            val operation = Instructions.get(operationName) ?: return null
+
+            val argId = operationElement.valueList.indexOf(element)
+
+            if (argId < 0 || argId >= operation.arguments.size) return null
+
+            val arg = operation.arguments[argId]
+
+            return doc(
+                keyword(text("parameter ")),
+                text(arg.name)
+            )
+        }
+
+        val texts = arrayOf(renderOnlyParameterDoc(), renderOnlyValueDoc()).filterNotNull()
+
+        return if (texts.isNotEmpty()) texts.joinToString(br().toString()) else null
     }
 
     private fun renderHashDoc(hash: Ic10Hash): String {
@@ -152,22 +176,16 @@ class Ic10DocumentationProvider: AbstractDocumentationProvider() {
         }
     }
 
-    private fun renderVariableReference(element: Ic10ReferenceName): String? {
-        val symbol = Ic10PsiUtils.findAndResolveSymbol(element)
+    private fun renderOperationNameDoc(element: Ic10OperationName): String? {
+        val operation = Instructions.get(element.text) ?: return null
 
-        val operation = element.findParentOfType<Ic10Operation>() ?: return null
-
-        val instruction = Instructions.get(operation.operationName.text) ?: return null
-
-        val argument = instruction.arguments[operation.valueList.indexOf(element.parent)]
-
-        return renderVariableDoc(argument, symbol)
+        return doc(
+            keyword(text("operation")),
+            text(" "),
+            text(operation.name),
+            *(operation.arguments.flatMap { listOf(text(" "), text(it.name)) }.toTypedArray())
+        )
     }
-
-    private fun renderVariableDoc(argument: Instruction.Arg, symbol: Ic10Symbol?): String = doc(
-        definition(text(argument.name)),
-        content(text(argument.type.name))
-    )
 }
 
 object DocMarkup {

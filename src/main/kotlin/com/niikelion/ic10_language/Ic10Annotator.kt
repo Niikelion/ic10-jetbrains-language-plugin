@@ -27,11 +27,8 @@ class Ic10Annotator: Annotator {
         val instruction = Instructions.get(element.operationName.text)
             ?: return holder.newAnnotation(HighlightSeverity.ERROR, "Unknown instruction").create()
 
-        //TODO: move tooltip to documentation
-
         holder
-            .newAnnotation(HighlightSeverity.INFORMATION, instruction.name)
-            .tooltip(instruction.getTooltipText())
+            .newSilentAnnotation(HighlightSeverity.INFORMATION)
             .range(element.operationName)
             .textAttributes(Ic10SyntaxHighlighter.INSTRUCTION)
             .create()
@@ -44,14 +41,9 @@ class Ic10Annotator: Annotator {
         }
     }
     private fun annotateValue(argument: Instruction.Arg, value: Ic10Value, holder: AnnotationHolder, expectsUnique: Boolean) {
-        holder.newAnnotation(HighlightSeverity.INFORMATION, "").tooltip(argument.getTooltipText()).range(value).create()
+        val reference = value.referenceName ?: return annotateNumericValue(argument, value, holder)
 
-        val reference = value.referenceName
-
-        if (reference != null)
-            return annotateReference(argument, reference, holder, expectsUnique)
-
-        annotateNumericValue(argument, value, holder)
+        return annotateReference(argument, reference, holder, expectsUnique)
     }
     private fun annotateReference(argument: Instruction.Arg, element: Ic10ReferenceName, holder: AnnotationHolder, expectsUnique: Boolean) {
         when (argument.type) {
