@@ -9,10 +9,10 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
-import com.intellij.psi.util.findParentOfType
-import com.niikelion.ic10_language.Ic10Icons
 import com.niikelion.ic10_language.Ic10PsiUtils
-import com.niikelion.ic10_language.psi.*
+import com.niikelion.ic10_language.psi.Ic10ElementFactory
+import com.niikelion.ic10_language.psi.Ic10NamedElement
+import com.niikelion.ic10_language.psi.Ic10Types
 import javax.swing.Icon
 
 class Ic10NamedElementIconProvider: IconProvider() {
@@ -24,16 +24,16 @@ class Ic10NamedElementIconProvider: IconProvider() {
 
 open class Ic10NamedElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), Ic10NamedElement {
     override fun setName(name: String): PsiElement {
-        val oldTextNode = nameIdentifier?.node ?: return this
+        val oldTextNode = nameIdentifier.node ?: return this
         val newTextNode = Ic10ElementFactory.createLabel(project, name)?.nameIdentifier?.node ?: return this
         oldTextNode.treeParent.replaceChild(oldTextNode, newTextNode)
 
         return this
     }
 
-    override fun getName(): String? = nameIdentifier?.text
+    override fun getName(): String = nameIdentifier.text
 
-    override fun getNameIdentifier(): PsiElement? = PsiTreeUtil.collectElements(this) { it.elementType == Ic10Types.NAME }.firstOrNull()
+    override fun getNameIdentifier(): PsiElement = PsiTreeUtil.collectElements(this) { it.elementType == Ic10Types.NAME }.first()
 
     override fun getReferences(): Array<PsiReference> =
         ReferenceProvidersRegistry.getReferencesFromProviders(this)

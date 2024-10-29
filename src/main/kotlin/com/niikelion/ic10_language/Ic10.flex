@@ -31,6 +31,7 @@ FLOAT={DECIMAL}"."{DECIMAL}
 MINUS="-"
 
 COLON=":"
+DOT="."
 
 %state HASH_VALUE
 
@@ -42,6 +43,7 @@ COLON=":"
 <YYINITIAL> {HEXADECIMAL} { yybegin(YYINITIAL); return Ic10Types.HEXADECIMAL; }
 <YYINITIAL> {MINUS}?{FLOAT} { yybegin(YYINITIAL); return Ic10Types.FLOAT; }
 <YYINITIAL> {COLON} { yybegin(YYINITIAL); return Ic10Types.COLON; }
+<YYINITIAL> {DOT} { yybegin(YYINITIAL); return Ic10Types.DOT; }
 
 <YYINITIAL> {COMMENT} { yybegin(YYINITIAL); return Ic10Types.COMMENT; }
 

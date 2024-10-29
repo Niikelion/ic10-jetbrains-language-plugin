@@ -41,9 +41,15 @@ class Ic10Annotator: Annotator {
         }
     }
     private fun annotateValue(argument: Instruction.Arg, value: Ic10Value, holder: AnnotationHolder, expectsUnique: Boolean) {
-        val reference = value.referenceName ?: return annotateNumericValue(argument, value, holder)
+        val reference = value.referenceName
+        if (reference != null)
+            return annotateReference(argument, reference, holder, expectsUnique)
 
-        return annotateReference(argument, reference, holder, expectsUnique)
+        val channel = value.channel
+        if (channel != null)
+            return annotateChannel(argument, channel, holder)
+
+        return annotateNumericValue(argument, value, holder)
     }
     private fun annotateReference(argument: Instruction.Arg, element: Ic10ReferenceName, holder: AnnotationHolder, expectsUnique: Boolean) {
         when (argument.type) {
@@ -71,9 +77,12 @@ class Ic10Annotator: Annotator {
             }
         }
     }
+    private fun annotateChannel(argument: Instruction.Arg, channel: Ic10Channel, holder: AnnotationHolder) {
+        annotateReference(Instruction.Arg(argument.name, Instruction.ArgType.Device), channel.referenceName, holder, false)
+    }
     private fun annotateNumericValue(argument: Instruction.Arg, value: Ic10Value, holder: AnnotationHolder) {
         if (!argument.type.acceptsValue)
-            holder.newAnnotation(HighlightSeverity.ERROR, "Expected ${argument.type.name}, got value").range(value).create()
+            holder.newAnnotation(HighlightSeverity.ERROR, "Expected ${argument.type.name}, got Value").range(value).create()
     }
     private fun annotateConstantReference(element: Ic10ReferenceName, holder: AnnotationHolder) {
         holder

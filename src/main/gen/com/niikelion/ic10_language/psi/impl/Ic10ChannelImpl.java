@@ -11,14 +11,14 @@ import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
+public class Ic10ChannelImpl extends ASTWrapperPsiElement implements Ic10Channel {
 
-  public Ic10ValueImpl(@NotNull ASTNode node) {
+  public Ic10ChannelImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull Ic10Visitor visitor) {
-    visitor.visitValue(this);
+    visitor.visitChannel(this);
   }
 
   @Override
@@ -28,33 +28,15 @@ public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
   }
 
   @Override
-  @Nullable
-  public Ic10Channel getChannel() {
-    return findChildByClass(Ic10Channel.class);
+  @NotNull
+  public Ic10ChannelNumber getChannelNumber() {
+    return findNotNullChildByClass(Ic10ChannelNumber.class);
   }
 
   @Override
-  @Nullable
-  public Ic10Constant getConstant() {
-    return findChildByClass(Ic10Constant.class);
-  }
-
-  @Override
-  @Nullable
-  public Ic10Hash getHash() {
-    return findChildByClass(Ic10Hash.class);
-  }
-
-  @Override
-  @Nullable
-  public Ic10Number getNumber() {
-    return findChildByClass(Ic10Number.class);
-  }
-
-  @Override
-  @Nullable
+  @NotNull
   public Ic10ReferenceName getReferenceName() {
-    return findChildByClass(Ic10ReferenceName.class);
+    return findNotNullChildByClass(Ic10ReferenceName.class);
   }
 
 }

@@ -23,7 +23,10 @@ label ::= labelName COLON {
 
 operation ::= operationName value*
 
-value ::= hash | referenceName | number
+value ::= channel | hash | number | constant | referenceName
+constant ::= constantName DOT constantName
+channel ::= referenceName COLON channelNumber
+channelNumber ::= DECIMAL
 number ::= BINARY | DECIMAL | HEXADECIMAL | FLOAT
 hash ::= OPENBRACKET hashValue CLOSEBRACKET
 hashValue ::= HASHCONTENT
@@ -33,3 +36,4 @@ referenceName ::= NAME {
 }
 labelName ::= NAME
 operationName ::= NAME
+constantName ::= NAME

@@ -36,6 +36,58 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // referenceName COLON channelNumber
+  public static boolean channel(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "channel")) return false;
+    if (!nextTokenIs(b, NAME)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = referenceName(b, l + 1);
+    r = r && consumeToken(b, COLON);
+    r = r && channelNumber(b, l + 1);
+    exit_section_(b, m, CHANNEL, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // DECIMAL
+  public static boolean channelNumber(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "channelNumber")) return false;
+    if (!nextTokenIs(b, DECIMAL)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, DECIMAL);
+    exit_section_(b, m, CHANNEL_NUMBER, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // constantName DOT constantName
+  public static boolean constant(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "constant")) return false;
+    if (!nextTokenIs(b, NAME)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = constantName(b, l + 1);
+    r = r && consumeToken(b, DOT);
+    r = r && constantName(b, l + 1);
+    exit_section_(b, m, CONSTANT, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // NAME
+  public static boolean constantName(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "constantName")) return false;
+    if (!nextTokenIs(b, NAME)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, NAME);
+    exit_section_(b, m, CONSTANT_NAME, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // OPENBRACKET hashValue CLOSEBRACKET
   public static boolean hash(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "hash")) return false;
@@ -225,14 +277,16 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // hash | referenceName | number
+  // channel | hash | number | constant | referenceName
   public static boolean value(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "value")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, VALUE, "<value>");
-    r = hash(b, l + 1);
-    if (!r) r = referenceName(b, l + 1);
+    r = channel(b, l + 1);
+    if (!r) r = hash(b, l + 1);
     if (!r) r = number(b, l + 1);
+    if (!r) r = constant(b, l + 1);
+    if (!r) r = referenceName(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }

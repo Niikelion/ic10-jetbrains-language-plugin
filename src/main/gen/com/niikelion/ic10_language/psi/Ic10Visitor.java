@@ -7,6 +7,22 @@ import com.intellij.psi.PsiElement;
 
 public class Ic10Visitor extends PsiElementVisitor {
 
+  public void visitChannel(@NotNull Ic10Channel o) {
+    visitPsiElement(o);
+  }
+
+  public void visitChannelNumber(@NotNull Ic10ChannelNumber o) {
+    visitPsiElement(o);
+  }
+
+  public void visitConstant(@NotNull Ic10Constant o) {
+    visitPsiElement(o);
+  }
+
+  public void visitConstantName(@NotNull Ic10ConstantName o) {
+    visitPsiElement(o);
+  }
+
   public void visitHash(@NotNull Ic10Hash o) {
     visitPsiElement(o);
   }

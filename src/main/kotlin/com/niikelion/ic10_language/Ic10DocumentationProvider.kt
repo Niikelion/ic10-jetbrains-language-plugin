@@ -57,16 +57,16 @@ class Ic10DocumentationProvider: AbstractDocumentationProvider() {
     }
 
     private fun renderValueDoc(element: Ic10Value): String? {
-        val hash = element.hash
-
         fun renderOnlyValueDoc(): String? {
+            val hash = element.hash
             if (hash != null)
                 return renderHashDoc(hash)
 
             val name = element.referenceName
-
             if (name != null)
                 return renderReferenceNameDoc(name)
+
+            //TODO: handle channels and flags
 
             return null
         }

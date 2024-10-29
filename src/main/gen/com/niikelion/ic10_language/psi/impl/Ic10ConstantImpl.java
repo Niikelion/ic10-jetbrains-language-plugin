@@ -11,14 +11,14 @@ import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
+public class Ic10ConstantImpl extends ASTWrapperPsiElement implements Ic10Constant {
 
-  public Ic10ValueImpl(@NotNull ASTNode node) {
+  public Ic10ConstantImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull Ic10Visitor visitor) {
-    visitor.visitValue(this);
+    visitor.visitConstant(this);
   }
 
   @Override
@@ -28,33 +28,9 @@ public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
   }
 
   @Override
-  @Nullable
-  public Ic10Channel getChannel() {
-    return findChildByClass(Ic10Channel.class);
-  }
-
-  @Override
-  @Nullable
-  public Ic10Constant getConstant() {
-    return findChildByClass(Ic10Constant.class);
-  }
-
-  @Override
-  @Nullable
-  public Ic10Hash getHash() {
-    return findChildByClass(Ic10Hash.class);
-  }
-
-  @Override
-  @Nullable
-  public Ic10Number getNumber() {
-    return findChildByClass(Ic10Number.class);
-  }
-
-  @Override
-  @Nullable
-  public Ic10ReferenceName getReferenceName() {
-    return findChildByClass(Ic10ReferenceName.class);
+  @NotNull
+  public List<Ic10ConstantName> getConstantNameList() {
+    return PsiTreeUtil.getChildrenOfTypeAsList(this, Ic10ConstantName.class);
   }
 
 }

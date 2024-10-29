@@ -5,21 +5,12 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface Ic10Value extends PsiElement {
+public interface Ic10Channel extends PsiElement {
 
-  @Nullable
-  Ic10Channel getChannel();
+  @NotNull
+  Ic10ChannelNumber getChannelNumber();
 
-  @Nullable
-  Ic10Constant getConstant();
-
-  @Nullable
-  Ic10Hash getHash();
-
-  @Nullable
-  Ic10Number getNumber();
-
-  @Nullable
+  @NotNull
   Ic10ReferenceName getReferenceName();
 
 }

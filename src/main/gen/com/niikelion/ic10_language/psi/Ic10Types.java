@@ -8,6 +8,10 @@ import com.niikelion.ic10_language.psi.impl.*;
 
 public interface Ic10Types {
 
+  IElementType CHANNEL = new Ic10ElementType("CHANNEL");
+  IElementType CHANNEL_NUMBER = new Ic10ElementType("CHANNEL_NUMBER");
+  IElementType CONSTANT = new Ic10ElementType("CONSTANT");
+  IElementType CONSTANT_NAME = new Ic10ElementType("CONSTANT_NAME");
   IElementType HASH = new Ic10ElementType("HASH");
   IElementType HASH_VALUE = new Ic10ElementType("HASH_VALUE");
   IElementType LABEL = new Ic10ElementType("LABEL");
@@ -25,6 +29,7 @@ public interface Ic10Types {
   IElementType COMMENT = new Ic10TokenType("COMMENT");
   IElementType CRLF = new Ic10TokenType("CRLF");
   IElementType DECIMAL = new Ic10TokenType("DECIMAL");
+  IElementType DOT = new Ic10TokenType("DOT");
   IElementType FLOAT = new Ic10TokenType("FLOAT");
   IElementType HASHCONTENT = new Ic10TokenType("HASHCONTENT");
   IElementType HEXADECIMAL = new Ic10TokenType("HEXADECIMAL");
@@ -34,7 +39,19 @@ public interface Ic10Types {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-      if (type == HASH) {
+      if (type == CHANNEL) {
+        return new Ic10ChannelImpl(node);
+      }
+      else if (type == CHANNEL_NUMBER) {
+        return new Ic10ChannelNumberImpl(node);
+      }
+      else if (type == CONSTANT) {
+        return new Ic10ConstantImpl(node);
+      }
+      else if (type == CONSTANT_NAME) {
+        return new Ic10ConstantNameImpl(node);
+      }
+      else if (type == HASH) {
         return new Ic10HashImpl(node);
       }
       else if (type == HASH_VALUE) {
