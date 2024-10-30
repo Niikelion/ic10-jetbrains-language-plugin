@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.niikelion.ic10-plugin-jetbrains"
-version = "1.2"
+version = "1.3"
 
 repositories {
   mavenCentral()

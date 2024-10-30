@@ -17,6 +17,14 @@
     Stationeers Ic10 language support plugin.
   ]]></description>
 
+  <change-notes><![CDATA[
+    <ul>
+      <li><b>1.3</b> Improved navigation.</li>
+      <li><b>1.2</b> Added support for channels and printer constants.</li>
+      <li><b>1.1</b> Added documentation for available instructions.</li>
+    </ul>
+  ]]></change-notes>
+
   <!-- Product and plugin compatibility requirements.
        Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
   <depends>com.intellij.modules.platform</depends>
@@ -64,7 +72,7 @@
       implementationClass="com.niikelion.ic10_language.Ic10RefactoringSupportProvider"
     />
     <gotoSymbolContributor
-      implementation="com.niikelion.ic10_language.Ic10ChooseByNameContributor"
+      implementation="com.niikelion.ic10_language.navigation.Ic10ChooseByNameContributor"
     />
     <iconProvider
       implementation="com.niikelion.ic10_language.psi.impl.Ic10NamedElementIconProvider"

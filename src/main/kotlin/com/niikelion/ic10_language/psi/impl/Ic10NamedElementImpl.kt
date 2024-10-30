@@ -7,6 +7,8 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.niikelion.ic10_language.Ic10PsiUtils
@@ -41,4 +43,6 @@ open class Ic10NamedElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), Ic1
     override fun getPresentation(): ItemPresentation? {
         return Ic10PsiUtils.getPresentation(this)
     }
+
+    override fun getUseScope(): SearchScope = GlobalSearchScope.fileScope(containingFile)
 }

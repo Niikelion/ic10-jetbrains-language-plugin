@@ -82,6 +82,14 @@ object Ic10PsiUtils {
     private fun findReferencesInFile(file: PsiFile) = PsiTreeUtil.findChildrenOfType(file, Ic10ReferenceName::class.java)
     fun findReferencesInFile(file: PsiFile, name: String) = findReferencesInFile(file).filter { it.name == name }
 
+    fun isDeclaration(element: PsiElement): Boolean {
+        return when (element) {
+            is Ic10Label -> true
+            is Ic10ReferenceName -> element.findParentOfType<Ic10Operation>()?.let { getDeclaredName(it) } != null
+            else -> false
+        }
+    }
+
     fun getDeclaredName(element: Ic10Operation): String? {
         val opName = element.operationName.text
         if (opName != "define" && opName != "alias") return null
