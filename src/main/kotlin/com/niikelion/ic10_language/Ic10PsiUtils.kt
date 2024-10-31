@@ -1,7 +1,6 @@
 package com.niikelion.ic10_language
 
 import com.intellij.navigation.ItemPresentation
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -10,9 +9,6 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
-import com.niikelion.ic10_language.DocMarkup.doc
-import com.niikelion.ic10_language.DocMarkup.text
-import com.niikelion.ic10_language.DocMarkup.value
 import com.niikelion.ic10_language.psi.*
 import kotlinx.collections.immutable.toImmutableMap
 import java.util.zip.CRC32
@@ -78,10 +74,7 @@ data class Ic10Symbol(val name: String, val definitionElement: Ic10NamedElement,
 object Ic10PsiUtils {
     fun findLabelsInFile(file: PsiFile): Collection<Ic10Label> = PsiTreeUtil.findChildrenOfType(file, Ic10Label::class.java)
     fun findLabelsInFile(file: PsiFile, name: String) = findLabelsInFile(file).filter { it.name == name }
-
-    private fun findReferencesInFile(file: PsiFile) = PsiTreeUtil.findChildrenOfType(file, Ic10ReferenceName::class.java)
-    fun findReferencesInFile(file: PsiFile, name: String) = findReferencesInFile(file).filter { it.name == name }
-
+    
     fun isDeclaration(element: PsiElement): Boolean {
         return when (element) {
             is Ic10Label -> true
