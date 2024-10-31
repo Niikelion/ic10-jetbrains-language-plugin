@@ -1,9 +1,13 @@
-package com.niikelion.ic10_language
+package com.niikelion.ic10_language.annotations
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
+import com.niikelion.ic10_language.*
+import com.niikelion.ic10_language.logic.Constants
+import com.niikelion.ic10_language.logic.Instruction
+import com.niikelion.ic10_language.logic.Instructions
 import com.niikelion.ic10_language.psi.*
 
 class Ic10Annotator: Annotator {
@@ -53,7 +57,9 @@ class Ic10Annotator: Annotator {
     }
     private fun annotateReference(argument: Instruction.Arg, element: Ic10ReferenceName, holder: AnnotationHolder, expectsUnique: Boolean) {
         when (argument.type) {
-            Instruction.ArgType.Property, Instruction.ArgType.SlotProperty -> return holder.newSilentAnnotation(HighlightSeverity.INFORMATION).textAttributes(Ic10SyntaxHighlighter.CONSTANT).range(element).create()
+            Instruction.ArgType.Property, Instruction.ArgType.SlotProperty -> return holder.newSilentAnnotation(HighlightSeverity.INFORMATION).textAttributes(
+                Ic10SyntaxHighlighter.CONSTANT
+            ).range(element).create()
             else -> {
                 val name = element.name!!
 

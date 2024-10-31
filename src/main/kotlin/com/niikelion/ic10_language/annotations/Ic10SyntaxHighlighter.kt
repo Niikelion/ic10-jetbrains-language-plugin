@@ -1,4 +1,4 @@
-package com.niikelion.ic10_language
+package com.niikelion.ic10_language.annotations
 
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey.createTextAttributes
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
+import com.niikelion.ic10_language.Ic10LexerAdapter
 import com.niikelion.ic10_language.psi.Ic10Types
 
 

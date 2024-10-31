@@ -1,4 +1,4 @@
-package com.niikelion.ic10_language
+package com.niikelion.ic10_language.logic
 
 data class Instruction(val name: String, val description: String, val arguments: List<Arg> = listOf(), val isDeclaration: Boolean = false) {
     data class Arg(val name: String, val type: ArgType) {
@@ -70,7 +70,9 @@ object Instructions {
         branch("bapz", "abs(a) <= max(b * abs(a), epsilon * 8)", 3, false, false),
         branch("bapzal", "abs(a) <= max(b * abs(a), epsilon * 8)", 3, false, true),
         Instruction("bdns", "Branch to line a if device d is not set", listOf(targetDevice, value("a"))),
-        Instruction("bdnsal", "Branch to line a if device d is not set and store return pointer in ra", listOf(targetDevice, value("a"))),
+        Instruction("bdnsal", "Branch to line a if device d is not set and store return pointer in ra", listOf(
+            targetDevice, value("a")
+        )),
         Instruction("bdse", "Branch to line a if device d is set", listOf(targetDevice, value("a"))),
         Instruction("bdseal", "Branch to line a if device d is set and store return pointer in ra", listOf(targetDevice, value("a"))),
         branch("beq", "a == b", 3, false, false),
@@ -130,7 +132,9 @@ object Instructions {
         op("exp", 1, "exp(a)"),
         op("floor", 1, "largest integer less than a"),
         Instruction("get", "Reads the stack value of the provided value: r = d.stack[i]", listOf(resultVariable, targetDevice, value("i"))),
-        Instruction("getd", "Reads the stack value of device with provided id: r = findDeviceById(id).stack[i]", listOf(resultVariable, value("id"), value("i"))),
+        Instruction("getd", "Reads the stack value of device with provided id: r = findDeviceById(id).stack[i]", listOf(
+            resultVariable, value("id"), value("i")
+        )),
         Instruction("hcf", "Self-destructs the device"),
         Instruction("j", "Jump to line", listOf(value("line"))),
         Instruction("jal", "Jump to line a and store return pointer in ra", listOf(value("a"))),
@@ -166,8 +170,12 @@ object Instructions {
             listOf(resultVariable, value("id"), propertyName, batchMode)
         ),
         op("log", 1, "log(a)"),
-        Instruction("lr", "Loads given reagent count from device based on reagentMode(Contents(0) - currently in the device, Required(1) - missing from the recipe, Recipe(2) - required by the recipe): r = d.reagentMode.count(reagentId)", listOf(resultVariable, targetDevice, value("reagentMode"), value("reagentId"))),
-        Instruction("ls", "Loads property from given slot index of provided device: r = d.slot[slotIndex].property", listOf(resultVariable, targetDevice, value("slotIndex"), slotPropertyName)),
+        Instruction("lr", "Loads given reagent count from device based on reagentMode(Contents(0) - currently in the device, Required(1) - missing from the recipe, Recipe(2) - required by the recipe): r = d.reagentMode.count(reagentId)", listOf(
+            resultVariable, targetDevice, value("reagentMode"), value("reagentId")
+        )),
+        Instruction("ls", "Loads property from given slot index of provided device: r = d.slot[slotIndex].property", listOf(
+            resultVariable, targetDevice, value("slotIndex"), slotPropertyName
+        )),
         op("max", 2, "max of a or b"),
         op("min", 2, "min of a or b"),
         op("mod", 2, "a mod b(not: NOT the same as a % b)"),
@@ -177,13 +185,21 @@ object Instructions {
         op("not", 1, "!a"),
         op("or", 2, "a || b"),
         op("peek", 0, "value at the top of the stack"),
-        Instruction("poke", "Store the provided value at the provided address in the stack: db.stack[address] = value", listOf(value("address"), value("value"))),
+        Instruction("poke", "Store the provided value at the provided address in the stack: db.stack[address] = value", listOf(
+            value("address"), value("value")
+        )),
         op("pop", 0, "the value at the top of the stack and decrements sp"),
         Instruction("push", "Stores the provided value at the top of the stack and increments sp", listOf(value("value"))),
-        Instruction("put", "Stores the provided value at the provided address in the stack of the provided device: d.stack[address] = value", listOf(targetDevice, value("address"), value("value"))),
-        Instruction("putd", "Stores the provided value at the provided address in the stack of device with provided id: findDeviceById(id).stack[address] = value", listOf(targetDevice, value("address"), value("value"))),
+        Instruction("put", "Stores the provided value at the provided address in the stack of the provided device: d.stack[address] = value", listOf(
+            targetDevice, value("address"), value("value")
+        )),
+        Instruction("putd", "Stores the provided value at the provided address in the stack of device with provided id: findDeviceById(id).stack[address] = value", listOf(
+            targetDevice, value("address"), value("value")
+        )),
         op("rand", 0, "random value x, so that 0 <= x < 1"),
-        Instruction("rmap", "Finds id of item that gives given reagent when placed into the machine, for example for Autolathe and id of Iron it will output id of ItemIronIngot", listOf(resultVariable, targetDevice, value("reagentId"))),
+        Instruction("rmap", "Finds id of item that gives given reagent when placed into the machine, for example for Autolathe and id of Iron it will output id of ItemIronIngot", listOf(
+            resultVariable, targetDevice, value("reagentId")
+        )),
         op("round", 1, "a rounded to the nearest integer"),
         Instruction("s", "Writes value to property of device: d.property = value", listOf(targetDevice, propertyName, value("value"))),
         op("sap", 3, "1 if abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8), 0 otherwise"),

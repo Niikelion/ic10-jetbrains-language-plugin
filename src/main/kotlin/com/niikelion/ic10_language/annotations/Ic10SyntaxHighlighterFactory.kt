@@ -1,4 +1,4 @@
-package com.niikelion.ic10_language
+package com.niikelion.ic10_language.annotations
 
 import com.intellij.openapi.fileTypes.SyntaxHighlighter
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory

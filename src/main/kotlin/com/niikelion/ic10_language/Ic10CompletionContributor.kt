@@ -4,6 +4,8 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.util.ProcessingContext
+import com.niikelion.ic10_language.logic.Constants
+import com.niikelion.ic10_language.logic.Instructions
 import com.niikelion.ic10_language.psi.Ic10Types
 
 

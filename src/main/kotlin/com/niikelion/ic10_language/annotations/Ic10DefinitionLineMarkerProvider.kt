@@ -1,4 +1,4 @@
-package com.niikelion.ic10_language
+package com.niikelion.ic10_language.annotations
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
@@ -6,6 +6,8 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.findParentOfType
+import com.niikelion.ic10_language.Ic10Icons
+import com.niikelion.ic10_language.Ic10PsiUtils
 import com.niikelion.ic10_language.psi.Ic10Label
 import com.niikelion.ic10_language.psi.Ic10Operation
 import com.niikelion.ic10_language.psi.Ic10Types

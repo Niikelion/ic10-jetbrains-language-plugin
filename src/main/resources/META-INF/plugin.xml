@@ -45,19 +45,19 @@
     />
     <lang.syntaxHighlighterFactory
       language="Ic10"
-      implementationClass="com.niikelion.ic10_language.Ic10SyntaxHighlighterFactory"
+      implementationClass="com.niikelion.ic10_language.annotations.Ic10SyntaxHighlighterFactory"
     />
     <annotator
       language="Ic10"
-      implementationClass="com.niikelion.ic10_language.Ic10Annotator"
+      implementationClass="com.niikelion.ic10_language.annotations.Ic10Annotator"
     />
     <codeInsight.lineMarkerProvider
       language="Ic10"
-      implementationClass="com.niikelion.ic10_language.Ic10NameSourceLineMarkerProvider"
+      implementationClass="com.niikelion.ic10_language.annotations.Ic10NameSourceLineMarkerProvider"
     />
     <codeInsight.lineMarkerProvider
       language="Ic10"
-      implementationClass="com.niikelion.ic10_language.Ic10DefinitionLineMarkerProvider"
+      implementationClass="com.niikelion.ic10_language.annotations.Ic10DefinitionLineMarkerProvider"
     />
     <completion.contributor
       language="Ic10"
@@ -88,6 +88,10 @@
     <lang.documentationProvider
       language="Ic10"
       implementationClass="com.niikelion.ic10_language.Ic10DocumentationProvider"
+    />
+    <lang.findUsagesProvider
+      language="Ic10"
+      implementationClass="com.niikelion.ic10_language.navigation.Ic10FindUsagesProvider"
     />
   </extensions>
 </idea-plugin>

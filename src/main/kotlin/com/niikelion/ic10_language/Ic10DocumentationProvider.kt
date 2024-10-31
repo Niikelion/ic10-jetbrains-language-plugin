@@ -17,6 +17,8 @@ import com.niikelion.ic10_language.DocMarkup.doc
 import com.niikelion.ic10_language.DocMarkup.keyword
 import com.niikelion.ic10_language.DocMarkup.text
 import com.niikelion.ic10_language.DocMarkup.value
+import com.niikelion.ic10_language.logic.Constants
+import com.niikelion.ic10_language.logic.Instructions
 import com.niikelion.ic10_language.psi.*
 
 class Ic10DocumentationProvider: AbstractDocumentationProvider() {
