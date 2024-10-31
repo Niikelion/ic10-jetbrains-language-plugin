@@ -17,4 +17,6 @@ object Ic10Icons {
     val Function = getIcon("/icons/function.svg", javaClass)
     @JvmField
     val Edit = getIcon("/icons/edit.svg", javaClass)
+    @JvmField
+    val Runner = getIcon("/icons/binaryData.svg", javaClass)
 }

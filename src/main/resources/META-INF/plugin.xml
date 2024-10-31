@@ -93,5 +93,10 @@
       language="Ic10"
       implementationClass="com.niikelion.ic10_language.navigation.Ic10FindUsagesProvider"
     />
+    <toolWindow
+      factoryClass="com.niikelion.ic10_language.tools.Ic10RunnerWindowFactory"
+      id="Ic10 Runner"
+      icon="com.niikelion.ic10_language.Ic10Icons.Runner"
+    />
   </extensions>
 </idea-plugin>

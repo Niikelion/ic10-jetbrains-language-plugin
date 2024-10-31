@@ -3,6 +3,7 @@ package com.niikelion.ic10_language.annotations
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.niikelion.ic10_language.*
 import com.niikelion.ic10_language.logic.Constants
@@ -10,7 +11,7 @@ import com.niikelion.ic10_language.logic.Instruction
 import com.niikelion.ic10_language.logic.Instructions
 import com.niikelion.ic10_language.psi.*
 
-class Ic10Annotator: Annotator {
+class Ic10Annotator: Annotator, DumbAware {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
             is Ic10Line -> annotateLine(element, holder)
