@@ -1,4 +1,4 @@
-package com.niikelion.ic10_language
+package com.niikelion.ic10_language.logic
 
 data class Constant(val name: String, val description: String, val value: Number? = null)
 
