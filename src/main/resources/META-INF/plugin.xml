@@ -98,5 +98,6 @@
       id="Ic10 Runner"
       icon="com.niikelion.ic10_language.Ic10Icons.Runner"
     />
+    <configurationType implementation="com.niikelion.ic10_language.Ic10SingleFileConfigurationType" />
   </extensions>
 </idea-plugin>
