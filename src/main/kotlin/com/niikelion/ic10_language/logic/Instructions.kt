@@ -1,11 +1,16 @@
 package com.niikelion.ic10_language.logic
 
-data class Instruction(val name: String, val description: String, val arguments: List<Arg> = listOf(), val isDeclaration: Boolean = false) {
-    data class Arg(val name: String, val type: ArgType) {
+import kotlin.collections.List
+
+private val typeLabels = listOf("d?", "r?", "num")
+
+class Instruction(val name: String, val description: String, val arguments: List<Arg> = listOf(), val isDeclaration: Boolean = false) {
+    class Arg(val name: String, val type: ArgType) {
         companion object {
             fun name(name: String) = Arg(name, ArgType.Name)
             fun device(name: String) = Arg(name, ArgType.Device)
             fun value(name: String) = Arg(name, ArgType.Value)
+            fun constant(name: String) = Arg(name, ArgType.Constant)
             fun variable(name: String) = Arg(name, ArgType.Variable)
             fun property(name: String) = Arg(name, ArgType.Property)
             fun slotProperty(name: String) = Arg(name, ArgType.SlotProperty)
@@ -17,17 +22,31 @@ data class Instruction(val name: String, val description: String, val arguments:
         },
         Device {
             override val acceptsDevice = true
+            override val acceptsValue = true
             override val acceptsVariable = true
         },
         Value {
             override val acceptsValue = true
             override val acceptsVariable = true
         },
+        Constant {
+            override val acceptsValue = true
+        },
         Name, Property, SlotProperty;
 
         open val acceptsDevice: Boolean = false
         open val acceptsValue: Boolean = false
         open val acceptsVariable: Boolean = false
+
+        val typeNames get(): List<String> = when(this) {
+            Name -> listOf("label")
+            Property -> listOf("logicType")
+            SlotProperty -> listOf("slotLogicType")
+            else -> listOf(acceptsDevice, acceptsVariable, acceptsValue)
+                .zip(typeLabels)
+                .filter { (flag, _) -> flag }
+                .map { (_, n) -> n }
+        }
     }
 }
 
@@ -36,6 +55,7 @@ object Instructions {
     private fun name(name: String) = Instruction.Arg.name(name)
     private fun device(name: String) = Instruction.Arg.device(name)
     private fun value(name: String) = Instruction.Arg.value(name)
+    private fun constant(name: String) = Instruction.Arg.constant(name)
     private fun variable(name: String) = Instruction.Arg.variable(name)
     private fun property(name: String) = Instruction.Arg.property(name)
     private fun slotProperty(name: String) = Instruction.Arg.slotProperty(name)
@@ -55,6 +75,12 @@ object Instructions {
             "${if (relative) "Relative branch" else "Branch" } to line ${inputValues[arguments-1].name} if $description${if (call) " and store return pointer in ra" else "" }",
             List(arguments) { inputValues[it] }
         )
+    private fun branch(name: String, description: String, arguments: List<Instruction.Arg>, relative: Boolean, call: Boolean) =
+        Instruction(
+            name,
+            "${if (relative) "Relative branch" else "Branch" } to line ${arguments.last().name} if $description${if (call) " and store return pointer in ra" else "" }",
+            arguments
+        )
 
     private val operations = arrayOf(
         op("abs", 1, "|a|"),
@@ -65,77 +91,76 @@ object Instructions {
         op("asin", 1, "arc sine of a in radians"),
         op("atan", 1, "arc tangent of a in radians"),
         op("atan2", 2, "counter-clockwise angle between positive x axis and ray from (0,0) to (b, a)"),
-        branch("bap", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, false, false),
-        branch("bapal", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, false ,true),
-        branch("bapz", "abs(a) <= max(b * abs(a), epsilon * 8)", 3, false, false),
-        branch("bapzal", "abs(a) <= max(b * abs(a), epsilon * 8)", 3, false, true),
-        Instruction("bdns", "Branch to line a if device d is not set", listOf(targetDevice, value("a"))),
-        Instruction("bdnsal", "Branch to line a if device d is not set and store return pointer in ra", listOf(
-            targetDevice, value("a")
-        )),
-        Instruction("bdse", "Branch to line a if device d is set", listOf(targetDevice, value("a"))),
-        Instruction("bdseal", "Branch to line a if device d is set and store return pointer in ra", listOf(targetDevice, value("a"))),
-        branch("beq", "a == b", 3, false, false),
-        branch("beqal", "a == b", 3, false, true),
-        branch("beqz", "a == 0", 2, false, false),
-        branch("beqzal", "a == 0", 2, false, true),
-        branch("bge", "a >= b", 3, false, false),
-        branch("bgeal", "a >= b", 3, false, true),
-        branch("bgez", "a >= 0", 2, false, false),
-        branch("bgezal", "a >= 0", 2, false, true),
-        branch("bgt", "a > b", 3, false, false),
-        branch("bgtal", "a > b", 3, false, true),
-        branch("bgtz", "a > 0", 2, false, false),
-        branch("bgtzal", "a > 0", 2, false, true),
-        branch("ble", "a <= b", 3, false, false),
-        branch("bleal", "a <= b", 3, false, true),
-        branch("blez", "a <= 0", 2, false, false),
-        branch("blezal", "a <= 0", 2, false, true),
-        branch("blt", "a < b", 3, false, false),
-        branch("bltal", "a < b", 3, false, true),
-        branch("bltz", "a < 0", 2, false, false),
-        branch("bltzal", "a < 0", 2, false, true),
-        branch("bna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", 4, false, false),
-        branch("bnaal", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", 4, false, true),
-        branch("bnan", "a is not a number (NaN)", 2, false, false),
-        branch("bnaz", "abs(a) > max(b * abs(a), epsilon * 8)", 3, false, false),
-        branch("bnazal", "abs(a) > max(b * abs(a), epsilon * 8)", 3, false, true),
-        branch("bne", "a != b", 3, false, false),
-        branch("bneal", "a != b", 3, false, true),
-        branch("bnez", "a != 0", 2, false, false),
-        branch("bnezal", "a != 0", 2, false, true),
-        branch("brap", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, true, false),
-        branch("brapz", "abs(a) <= max(c * abs(a), epsilon * 8)", 3, true, false),
-        Instruction("brdns", "Relative jump to line a if device is not set", listOf(targetDevice, value("a"))),
-        Instruction("brdse", "Relative jump to line a if device is set", listOf(targetDevice, value("a"))),
-        branch("breq", "a == b", 3, true, false),
-        branch("breqz", "a == 0", 2, true, false),
-        branch("brge", "a >= b", 3, true, false),
-        branch("brgez", "a >= 0", 2, true, false),
-        branch("brgt", "a > b", 3, true, false),
-        branch("brgtz", "a > 0", 2, true, false),
-        branch("brle", "a <= b", 3, true, false),
-        branch("brlez", "a <= 0", 2, true, false),
-        branch("brlt", "a < b", 3, true, false),
-        branch("brltz", "a < 0", 2, true, false),
-        branch("brna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", 4, true, false),
-        branch("brnan", "a is not a number (NaN)", 2, true, false),
-        branch("brnaz", "abs(a) > max(b * abs(a), epsilon * 8)", 3, true, false),
-        branch("brne", "a != b", 3, true, false),
-        branch("brnez", "a != 0", 2, true, false),
+        branch("bap", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = false, call = false),
+        branch("bapal", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = false ,call = true),
+        branch("bapz", "abs(a) <= max(b * abs(a), epsilon * 8)", 3, relative = false, call = false),
+        branch("bapzal", "abs(a) <= max(b * abs(a), epsilon * 8)", 3, relative = false, call = true),
+        branch("bdns", "device d is not set", listOf(targetDevice, value("a")), relative = false, call = true),
+        branch("bdnsal", "device d is not set", listOf(targetDevice, value("a")), relative = false, call = true),
+        branch("bdnvl", "device is not valid for a load instruction for property", listOf(targetDevice, propertyName, value("a")), relative = false, call = false),
+        branch("bdnvs", "device is not valid for a store instruction for property", listOf(targetDevice, propertyName, value("a")), relative = false, call = false),
+        branch("bdse", "device d is set", listOf(targetDevice, value("a")), relative = false, call = false),
+        branch("bdseal", "device d is set", listOf(targetDevice, value("a")), relative = false, call = true),
+        branch("beq", "a == b", 3, relative = false, call = false),
+        branch("beqal", "a == b", 3, relative = false, call = true),
+        branch("beqz", "a == 0", 2, relative = false, call = false),
+        branch("beqzal", "a == 0", 2, relative = false, call = true),
+        branch("bge", "a >= b", 3, relative = false, call = false),
+        branch("bgeal", "a >= b", 3, relative = false, call = true),
+        branch("bgez", "a >= 0", 2, relative = false, call = false),
+        branch("bgezal", "a >= 0", 2, relative = false, call = true),
+        branch("bgt", "a > b", 3, relative = false, call = false),
+        branch("bgtal", "a > b", 3, relative = false, call = true),
+        branch("bgtz", "a > 0", 2, relative = false, call = false),
+        branch("bgtzal", "a > 0", 2, relative = false, call = true),
+        branch("ble", "a <= b", 3, relative = false, call = false),
+        branch("bleal", "a <= b", 3, relative = false, call = true),
+        branch("blez", "a <= 0", 2, relative = false, call = false),
+        branch("blezal", "a <= 0", 2, relative = false, call = true),
+        branch("blt", "a < b", 3, relative = false, call = false),
+        branch("bltal", "a < b", 3, relative = false, call = true),
+        branch("bltz", "a < 0", 2, relative = false, call = false),
+        branch("bltzal", "a < 0", 2, relative = false, call = true),
+        branch("bna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = false, call = false),
+        branch("bnaal", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = false, call = true),
+        branch("bnan", "a is not a number (NaN)", 2, relative = false, call = false),
+        branch("bnaz", "abs(a) > max(b * abs(a), epsilon * 8)", 3, relative = false, call = false),
+        branch("bnazal", "abs(a) > max(b * abs(a), epsilon * 8)", 3, relative = false, call = true),
+        branch("bne", "a != b", 3, relative = false, call = false),
+        branch("bneal", "a != b", 3, relative = false, call = true),
+        branch("bnez", "a != 0", 2, relative = false, call = false),
+        branch("bnezal", "a != 0", 2, relative = false, call = true),
+        branch("brap", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = true, call = false),
+        branch("brapz", "abs(a) <= max(c * abs(a), epsilon * 8)", 3, relative = true, call = false),
+        branch("brdns", "device is not set", listOf(targetDevice, value("a")), relative = true, call = false),
+        branch("brdse", "device is set", listOf(targetDevice, value("a")), relative = true, call = false),
+        branch("breq", "a == b", 3, relative = true, call = false),
+        branch("breqz", "a == 0", 2, relative = true, call = false),
+        branch("brge", "a >= b", 3, relative = true, call = false),
+        branch("brgez", "a >= 0", 2, relative = true, call = false),
+        branch("brgt", "a > b", 3, relative = true, call = false),
+        branch("brgtz", "a > 0", 2, relative = true, call = false),
+        branch("brle", "a <= b", 3, relative = true, call = false),
+        branch("brlez", "a <= 0", 2, relative = true, call = false),
+        branch("brlt", "a < b", 3, relative = true, call = false),
+        branch("brltz", "a < 0", 2, relative = true, call = false),
+        branch("brna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = true, call = false),
+        branch("brnan", "a is not a number (NaN)", 2, relative = true, false),
+        branch("brnaz", "abs(a) > max(b * abs(a), epsilon * 8)", 3, relative = true, call = false),
+        branch("brne", "a != b", 3, relative = true, call = false),
+        branch("brnez", "a != 0", 2, relative = true, call = false),
         op("ceil", 1, "smallest integer greater than a"),
         Instruction("clr", "Clears the stack memory for the provided device", listOf(targetDevice)),
         Instruction("clrd", "Clears the stack memory for device with provided id", listOf(value("id"))),
         op("cos", 1, "cos(a)"),
-        Instruction("define", "Creates alias for constant value", listOf(name("alias"), value("value")), true),
+        Instruction("define", "Creates alias for constant value", listOf(name("alias"), constant("value")), true),
         op("div", 2, "a / b"),
         op("exp", 1, "exp(a)"),
+        op("ext", 3, "bit field from a, beginning at b for c length"),
         op("floor", 1, "largest integer less than a"),
-        Instruction("get", "Reads the stack value of the provided value: r = d.stack[i]", listOf(resultVariable, targetDevice, value("i"))),
-        Instruction("getd", "Reads the stack value of device with provided id: r = findDeviceById(id).stack[i]", listOf(
-            resultVariable, value("id"), value("i")
-        )),
+        Instruction("get", "Reads the stack value of the provided device: r = d.stack[i]", listOf(resultVariable, targetDevice, value("i"))),
         Instruction("hcf", "Self-destructs the device"),
+        Instruction("ins", "Inserts a bit field of a into r, beginning at b for c length", listOf(resultVariable, value("a"), value("b"), value("c"))),
         Instruction("j", "Jump to line", listOf(value("line"))),
         Instruction("jal", "Jump to line a and store return pointer in ra", listOf(value("a"))),
         Instruction("jr", "Relative jump by a lines", listOf(value("a"))),
@@ -164,11 +189,7 @@ object Instructions {
             "Loads property from given slot index of all devices with given typeHash and aggregates by batchMode: r = batchMode(findDevicesByType(typeHash).map(d -> d.slot[slotIndex].property))",
             listOf(resultVariable, value("typeHash"), value("slotIndex"), slotPropertyName, batchMode)
         ),
-        Instruction(
-            "ld",
-            "Loads property from device with provided id: r = findDeviceById(id).property",
-            listOf(resultVariable, value("id"), propertyName, batchMode)
-        ),
+        op("lerp", 3, "a * c + (1 - c) * b"),
         op("log", 1, "log(a)"),
         Instruction("lr", "Loads given reagent count from device based on reagentMode(Contents(0) - currently in the device, Required(1) - missing from the recipe, Recipe(2) - required by the recipe): r = d.reagentMode.count(reagentId)", listOf(
             resultVariable, targetDevice, value("reagentMode"), value("reagentId")
@@ -207,7 +228,6 @@ object Instructions {
         Instruction("sb", "Writes value to property of all devices with given typeHash", listOf(value("typeHash"), propertyName, value("value"))),
         Instruction("sbn", "Writes value to property of all devices with given typeHash and nameHash", listOf(value("typeHash"), value("nameHash"), propertyName, value("value"))),
         Instruction("sbs", "Writes value to property of given slot on all devices with given typeHash", listOf(value("typeHash"), value("slotIndex"), slotPropertyName, value("value"))),
-        Instruction("sd", "Writes value to property of device with given id", listOf(value("id"), propertyName, value("value"))),
         Instruction("sdns", "r = 1 if device is not set, 0 otherwise", listOf(resultVariable, targetDevice)),
         Instruction("sdse", "r = 1 if device is set, 0 otherwise", listOf(resultVariable, targetDevice)),
         op("select", 3, "a != 0 ? b : c"),
@@ -240,7 +260,7 @@ object Instructions {
         op("trunc", 1, "a with fractional part removed"),
         op("xor", 2, "a ^ b"),
         Instruction("yield", "Pauses execution for 1 tick")
-    ).associateBy { it.name }
+    ).associateBy(Instruction::name)
     fun get(name: String) = operations[name]
     val all get() = operations.values.toList()
 }

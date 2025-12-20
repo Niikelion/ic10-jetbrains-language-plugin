@@ -12,9 +12,11 @@
     tokenTypeClass="com.niikelion.ic10_language.psi.Ic10TokenType"
 }
 
-ic10File ::= (line (CRLF line)*)?
+ic10File ::= line_*
 
-line ::= (label | operation)? COMMENT?
+private line_ ::= (line|CRLF|COMMENT)
+
+line ::= (label | operation)
 
 label ::= labelName COLON {
     mixin="com.niikelion.ic10_language.psi.impl.Ic10NamedElementImpl"
@@ -23,13 +25,14 @@ label ::= labelName COLON {
 
 operation ::= operationName value*
 
-value ::= channel | hash | number | constant | referenceName
+value ::= channel | macro | number | constant | referenceName
 constant ::= constantName DOT constantName
 channel ::= referenceName COLON channelNumber
 channelNumber ::= DECIMAL
 number ::= BINARY | DECIMAL | HEXADECIMAL | FLOAT
-hash ::= OPENBRACKET hashValue CLOSEBRACKET
-hashValue ::= HASHCONTENT
+macro ::= macroName macroValue MACRO_END
+macroName ::= MACRO_START
+macroValue ::= MACRO_CONTENT
 referenceName ::= NAME {
     mixin="com.niikelion.ic10_language.psi.impl.Ic10NamedElementImpl"
     implements="com.niikelion.ic10_language.psi.Ic10NamedElement"

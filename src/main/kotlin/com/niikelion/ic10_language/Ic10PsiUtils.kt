@@ -9,10 +9,12 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import com.niikelion.ic10_language.Ic10PsiUtils.getDeclaredName
 import com.niikelion.ic10_language.logic.Constants
+import com.niikelion.ic10_language.logic.Instruction
+import com.niikelion.ic10_language.logic.Instructions
 import com.niikelion.ic10_language.psi.*
 import kotlinx.collections.immutable.toImmutableMap
-import java.util.zip.CRC32
 import javax.swing.Icon
 
 enum class Ic10SymbolType {
@@ -20,15 +22,25 @@ enum class Ic10SymbolType {
         override val isValue = true
     }, Variable {
         override val isValue = true
+    }, Register {
+        override val isValue = true
+        override val isRegister = true
     }, Device {
         override val isDevice = true
     };
 
     open val isValue: Boolean = false
+    open val isRegister: Boolean = false
     open val isDevice: Boolean = false
 }
 
-data class Ic10Symbol(val name: String, val definitionElement: Ic10NamedElement, val valueElement: PsiElement, val type: Ic10SymbolType, val unresolved: Boolean) {
+data class Ic10Symbol(
+    val name: String,
+    val definitionElement: Ic10NamedElement,
+    val valueElement: PsiElement,
+    val type: Ic10SymbolType,
+    val unresolved: Boolean
+) {
     companion object {
         fun isValidRegister(name: String) = registers.contains(name)
         fun isValidDevice(name: String) = devices.contains(name)
@@ -51,17 +63,17 @@ data class Ic10Symbol(val name: String, val definitionElement: Ic10NamedElement,
 
                     if (valueReferenceName != null) return from(referenceName, value, Ic10SymbolType.Constant, true)
 
-                    return from(referenceName, value, Ic10SymbolType.Constant, false)
+                    from(referenceName, value, Ic10SymbolType.Constant, false)
                 }
                 "alias" -> {
                     val valueReferenceName = value.referenceName ?: return null
 
                     val valueName = valueReferenceName.name!!
 
-                    if (isValidRegister(valueName)) return from(referenceName, value, Ic10SymbolType.Variable, false)
+                    if (isValidRegister(valueName)) return from(referenceName, value, Ic10SymbolType.Register, false)
                     if (isValidDevice(valueName)) return from(referenceName, value, Ic10SymbolType.Device, false)
 
-                    return from(referenceName, value, Ic10SymbolType.Variable, true)
+                    from(referenceName, value, Ic10SymbolType.Variable, true)
                 }
                 else -> null
             }
@@ -70,6 +82,8 @@ data class Ic10Symbol(val name: String, val definitionElement: Ic10NamedElement,
         private val registers = (List(18) { "r$it" } + listOf("sp", "ra")).toSet()
         private val devices = (List(6) { "d$it" } + listOf("db")).toSet()
     }
+
+    val isBuiltIn: Boolean get() = !unresolved && definitionElement.parent == valueElement
 }
 
 object Ic10PsiUtils {
@@ -79,7 +93,7 @@ object Ic10PsiUtils {
     fun isDeclaration(element: PsiElement): Boolean {
         return when (element) {
             is Ic10Label -> true
-            is Ic10ReferenceName -> element.findParentOfType<Ic10Operation>()?.let { getDeclaredName(it) } != null
+            is Ic10ReferenceName -> element.isDeclaration
             else -> false
         }
     }
@@ -159,8 +173,8 @@ object Ic10PsiUtils {
         return virtualFiles.mapNotNull { file -> PsiManager.getInstance(project).findFile(file) as Ic10File? }
     }
 
-    fun isValidRegister(element: Ic10ReferenceName) = Ic10Symbol.isValidRegister(element.name!!)
-    fun isValidDevice(element: Ic10ReferenceName) = Ic10Symbol.isValidDevice(element.name!!)
+    fun isValidRegister(element: Ic10NamedElement) = Ic10Symbol.isValidRegister(element.name!!)
+    fun isValidDevice(element: Ic10NamedElement) = Ic10Symbol.isValidDevice(element.name!!)
 
     private fun findSymbols(file: PsiFile): Collection<Ic10Symbol> {
         val labels = findLabelsInFile(file).map { Ic10Symbol.from(it) }
@@ -191,22 +205,18 @@ object Ic10PsiUtils {
             return Ic10Symbol.from(element, element.parent, Ic10SymbolType.Device, false)
 
         if (isValidRegister(element))
-            return Ic10Symbol.from(element, element.parent, Ic10SymbolType.Variable, false)
+            return Ic10Symbol.from(element, element.parent, Ic10SymbolType.Register, false)
 
         Constants.get(element.name!!) ?: return null
+
+        // TODO: handle logic types and enums
 
         return Ic10Symbol.from(element, element.parent, Ic10SymbolType.Constant, false)
     }
 
     fun getLineNumber(element: PsiElement): Int = element.containingFile.viewProvider.document.getLineNumber(element.textOffset) + 1
-
-    fun calculateHash(hash: Ic10Hash): Long {
-        val rawText = hash.hashValue.text
-        val text = rawText.substring(1, rawText.length - 1)
-
-        val crc32 = CRC32()
-        crc32.update(text.toByteArray())
-
-        return crc32.value
-    }
 }
+
+val Ic10Operation.instruction get(): Instruction? = Instructions.get(operationName.text)
+val Ic10NamedElement.isDeclaration: Boolean get() =
+    findParentOfType<Ic10Operation>()?.let { getDeclaredName(it) } != null

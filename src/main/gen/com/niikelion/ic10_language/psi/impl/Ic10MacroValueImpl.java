@@ -11,14 +11,14 @@ import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10HashValueImpl extends ASTWrapperPsiElement implements Ic10HashValue {
+public class Ic10MacroValueImpl extends ASTWrapperPsiElement implements Ic10MacroValue {
 
-  public Ic10HashValueImpl(@NotNull ASTNode node) {
+  public Ic10MacroValueImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull Ic10Visitor visitor) {
-    visitor.visitHashValue(this);
+    visitor.visitMacroValue(this);
   }
 
   @Override

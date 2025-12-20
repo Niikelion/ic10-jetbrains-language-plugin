@@ -9,4 +9,7 @@ import com.niikelion.ic10_language.Ic10FileType
 class Ic10File(viewProvider: FileViewProvider): PsiFileBase(viewProvider, Ic10Language.Instance) {
     override fun getFileType(): FileType = Ic10FileType.Instance
     override fun toString(): String = "Ic10 File"
+
+    val lineCount: Int get() = text.count { it == '\n' } + 1
+    val byteCount: Int get() = text.length
 }

@@ -12,11 +12,12 @@ public interface Ic10Types {
   IElementType CHANNEL_NUMBER = new Ic10ElementType("CHANNEL_NUMBER");
   IElementType CONSTANT = new Ic10ElementType("CONSTANT");
   IElementType CONSTANT_NAME = new Ic10ElementType("CONSTANT_NAME");
-  IElementType HASH = new Ic10ElementType("HASH");
-  IElementType HASH_VALUE = new Ic10ElementType("HASH_VALUE");
   IElementType LABEL = new Ic10ElementType("LABEL");
   IElementType LABEL_NAME = new Ic10ElementType("LABEL_NAME");
   IElementType LINE = new Ic10ElementType("LINE");
+  IElementType MACRO = new Ic10ElementType("MACRO");
+  IElementType MACRO_NAME = new Ic10ElementType("MACRO_NAME");
+  IElementType MACRO_VALUE = new Ic10ElementType("MACRO_VALUE");
   IElementType NUMBER = new Ic10ElementType("NUMBER");
   IElementType OPERATION = new Ic10ElementType("OPERATION");
   IElementType OPERATION_NAME = new Ic10ElementType("OPERATION_NAME");
@@ -24,17 +25,17 @@ public interface Ic10Types {
   IElementType VALUE = new Ic10ElementType("VALUE");
 
   IElementType BINARY = new Ic10TokenType("BINARY");
-  IElementType CLOSEBRACKET = new Ic10TokenType("CLOSEBRACKET");
   IElementType COLON = new Ic10TokenType("COLON");
   IElementType COMMENT = new Ic10TokenType("COMMENT");
   IElementType CRLF = new Ic10TokenType("CRLF");
   IElementType DECIMAL = new Ic10TokenType("DECIMAL");
   IElementType DOT = new Ic10TokenType("DOT");
   IElementType FLOAT = new Ic10TokenType("FLOAT");
-  IElementType HASHCONTENT = new Ic10TokenType("HASHCONTENT");
   IElementType HEXADECIMAL = new Ic10TokenType("HEXADECIMAL");
+  IElementType MACRO_CONTENT = new Ic10TokenType("MACRO_CONTENT");
+  IElementType MACRO_END = new Ic10TokenType("MACRO_END");
+  IElementType MACRO_START = new Ic10TokenType("MACRO_START");
   IElementType NAME = new Ic10TokenType("NAME");
-  IElementType OPENBRACKET = new Ic10TokenType("OPENBRACKET");
 
   class Factory {
     public static PsiElement createElement(ASTNode node) {
@@ -51,12 +52,6 @@ public interface Ic10Types {
       else if (type == CONSTANT_NAME) {
         return new Ic10ConstantNameImpl(node);
       }
-      else if (type == HASH) {
-        return new Ic10HashImpl(node);
-      }
-      else if (type == HASH_VALUE) {
-        return new Ic10HashValueImpl(node);
-      }
       else if (type == LABEL) {
         return new Ic10LabelImpl(node);
       }
@@ -65,6 +60,15 @@ public interface Ic10Types {
       }
       else if (type == LINE) {
         return new Ic10LineImpl(node);
+      }
+      else if (type == MACRO) {
+        return new Ic10MacroImpl(node);
+      }
+      else if (type == MACRO_NAME) {
+        return new Ic10MacroNameImpl(node);
+      }
+      else if (type == MACRO_VALUE) {
+        return new Ic10MacroValueImpl(node);
       }
       else if (type == NUMBER) {
         return new Ic10NumberImpl(node);

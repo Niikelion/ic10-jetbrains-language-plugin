@@ -20,13 +20,13 @@ class Ic10SyntaxHighlighter: SyntaxHighlighterBase() {
         private val COMMENT = createTextAttributesKey("IC10_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
         private val NAME = createTextAttributesKey("IC10_NAME", DefaultLanguageHighlighterColors.IDENTIFIER)
         val NUMBER = createTextAttributesKey("IC10_NUMBER", DefaultLanguageHighlighterColors.NUMBER)
-        private val HASH = createTextAttributesKey("IC10_HASH", DefaultLanguageHighlighterColors.STRING)
+        val MACRO = createTextAttributesKey("IC10_MACRO", DefaultLanguageHighlighterColors.STRING)
         private val BAD_CHARACTER: TextAttributesKey = createTextAttributesKey("IC10_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER)
 
         private val COMMENT_KEYS = arrayOf(COMMENT)
         private val NAME_KEYS = arrayOf(NAME)
         private val NUMBER_KEYS = arrayOf(NUMBER)
-        private val HASH_KEYS = arrayOf(HASH)
+        private val MACRO_KEYS = arrayOf(MACRO)
         private val BAD_CHARACTER_KEYS = arrayOf(BAD_CHARACTER)
         private val EMPTY_KEYS = arrayOf<TextAttributesKey>()
     }
@@ -39,7 +39,7 @@ class Ic10SyntaxHighlighter: SyntaxHighlighterBase() {
 
             Ic10Types.NAME -> NAME_KEYS
 
-            Ic10Types.HASHCONTENT -> HASH_KEYS
+            Ic10Types.MACRO_CONTENT -> MACRO_KEYS
 
             Ic10Types.DECIMAL, Ic10Types.FLOAT, Ic10Types.HEXADECIMAL, Ic10Types.BINARY -> NUMBER_KEYS
 

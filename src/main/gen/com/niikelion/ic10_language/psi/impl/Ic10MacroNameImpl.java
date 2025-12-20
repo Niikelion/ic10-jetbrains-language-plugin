@@ -11,26 +11,20 @@ import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10HashImpl extends ASTWrapperPsiElement implements Ic10Hash {
+public class Ic10MacroNameImpl extends ASTWrapperPsiElement implements Ic10MacroName {
 
-  public Ic10HashImpl(@NotNull ASTNode node) {
+  public Ic10MacroNameImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull Ic10Visitor visitor) {
-    visitor.visitHash(this);
+    visitor.visitMacroName(this);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof Ic10Visitor) accept((Ic10Visitor)visitor);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public Ic10HashValue getHashValue() {
-    return findNotNullChildByClass(Ic10HashValue.class);
   }
 
 }

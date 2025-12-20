@@ -19,7 +19,7 @@ class Ic10Lexer implements FlexLexer {
 
   /** lexical states */
   public static final int YYINITIAL = 0;
-  public static final int HASH_VALUE = 2;
+  public static final int MACRO_VALUE = 2;
 
   /**
    * ZZ_LEXSTATE[l] is the state in the DFA for the lexical state l
@@ -67,9 +67,9 @@ class Ic10Lexer implements FlexLexer {
   private static final String ZZ_CMAP_BLOCKS_PACKED_0 =
     "\11\0\1\1\1\2\2\3\1\4\22\0\1\5\1\0"+
     "\1\6\1\7\1\10\1\11\2\0\1\12\1\13\3\0"+
-    "\1\14\1\15\1\0\2\16\10\17\1\20\6\0\1\21"+
-    "\5\22\1\23\1\24\12\23\1\25\7\23\4\0\1\26"+
-    "\1\0\32\23\12\0\1\3\u01a2\0\2\3\326\0";
+    "\1\14\1\15\1\0\2\16\10\17\1\20\6\0\6\21"+
+    "\24\22\4\0\1\23\1\0\32\24\12\0\1\3\u01a2\0"+
+    "\2\3\326\0";
 
   private static int [] zzUnpackcmap_blocks() {
     int [] result = new int[768];
@@ -97,11 +97,11 @@ class Ic10Lexer implements FlexLexer {
 
   private static final String ZZ_ACTION_PACKED_0 =
     "\2\0\1\1\1\2\2\3\1\4\3\1\1\5\1\6"+
-    "\1\7\2\10\1\1\1\11\1\12\1\13\1\0\1\10"+
-    "\3\0\1\14\1\10\1\15\1\10\1\16";
+    "\1\7\2\10\1\1\1\11\1\12\1\13\1\0\1\14"+
+    "\3\0\1\15\1\16";
 
   private static int [] zzUnpackAction() {
-    int [] result = new int[29];
+    int [] result = new int[26];
     int offset = 0;
     offset = zzUnpackAction(ZZ_ACTION_PACKED_0, offset, result);
     return result;
@@ -126,13 +126,13 @@ class Ic10Lexer implements FlexLexer {
   private static final int [] ZZ_ROWMAP = zzUnpackRowMap();
 
   private static final String ZZ_ROWMAP_PACKED_0 =
-    "\0\0\0\27\0\56\0\105\0\56\0\134\0\163\0\212"+
-    "\0\241\0\270\0\56\0\317\0\56\0\346\0\375\0\u0114"+
-    "\0\56\0\u012b\0\u0142\0\u0159\0\u0170\0\u0187\0\212\0\241"+
-    "\0\u0159\0\u019e\0\56\0\u01b5\0\56";
+    "\0\0\0\25\0\52\0\77\0\52\0\124\0\151\0\176"+
+    "\0\223\0\250\0\52\0\275\0\52\0\322\0\347\0\374"+
+    "\0\52\0\u0111\0\u0126\0\u013b\0\52\0\u0150\0\176\0\223"+
+    "\0\u013b\0\52";
 
   private static int [] zzUnpackRowMap() {
-    int [] result = new int[29];
+    int [] result = new int[26];
     int offset = 0;
     offset = zzUnpackRowMap(ZZ_ROWMAP_PACKED_0, offset, result);
     return result;
@@ -156,21 +156,18 @@ class Ic10Lexer implements FlexLexer {
 
   private static final String ZZ_TRANS_PACKED_0 =
     "\1\3\1\4\2\5\1\6\1\4\1\3\1\7\1\10"+
-    "\1\11\2\3\1\12\1\13\2\14\1\15\3\16\1\17"+
-    "\2\16\6\3\1\20\4\3\1\21\13\3\30\0\1\4"+
-    "\3\0\1\4\23\0\1\5\24\0\2\7\1\0\1\7"+
-    "\1\0\22\7\16\0\2\22\1\0\2\22\22\0\1\23"+
-    "\26\0\2\14\24\0\1\24\2\14\25\0\2\16\1\0"+
-    "\6\16\16\0\2\16\1\0\1\25\5\16\5\0\1\26"+
-    "\10\0\2\26\1\0\6\26\16\0\2\22\1\0\2\22"+
-    "\3\0\1\27\16\0\1\23\7\0\1\30\16\0\2\31"+
-    "\25\0\2\16\1\0\4\16\1\32\1\16\5\0\1\26"+
-    "\1\33\7\0\2\26\1\0\6\26\16\0\2\16\1\0"+
-    "\3\16\1\34\2\16\12\0\1\35\3\0\2\16\1\0"+
-    "\6\16";
+    "\1\11\2\3\1\12\1\13\2\14\1\15\2\16\2\17"+
+    "\6\3\1\20\4\3\1\21\11\3\26\0\1\4\3\0"+
+    "\1\4\21\0\1\5\22\0\2\7\1\0\1\7\1\0"+
+    "\20\7\16\0\2\22\1\0\1\22\21\0\1\23\24\0"+
+    "\2\14\22\0\1\24\2\14\17\0\1\25\3\0\2\17"+
+    "\1\0\2\16\2\17\16\0\2\17\1\0\4\17\5\0"+
+    "\1\26\10\0\2\26\1\0\4\26\16\0\2\22\1\0"+
+    "\1\22\1\0\1\27\17\0\1\23\4\0\1\30\17\0"+
+    "\2\31\12\0\1\26\1\32\7\0\2\26\1\0\4\26";
 
   private static int [] zzUnpacktrans() {
-    int [] result = new int[460];
+    int [] result = new int[357];
     int offset = 0;
     offset = zzUnpacktrans(ZZ_TRANS_PACKED_0, offset, result);
     return result;
@@ -209,11 +206,10 @@ class Ic10Lexer implements FlexLexer {
 
   private static final String ZZ_ATTRIBUTE_PACKED_0 =
     "\2\0\1\11\1\1\1\11\5\1\1\11\1\1\1\11"+
-    "\3\1\1\11\2\1\1\0\1\1\3\0\2\1\1\11"+
-    "\1\1\1\11";
+    "\3\1\1\11\2\1\1\0\1\11\3\0\1\1\1\11";
 
   private static int [] zzUnpackAttribute() {
-    int [] result = new int[29];
+    int [] result = new int[26];
     int offset = 0;
     offset = zzUnpackAttribute(ZZ_ATTRIBUTE_PACKED_0, offset, result);
     return result;
@@ -575,7 +571,7 @@ class Ic10Lexer implements FlexLexer {
           // fall through
           case 22: break;
           case 9:
-            { yybegin(YYINITIAL); return Ic10Types.CLOSEBRACKET;
+            { yybegin(YYINITIAL); return Ic10Types.MACRO_END;
             }
           // fall through
           case 23: break;
@@ -590,17 +586,17 @@ class Ic10Lexer implements FlexLexer {
           // fall through
           case 25: break;
           case 12:
-            { yybegin(YYINITIAL); return Ic10Types.FLOAT;
+            { yybegin(MACRO_VALUE); return Ic10Types.MACRO_START;
             }
           // fall through
           case 26: break;
           case 13:
-            { yybegin(HASH_VALUE); return Ic10Types.HASHCONTENT;
+            { yybegin(YYINITIAL); return Ic10Types.FLOAT;
             }
           // fall through
           case 27: break;
           case 14:
-            { yybegin(HASH_VALUE); return Ic10Types.OPENBRACKET;
+            { yybegin(MACRO_VALUE); return Ic10Types.MACRO_CONTENT;
             }
           // fall through
           case 28: break;

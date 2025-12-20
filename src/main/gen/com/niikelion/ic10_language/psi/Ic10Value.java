@@ -14,7 +14,7 @@ public interface Ic10Value extends PsiElement {
   Ic10Constant getConstant();
 
   @Nullable
-  Ic10Hash getHash();
+  Ic10Macro getMacro();
 
   @Nullable
   Ic10Number getNumber();

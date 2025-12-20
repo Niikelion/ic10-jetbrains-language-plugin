@@ -23,14 +23,6 @@ public class Ic10Visitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
-  public void visitHash(@NotNull Ic10Hash o) {
-    visitPsiElement(o);
-  }
-
-  public void visitHashValue(@NotNull Ic10HashValue o) {
-    visitPsiElement(o);
-  }
-
   public void visitLabel(@NotNull Ic10Label o) {
     visitNamedElement(o);
   }
@@ -40,6 +32,18 @@ public class Ic10Visitor extends PsiElementVisitor {
   }
 
   public void visitLine(@NotNull Ic10Line o) {
+    visitPsiElement(o);
+  }
+
+  public void visitMacro(@NotNull Ic10Macro o) {
+    visitPsiElement(o);
+  }
+
+  public void visitMacroName(@NotNull Ic10MacroName o) {
+    visitPsiElement(o);
+  }
+
+  public void visitMacroValue(@NotNull Ic10MacroValue o) {
     visitPsiElement(o);
   }
 

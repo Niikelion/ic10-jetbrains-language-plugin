@@ -1,0 +1,3 @@
+start:
+    yield
+    j start

@@ -88,70 +88,15 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // OPENBRACKET hashValue CLOSEBRACKET
-  public static boolean hash(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "hash")) return false;
-    if (!nextTokenIs(b, OPENBRACKET)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, OPENBRACKET);
-    r = r && hashValue(b, l + 1);
-    r = r && consumeToken(b, CLOSEBRACKET);
-    exit_section_(b, m, HASH, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // HASHCONTENT
-  public static boolean hashValue(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "hashValue")) return false;
-    if (!nextTokenIs(b, HASHCONTENT)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, HASHCONTENT);
-    exit_section_(b, m, HASH_VALUE, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // (line (CRLF line)*)?
+  // line_*
   static boolean ic10File(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "ic10File")) return false;
-    ic10File_0(b, l + 1);
-    return true;
-  }
-
-  // line (CRLF line)*
-  private static boolean ic10File_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ic10File_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = line(b, l + 1);
-    r = r && ic10File_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (CRLF line)*
-  private static boolean ic10File_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ic10File_0_1")) return false;
     while (true) {
       int c = current_position_(b);
-      if (!ic10File_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "ic10File_0_1", c)) break;
+      if (!line_(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "ic10File", c)) break;
     }
     return true;
-  }
-
-  // CRLF line
-  private static boolean ic10File_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "ic10File_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, CRLF);
-    r = r && line(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
   }
 
   /* ********************************************************** */
@@ -180,38 +125,65 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (label | operation)? COMMENT?
+  // label | operation
   public static boolean line(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "line")) return false;
+    if (!nextTokenIs(b, NAME)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, LINE, "<line>");
-    r = line_0(b, l + 1);
-    r = r && line_1(b, l + 1);
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // (label | operation)?
-  private static boolean line_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "line_0")) return false;
-    line_0_0(b, l + 1);
-    return true;
-  }
-
-  // label | operation
-  private static boolean line_0_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "line_0_0")) return false;
-    boolean r;
+    Marker m = enter_section_(b);
     r = label(b, l + 1);
     if (!r) r = operation(b, l + 1);
+    exit_section_(b, m, LINE, r);
     return r;
   }
 
-  // COMMENT?
-  private static boolean line_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "line_1")) return false;
-    consumeToken(b, COMMENT);
-    return true;
+  /* ********************************************************** */
+  // line|CRLF|COMMENT
+  static boolean line_(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "line_")) return false;
+    boolean r;
+    r = line(b, l + 1);
+    if (!r) r = consumeToken(b, CRLF);
+    if (!r) r = consumeToken(b, COMMENT);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // macroName macroValue MACRO_END
+  public static boolean macro(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "macro")) return false;
+    if (!nextTokenIs(b, MACRO_START)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = macroName(b, l + 1);
+    r = r && macroValue(b, l + 1);
+    r = r && consumeToken(b, MACRO_END);
+    exit_section_(b, m, MACRO, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // MACRO_START
+  public static boolean macroName(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "macroName")) return false;
+    if (!nextTokenIs(b, MACRO_START)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, MACRO_START);
+    exit_section_(b, m, MACRO_NAME, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // MACRO_CONTENT
+  public static boolean macroValue(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "macroValue")) return false;
+    if (!nextTokenIs(b, MACRO_CONTENT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, MACRO_CONTENT);
+    exit_section_(b, m, MACRO_VALUE, r);
+    return r;
   }
 
   /* ********************************************************** */
@@ -277,13 +249,13 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // channel | hash | number | constant | referenceName
+  // channel | macro | number | constant | referenceName
   public static boolean value(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "value")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, VALUE, "<value>");
     r = channel(b, l + 1);
-    if (!r) r = hash(b, l + 1);
+    if (!r) r = macro(b, l + 1);
     if (!r) r = number(b, l + 1);
     if (!r) r = constant(b, l + 1);
     if (!r) r = referenceName(b, l + 1);

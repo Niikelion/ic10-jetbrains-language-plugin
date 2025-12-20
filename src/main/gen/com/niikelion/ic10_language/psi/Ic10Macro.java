@@ -5,9 +5,12 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface Ic10Hash extends PsiElement {
+public interface Ic10Macro extends PsiElement {
 
   @NotNull
-  Ic10HashValue getHashValue();
+  Ic10MacroName getMacroName();
+
+  @NotNull
+  Ic10MacroValue getMacroValue();
 
 }

@@ -1,6 +1,5 @@
 package com.niikelion.ic10_language;
 
-import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.tree.IElementType;
 import com.niikelion.ic10_language.psi.Ic10Types;
 import com.intellij.psi.TokenType;
@@ -19,9 +18,9 @@ CRLF=\R
 WHITE_SPACE=[\ \t]
 COMMENT=("#")[^\r\n]*
 
-OPENBRACKET="HASH("
-CLOSEBRACKET=")"
-HASHCONTENT=\"[a-zA-Z0-9_ ]+\"
+MACRO_START=[A-Z]+"("
+MACRO_END=")"
+MACRO_CONTENT=\"[a-zA-Z0-9_ ]+\"
 
 NAME=[a-zA-Z_][a-zA-Z0-9_]*
 BINARY="%"[0-1](_?[0-1])*
@@ -33,7 +32,7 @@ MINUS="-"
 COLON=":"
 DOT="."
 
-%state HASH_VALUE
+%state MACRO_VALUE
 
 %%
 
@@ -51,8 +50,8 @@ DOT="."
 
 <YYINITIAL> {CRLF} { yybegin(YYINITIAL); return Ic10Types.CRLF; }
 
-<YYINITIAL> {OPENBRACKET} { yybegin(HASH_VALUE); return Ic10Types.OPENBRACKET; }
-<HASH_VALUE> {CLOSEBRACKET} { yybegin(YYINITIAL); return Ic10Types.CLOSEBRACKET; }
-<HASH_VALUE> {HASHCONTENT} { yybegin(HASH_VALUE); return Ic10Types.HASHCONTENT; }
+<YYINITIAL> {MACRO_START} { yybegin(MACRO_VALUE); return Ic10Types.MACRO_START; }
+<MACRO_VALUE> {MACRO_END} { yybegin(YYINITIAL); return Ic10Types.MACRO_END; }
+<MACRO_VALUE> {MACRO_CONTENT} { yybegin(MACRO_VALUE); return Ic10Types.MACRO_CONTENT; }
 
 [^] { return TokenType.BAD_CHARACTER; }

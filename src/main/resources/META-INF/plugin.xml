@@ -19,6 +19,7 @@
 
   <change-notes><![CDATA[
     <ul>
+      <li><b>1.5</b> Improved quick-docs, added parameter info hints and formatting support.</li>
       <li><b>1.4</b> Updated compatible ide versions.</li>
       <li><b>1.3</b> Improved navigation.</li>
       <li><b>1.2</b> Added support for channels and printer constants.</li>
@@ -93,6 +94,33 @@
     <lang.findUsagesProvider
       language="Ic10"
       implementationClass="com.niikelion.ic10_language.navigation.Ic10FindUsagesProvider"
+    />
+    <statusBarWidgetFactory
+      id="Ic10.FileLimitsWidget"
+      implementation="com.niikelion.ic10_language.widgets.Ic10LimitsWidgetFactory"
+    />
+    <lang.formatter
+      language="Ic10"
+      implementationClass="com.niikelion.ic10_language.formatting.Ic10FormattingModelBuilder"
+    />
+    <enterHandlerDelegate
+      implementation="com.niikelion.ic10_language.formatting.Ic10EnterHandler"
+    />
+    <codeInsight.parameterInfo
+      language="Ic10"
+      implementationClass="com.niikelion.ic10_language.annotations.Ic10ParameterInfoHandler"
+    />
+    <platform.backend.documentation.psiTargetProvider
+      implementation="com.niikelion.ic10_language.documentation.InstructionDocumentationProvider"
+    />
+    <platform.backend.documentation.psiTargetProvider
+      implementation="com.niikelion.ic10_language.documentation.MacroDocumentationProvider"
+    />
+    <platform.backend.documentation.psiTargetProvider
+      implementation="com.niikelion.ic10_language.documentation.LabelDocumentationProvider"
+    />
+    <platform.backend.documentation.psiTargetProvider
+      implementation="com.niikelion.ic10_language.documentation.SymbolDocumentationProvider"
     />
   </extensions>
 </idea-plugin>

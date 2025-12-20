@@ -11,14 +11,14 @@ import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
+public class Ic10MacroImpl extends ASTWrapperPsiElement implements Ic10Macro {
 
-  public Ic10ValueImpl(@NotNull ASTNode node) {
+  public Ic10MacroImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull Ic10Visitor visitor) {
-    visitor.visitValue(this);
+    visitor.visitMacro(this);
   }
 
   @Override
@@ -28,33 +28,15 @@ public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
   }
 
   @Override
-  @Nullable
-  public Ic10Channel getChannel() {
-    return findChildByClass(Ic10Channel.class);
+  @NotNull
+  public Ic10MacroName getMacroName() {
+    return findNotNullChildByClass(Ic10MacroName.class);
   }
 
   @Override
-  @Nullable
-  public Ic10Constant getConstant() {
-    return findChildByClass(Ic10Constant.class);
-  }
-
-  @Override
-  @Nullable
-  public Ic10Macro getMacro() {
-    return findChildByClass(Ic10Macro.class);
-  }
-
-  @Override
-  @Nullable
-  public Ic10Number getNumber() {
-    return findChildByClass(Ic10Number.class);
-  }
-
-  @Override
-  @Nullable
-  public Ic10ReferenceName getReferenceName() {
-    return findChildByClass(Ic10ReferenceName.class);
+  @NotNull
+  public Ic10MacroValue getMacroValue() {
+    return findNotNullChildByClass(Ic10MacroValue.class);
   }
 
 }
