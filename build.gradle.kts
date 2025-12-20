@@ -38,11 +38,6 @@ tasks {
     }
   }
 
-  patchPluginXml {
-    sinceBuild.set("232")
-    untilBuild.set("")
-  }
-
   signPlugin {
     certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
     privateKey.set(System.getenv("PRIVATE_KEY"))

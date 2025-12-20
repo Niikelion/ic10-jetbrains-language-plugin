@@ -2,35 +2,23 @@ package com.niikelion.ic10_language.widgets
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
-import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
-import com.intellij.openapi.vfs.readText
-import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup
-import com.intellij.openapi.wm.impl.status.EditorBasedWidget
-import com.intellij.openapi.wm.impl.status.EditorBasedWidgetHelper
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.messages.MessageBus
-import com.intellij.util.messages.MessageBusConnection
 import com.niikelion.ic10_language.Ic10FileType
 import com.niikelion.ic10_language.logic.Constraints
 import com.niikelion.ic10_language.psi.Ic10File
-import io.ktor.client.plugins.logging.EMPTY
 import org.jetbrains.annotations.NonNls
-import java.awt.Component
 
 class Ic10LimitsWidgetFactory: StatusBarEditorBasedWidgetFactory() {
     companion object {
