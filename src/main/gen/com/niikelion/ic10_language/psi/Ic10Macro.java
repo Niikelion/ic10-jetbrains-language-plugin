@@ -4,8 +4,9 @@ package com.niikelion.ic10_language.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.niikelion.ic10_language.psi.elements.Ic10ValueLikeElement;
 
-public interface Ic10Macro extends PsiElement {
+public interface Ic10Macro extends Ic10ValueLikeElement {
 
   @NotNull
   Ic10MacroName getMacroName();

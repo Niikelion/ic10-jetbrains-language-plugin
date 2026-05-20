@@ -4,27 +4,34 @@ package com.niikelion.ic10_language.psi;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiElement;
+import com.niikelion.ic10_language.psi.elements.Ic10ValueLikeElement;
+import com.niikelion.ic10_language.psi.elements.Ic10LabelElement;
+import com.niikelion.ic10_language.psi.elements.Ic10ReferenceNameElement;
 
 public class Ic10Visitor extends PsiElementVisitor {
 
   public void visitChannel(@NotNull Ic10Channel o) {
-    visitPsiElement(o);
+    visitValueLikeElement(o);
   }
 
   public void visitChannelNumber(@NotNull Ic10ChannelNumber o) {
     visitPsiElement(o);
   }
 
-  public void visitConstant(@NotNull Ic10Constant o) {
+  public void visitEnum(@NotNull Ic10Enum o) {
+    visitValueLikeElement(o);
+  }
+
+  public void visitEnumName(@NotNull Ic10EnumName o) {
     visitPsiElement(o);
   }
 
-  public void visitConstantName(@NotNull Ic10ConstantName o) {
+  public void visitEnumProperty(@NotNull Ic10EnumProperty o) {
     visitPsiElement(o);
   }
 
   public void visitLabel(@NotNull Ic10Label o) {
-    visitNamedElement(o);
+    visitLabelElement(o);
   }
 
   public void visitLabelName(@NotNull Ic10LabelName o) {
@@ -36,7 +43,7 @@ public class Ic10Visitor extends PsiElementVisitor {
   }
 
   public void visitMacro(@NotNull Ic10Macro o) {
-    visitPsiElement(o);
+    visitValueLikeElement(o);
   }
 
   public void visitMacroName(@NotNull Ic10MacroName o) {
@@ -48,7 +55,7 @@ public class Ic10Visitor extends PsiElementVisitor {
   }
 
   public void visitNumber(@NotNull Ic10Number o) {
-    visitPsiElement(o);
+    visitValueLikeElement(o);
   }
 
   public void visitOperation(@NotNull Ic10Operation o) {
@@ -60,14 +67,22 @@ public class Ic10Visitor extends PsiElementVisitor {
   }
 
   public void visitReferenceName(@NotNull Ic10ReferenceName o) {
-    visitNamedElement(o);
+    visitReferenceNameElement(o);
   }
 
   public void visitValue(@NotNull Ic10Value o) {
     visitPsiElement(o);
   }
 
-  public void visitNamedElement(@NotNull Ic10NamedElement o) {
+  public void visitLabelElement(@NotNull Ic10LabelElement o) {
+    visitPsiElement(o);
+  }
+
+  public void visitReferenceNameElement(@NotNull Ic10ReferenceNameElement o) {
+    visitPsiElement(o);
+  }
+
+  public void visitValueLikeElement(@NotNull Ic10ValueLikeElement o) {
     visitPsiElement(o);
   }
 

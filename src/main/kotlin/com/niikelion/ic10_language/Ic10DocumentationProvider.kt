@@ -15,7 +15,12 @@ class Ic10DocumentationProvider: AbstractDocumentationProvider() {
         targetOffset: Int
     ): PsiElement? {
         return contextElement?.findParent { when(elementType) {
-            Ic10Types.MACRO, Ic10Types.VALUE, Ic10Types.OPERATION_NAME -> true
+            Ic10Types.MACRO,
+            Ic10Types.VALUE,
+            Ic10Types.OPERATION_NAME,
+            Ic10Types.REFERENCE_NAME,
+            Ic10Types.ENUM_NAME,
+            Ic10Types.ENUM_PROPERTY -> true
             else -> false
         } } ?: super.getCustomDocumentationElement(editor, file, contextElement, targetOffset)
     }

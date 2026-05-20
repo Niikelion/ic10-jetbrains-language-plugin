@@ -4,6 +4,7 @@ package com.niikelion.ic10_language.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.niikelion.ic10_language.logic.IUnresolvedValue;
 
 public interface Ic10Value extends PsiElement {
 
@@ -11,7 +12,7 @@ public interface Ic10Value extends PsiElement {
   Ic10Channel getChannel();
 
   @Nullable
-  Ic10Constant getConstant();
+  Ic10Enum getEnum();
 
   @Nullable
   Ic10Macro getMacro();
@@ -21,5 +22,7 @@ public interface Ic10Value extends PsiElement {
 
   @Nullable
   Ic10ReferenceName getReferenceName();
+
+  @Nullable IUnresolvedValue getValue();
 
 }

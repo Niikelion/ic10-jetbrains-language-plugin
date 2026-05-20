@@ -7,7 +7,6 @@ import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.startOffset
 import com.niikelion.ic10_language.Ic10Language
-import com.niikelion.ic10_language.instruction
 import com.niikelion.ic10_language.psi.Ic10Operation
 
 @Suppress("UnstableApiUsage")

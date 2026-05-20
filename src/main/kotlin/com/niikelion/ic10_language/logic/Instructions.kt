@@ -1,10 +1,29 @@
 package com.niikelion.ic10_language.logic
 
-import kotlin.collections.List
+import com.niikelion.ic10_language.logic.aspects.*
+import com.niikelion.ic10_language.logic.aspects.Ic10ProgramAspect.Companion.TICK_PER_SECOND
+import com.niikelion.ic10_language.logic.state.SimulationStateChangeBuilder
+import fleet.kernel.waitFor
+import kotlin.math.*
+import kotlin.random.Random
 
 private val typeLabels = listOf("d?", "r?", "num")
+private fun select(cond: Boolean, ifTrue: Double = 1.0, ifFalse: Double = 0.0) = if (cond) ifTrue else ifFalse
+typealias InstructionAction = InstructionContext.(args: Array<IValue>) -> Unit
 
-class Instruction(val name: String, val description: String, val arguments: List<Arg> = listOf(), val isDeclaration: Boolean = false) {
+private fun ap(a: Double, b: Double, c: Double): Boolean {
+    val epsilon = Constants.get("epsilon")!!.value
+    return abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)
+}
+
+class Instruction(
+    val name: String,
+    val description: String,
+    val arguments: List<Arg>,
+    val isDeclaration: Boolean = false,
+    val deprecationMessage: String? = null,
+    val action: InstructionAction? = null
+) {
     class Arg(val name: String, val type: ArgType) {
         companion object {
             fun name(name: String) = Arg(name, ArgType.Name)
@@ -48,11 +67,28 @@ class Instruction(val name: String, val description: String, val arguments: List
                 .map { (_, n) -> n }
         }
     }
+
+    fun deprecate(msg: String) = Instruction(
+        name = name,
+        description = description,
+        arguments = arguments,
+        isDeclaration = isDeclaration,
+        deprecationMessage = msg,
+        action = action
+    )
+}
+
+class InstructionContext(
+    val global: SimulationStateChangeBuilder,
+    private val deviceId: Long
+) {
+    val self by lazy { global.device(deviceId) }
+    val program by lazy { self.program }
+    val memory by lazy { self.memory }
 }
 
 @Suppress("SameParameterValue")
 object Instructions {
-    private fun name(name: String) = Instruction.Arg.name(name)
     private fun device(name: String) = Instruction.Arg.device(name)
     private fun value(name: String) = Instruction.Arg.value(name)
     private fun constant(name: String) = Instruction.Arg.constant(name)
@@ -60,6 +96,7 @@ object Instructions {
     private fun property(name: String) = Instruction.Arg.property(name)
     private fun slotProperty(name: String) = Instruction.Arg.slotProperty(name)
 
+    private val alias = Instruction.Arg.name("alias")
     private val inputValues = arrayOf("a", "b", "c", "d", "e").map { value(it) }
     private val resultVariable = variable("r")
     private val targetDevice = device("d")
@@ -67,108 +104,234 @@ object Instructions {
     private val slotPropertyName = slotProperty("property")
     private val batchMode = value("batchMode")
 
-    private fun op(name: String, arguments: Int, description: String) =
-        Instruction(name, "r = $description", listOf(resultVariable) + List(arguments) { inputValues[it] })
-    private fun branch(name: String, description: String, arguments: Int, relative: Boolean, call: Boolean) =
+    private fun rawOp(name: String, arguments: Int, description: String, action: ((args: List<Double>) -> Double)? = null) =
         Instruction(
-            name,
-            "${if (relative) "Relative branch" else "Branch" } to line ${inputValues[arguments-1].name} if $description${if (call) " and store return pointer in ra" else "" }",
-            List(arguments) { inputValues[it] }
+            name, "r = $description",
+            listOf(resultVariable) + List(arguments) { inputValues[it] },
+            action = action?.let { func ->
+                { args ->
+                    val value = func(List(arguments) { i -> program.getAsValue(args[i + 1]) })
+                    program.set(args[0].asRegister, value)
+                }
+            }
         )
-    private fun branch(name: String, description: String, arguments: List<Instruction.Arg>, relative: Boolean, call: Boolean) =
+    private fun opNoArgs(name: String, description: String, action: () -> Double) =
+        rawOp(name, 0, description) { action() }
+    private fun op(name: String, description: String, action: (a: Double) -> Double) =
+        rawOp(name, 1, description) { args -> action(args[0]) }
+    private fun op(name: String, description: String, action: (a: Double, b: Double) -> Double) =
+        rawOp(name, 2, description) { args -> action(args[0], args[1]) }
+    private fun op(name: String, description: String, action: (a: Double, b: Double, c: Double) -> Double) =
+        rawOp(name, 3, description) { args -> action(args[0], args[1], args[2]) }
+
+    private fun branch(name: String, description: String, arguments: Int, relative: Boolean = false, call: Boolean = false, action: (InstructionContext.(args: List<Double>) -> Boolean)? = null) =
+        branch(name, description, inputValues.take(arguments), relative, call, action?.let { func ->
+            { args ->
+                func(args.map(program::getAsValue))
+            }
+        })
+    private fun branch(name: String, description: String, arguments: List<Instruction.Arg>, relative: Boolean, call: Boolean, action: (InstructionContext.(args: List<IValue>) -> Boolean)? = null) =
         Instruction(
             name,
             "${if (relative) "Relative branch" else "Branch" } to line ${arguments.last().name} if $description${if (call) " and store return pointer in ra" else "" }",
-            arguments
+            arguments,
+            action = action?.let { func ->
+                { args ->
+                    val shouldJump = func(args.take(arguments.size - 1))
+
+                    if (shouldJump) {
+                        val jumpTarget = program.getAsValue(args.last())
+                        val normalizedJumpTarget = if (relative) program.instructionIndex + jumpTarget - 1 else jumpTarget
+                        val returnAddress = program.instructionIndex
+                        program.jump(normalizedJumpTarget.toInt())
+                        if (call)
+                            program.set(Registers.ra, returnAddress.toDouble())
+                    }
+                }
+            }
         )
 
+    private fun branch(name: String, description: String, relative: Boolean = false, call: Boolean = false, action: (a: Double) -> Boolean) =
+        branch(name, description, 2, relative, call) { args -> action(args[0]) }
+
+    private fun branch(name: String, description: String, relative: Boolean = false, call: Boolean = false, action: (a: Double, b: Double) -> Boolean) =
+        branch(name, description, 3, relative, call) { args -> action(args[0], args[1]) }
+
+    private fun branch(name: String, description: String, relative: Boolean = false, call: Boolean = false, action: (a: Double, b: Double, c: Double) -> Boolean) =
+        branch(name, description, 3, relative, call) { args -> action(args[0], args[1], args[2]) }
+
+    private fun branchDevice(name: String, description: String, relative: Boolean = false, call: Boolean = false, action: (deviceId: Long) -> Boolean) =
+        branch(name, "device d $description", listOf(targetDevice, value("a")), relative, call) { args -> action(program.get(args[0].asDevice)) }
+
     private val operations = arrayOf(
-        op("abs", 1, "|a|"),
-        op("acos", 1, "arc cosine of a in radians"),
-        op("add", 2, "a + b"),
-        Instruction("alias", "Creates alias for originalName", listOf(name("alias"), variable("originalName")), true),
-        op("and", 2, "a && b"),
-        op("asin", 1, "arc sine of a in radians"),
-        op("atan", 1, "arc tangent of a in radians"),
-        op("atan2", 2, "counter-clockwise angle between positive x axis and ray from (0,0) to (b, a)"),
-        branch("bap", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = false, call = false),
-        branch("bapal", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = false ,call = true),
-        branch("bapz", "abs(a) <= max(b * abs(a), epsilon * 8)", 3, relative = false, call = false),
-        branch("bapzal", "abs(a) <= max(b * abs(a), epsilon * 8)", 3, relative = false, call = true),
-        branch("bdns", "device d is not set", listOf(targetDevice, value("a")), relative = false, call = true),
-        branch("bdnsal", "device d is not set", listOf(targetDevice, value("a")), relative = false, call = true),
-        branch("bdnvl", "device is not valid for a load instruction for property", listOf(targetDevice, propertyName, value("a")), relative = false, call = false),
-        branch("bdnvs", "device is not valid for a store instruction for property", listOf(targetDevice, propertyName, value("a")), relative = false, call = false),
-        branch("bdse", "device d is set", listOf(targetDevice, value("a")), relative = false, call = false),
-        branch("bdseal", "device d is set", listOf(targetDevice, value("a")), relative = false, call = true),
-        branch("beq", "a == b", 3, relative = false, call = false),
-        branch("beqal", "a == b", 3, relative = false, call = true),
-        branch("beqz", "a == 0", 2, relative = false, call = false),
-        branch("beqzal", "a == 0", 2, relative = false, call = true),
-        branch("bge", "a >= b", 3, relative = false, call = false),
-        branch("bgeal", "a >= b", 3, relative = false, call = true),
-        branch("bgez", "a >= 0", 2, relative = false, call = false),
-        branch("bgezal", "a >= 0", 2, relative = false, call = true),
-        branch("bgt", "a > b", 3, relative = false, call = false),
-        branch("bgtal", "a > b", 3, relative = false, call = true),
-        branch("bgtz", "a > 0", 2, relative = false, call = false),
-        branch("bgtzal", "a > 0", 2, relative = false, call = true),
-        branch("ble", "a <= b", 3, relative = false, call = false),
-        branch("bleal", "a <= b", 3, relative = false, call = true),
-        branch("blez", "a <= 0", 2, relative = false, call = false),
-        branch("blezal", "a <= 0", 2, relative = false, call = true),
-        branch("blt", "a < b", 3, relative = false, call = false),
-        branch("bltal", "a < b", 3, relative = false, call = true),
-        branch("bltz", "a < 0", 2, relative = false, call = false),
-        branch("bltzal", "a < 0", 2, relative = false, call = true),
-        branch("bna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = false, call = false),
-        branch("bnaal", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = false, call = true),
-        branch("bnan", "a is not a number (NaN)", 2, relative = false, call = false),
-        branch("bnaz", "abs(a) > max(b * abs(a), epsilon * 8)", 3, relative = false, call = false),
-        branch("bnazal", "abs(a) > max(b * abs(a), epsilon * 8)", 3, relative = false, call = true),
-        branch("bne", "a != b", 3, relative = false, call = false),
-        branch("bneal", "a != b", 3, relative = false, call = true),
-        branch("bnez", "a != 0", 2, relative = false, call = false),
-        branch("bnezal", "a != 0", 2, relative = false, call = true),
-        branch("brap", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = true, call = false),
-        branch("brapz", "abs(a) <= max(c * abs(a), epsilon * 8)", 3, relative = true, call = false),
+        op("abs", "|a|") { a -> abs(a) },
+        op("acos", "arc cosine of a in radians") { a -> acos(a) },
+        op("add", "a + b") { a, b -> a + b },
+        Instruction(
+            "alias",
+            "Creates alias for originalName",
+            listOf(alias, variable("originalName")),
+            isDeclaration = true
+        ) {},
+        op("and", "a & b") { a, b -> (a.toValueBits() and b.toValueBits()).toDouble() },
+        op("asin", "arc sine of a in radians") { a -> asin(a) },
+        op("atan", "arc tangent of a in radians") { a -> atan(a) },
+        op("atan2", "counter-clockwise angle between positive x axis and ray from (0,0) to (b, a)") { a, b -> atan2(a, b) },
+        branch("bap", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", call = false) { a, b, c -> ap(a, b, c) },
+        branch("bapal", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", call = true) { a, b, c -> ap(a, b, c) },
+        branch("bapz", "abs(a) <= max(b * abs(a), epsilon * 8)", call = false) { a, b -> ap(a, 0.0, b) },
+        branch("bapzal", "abs(a) <= max(b * abs(a), epsilon * 8)", call = true) { a, b -> ap(a, 0.0, b) },
+        branchDevice("bdns", "is not set", call = false) { id -> id == 0L },
+        branchDevice("bdnsal", "is not set", call = true) { id -> id == 0L },
+        branch("bdnvl", "device d is not valid for a load instruction for property", listOf(targetDevice, propertyName, value("a")), relative = false, call = false),
+        branch("bdnvs", "device d is not valid for a store instruction for property", listOf(targetDevice, propertyName, value("a")), relative = false, call = false),
+        branchDevice("bdse", "is set", call = false) { id -> id != 0L },
+        branchDevice("bdseal", "device d is set", call = true) { id -> id != 0L },
+        branch("beq", "a == b") { a, b -> a == b },
+        branch("beqal", "a == b", call = true) { a, b -> a == b },
+        branch("beqz", "a == 0") { a -> a == 0.0 },
+        branch("beqzal", "a == 0", call = true) { a -> a == 0.0 },
+        branch("bge", "a >= b") { a, b -> a >= b },
+        branch("bgeal", "a >= b", call = true) { a, b -> a >= b },
+        branch("bgez", "a >= 0") { a -> a >= 0.0 },
+        branch("bgezal", "a >= 0", call = true) { a -> a >= 0.0 },
+        branch("bgt", "a > b") { a, b -> a > b },
+        branch("bgtal", "a > b", call = true) { a, b -> a > b },
+        branch("bgtz", "a > 0") { a -> a > 0.0 },
+        branch("bgtzal", "a > 0", call = true) { a -> a > 0.0 },
+        branch("ble", "a <= b") { a, b -> a <= b },
+        branch("bleal", "a <= b", call = true) { a, b -> a <= b },
+        branch("blez", "a <= 0") { a -> a <= 0.0 },
+        branch("blezal", "a <= 0", call = true) { a -> a <= 0.0 },
+        branch("blt", "a < b") { a, b -> a < b },
+        branch("bltal", "a < b", call = true) { a, b -> a < b },
+        branch("bltz", "a < 0") { a -> a < 0.0 },
+        branch("bltzal", "a < 0", call = true) { a -> a < 0.0 },
+        branch("bna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)") { a, b, c -> !ap(a, b, c) },
+        branch("bnaal", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", call = true) { a, b, c -> !ap(a, b, c) },
+        branch("bnan", "a is not a number (NaN)") { a -> a.isNaN() },
+        branch("bnaz", "abs(a) > max(b * abs(a), epsilon * 8)") { a, b -> !ap(a, 0.0, b) },
+        branch("bnazal", "abs(a) > max(b * abs(a), epsilon * 8)", call = true) { a, b -> !ap(a, 0.0, b) },
+        branch("bne", "a != b") { a, b -> a != b },
+        branch("bneal", "a != b", call = true) { a, b -> a != b },
+        branch("bnez", "a != 0") { a -> a != 0.0 },
+        branch("bnezal", "a != 0", call = true) { a -> a != 0.0 },
+        branch("brap", "abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)", relative = true) { a, b, c -> ap(a, b, c) },
+        branch("brapz", "abs(a) <= max(c * abs(a), epsilon * 8)", relative = true) { a, b -> ap(a, 0.0, b) },
         branch("brdns", "device is not set", listOf(targetDevice, value("a")), relative = true, call = false),
         branch("brdse", "device is set", listOf(targetDevice, value("a")), relative = true, call = false),
-        branch("breq", "a == b", 3, relative = true, call = false),
-        branch("breqz", "a == 0", 2, relative = true, call = false),
-        branch("brge", "a >= b", 3, relative = true, call = false),
-        branch("brgez", "a >= 0", 2, relative = true, call = false),
-        branch("brgt", "a > b", 3, relative = true, call = false),
-        branch("brgtz", "a > 0", 2, relative = true, call = false),
-        branch("brle", "a <= b", 3, relative = true, call = false),
-        branch("brlez", "a <= 0", 2, relative = true, call = false),
-        branch("brlt", "a < b", 3, relative = true, call = false),
-        branch("brltz", "a < 0", 2, relative = true, call = false),
-        branch("brna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", 4, relative = true, call = false),
-        branch("brnan", "a is not a number (NaN)", 2, relative = true, false),
-        branch("brnaz", "abs(a) > max(b * abs(a), epsilon * 8)", 3, relative = true, call = false),
-        branch("brne", "a != b", 3, relative = true, call = false),
-        branch("brnez", "a != 0", 2, relative = true, call = false),
-        op("ceil", 1, "smallest integer greater than a"),
-        Instruction("clr", "Clears the stack memory for the provided device", listOf(targetDevice)),
-        Instruction("clrd", "Clears the stack memory for device with provided id", listOf(value("id"))),
-        op("cos", 1, "cos(a)"),
-        Instruction("define", "Creates alias for constant value", listOf(name("alias"), constant("value")), true),
-        op("div", 2, "a / b"),
-        op("exp", 1, "exp(a)"),
-        op("ext", 3, "bit field from a, beginning at b for c length"),
-        op("floor", 1, "largest integer less than a"),
-        Instruction("get", "Reads the stack value of the provided device: r = d.stack[i]", listOf(resultVariable, targetDevice, value("i"))),
-        Instruction("hcf", "Self-destructs the device"),
-        Instruction("ins", "Inserts a bit field of a into r, beginning at b for c length", listOf(resultVariable, value("a"), value("b"), value("c"))),
-        Instruction("j", "Jump to line", listOf(value("line"))),
-        Instruction("jal", "Jump to line a and store return pointer in ra", listOf(value("a"))),
-        Instruction("jr", "Relative jump by a lines", listOf(value("a"))),
+        branch("breq", "a == b", relative = true) { a, b -> a == b },
+        branch("breqz", "a == 0", relative = true) { a -> a == 0.0 },
+        branch("brge", "a >= b", relative = true) { a, b -> a >= b },
+        branch("brgez", "a >= 0", relative = true) { a -> a >= 0.0 },
+        branch("brgt", "a > b", relative = true) { a, b -> a > b },
+        branch("brgtz", "a > 0", relative = true) { a -> a > 0.0 },
+        branch("brle", "a <= b", relative = true) { a, b -> a <= b },
+        branch("brlez", "a <= 0", relative = true) { a -> a <= 0.0 },
+        branch("brlt", "a < b", relative = true) { a, b -> a < b },
+        branch("brltz", "a < 0", relative = true) { a -> a < 0.0 },
+        branch("brna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8)", relative = true) { a, b, c -> !ap(a, b, c) },
+        branch("brnan", "a is not a number (NaN)", relative = true) { a -> a.isNaN() },
+        branch("brnaz", "abs(a) > max(b * abs(a), epsilon * 8)", relative = true) { a, b -> !ap(a, 0.0, b) },
+        branch("brne", "a != b", relative = true) { a, b -> a != b },
+        branch("brnez", "a != 0", relative = true) { a -> a != 0.0 },
+        op("ceil", "smallest integer greater than a") { a -> ceil(a) },
+        Instruction(
+            "clr",
+            "Clears the stack memory for the provided device",
+            listOf(targetDevice)
+        ) { args ->
+            val deviceId = program.getAsDeviceId(args[0])
+
+            global.device(deviceId).memory.clear()
+        },
+        Instruction("clrd", "Clears the stack memory for device with provided id", listOf(value("id")), deprecationMessage = "Use clr instead.") { args ->
+            val deviceId = program.getAsValue(args[0]).toLong()
+
+            global.device(deviceId).memory.clear()
+        },
+        op("cos", "cos(a)") { a -> cos(a) },
+        Instruction(
+            "define",
+            "Creates alias for constant value",
+            listOf(alias, constant("value")),
+            isDeclaration = true
+        ) {},
+        op("div", "a / b") { a, b -> a / b },
+        op("exp", "exp(a)") { a -> exp(a) },
+        rawOp("ext", 3, "bit field from a, beginning at b for c length"),
+        op("floor", "largest integer less than a") { a -> floor(a) },
+        Instruction(
+            "get",
+            "Reads the stack value of the provided device: r = d.stack[i]",
+            listOf(resultVariable, targetDevice, value("i"))
+        ) { args ->
+            val target = args[0].asRegister
+            val deviceId = program.getAsValue(args[1]).toLong()
+            val address = program.getAsValue(args[2]).toInt()
+
+            program.set(target, global.device(deviceId).memory.read(address))
+        },
+        Instruction(
+            "getd",
+            "Reads the stack value of the device indicated by id: r = getDevice(id).stack[i]",
+            listOf(resultVariable, value("id"), value("i"))
+        ) { args ->
+            val target = args[0].asRegister
+            val deviceId = program.getAsValue(args[1]).toLong()
+            val address = program.getAsValue(args[2]).toInt()
+
+            program.set(target, global.device(deviceId).memory.read(address))
+        },
+        Instruction(
+            "hcf",
+            "Self-destructs the device",
+            listOf()
+        ) {
+            program.lightOnFire()
+        },
+        Instruction(
+            "ins",
+            "Inserts a bit field of a into r, beginning at b for c length",
+            listOf(resultVariable, value("a"), value("b"), value("c"))
+        ),
+        Instruction(
+            "j",
+            "Jump to line",
+            listOf(value("line"))
+        ) { args ->
+            program.jump(program.getAsValue(args[0]).toInt())
+        },
+        Instruction(
+            "jal",
+            "Jump to line a and store return pointer in ra",
+            listOf(value("a"))
+        ) { args ->
+            val targetLine = program.getAsValue(args[0]).toInt()
+
+            program.set(Registers.ra, program.instructionIndex.toDouble())
+            program.jump(targetLine)
+        },
+        Instruction(
+            "jr",
+            "Relative jump by a lines",
+            listOf(value("a"))
+        ) { args ->
+            val offset = program.getAsValue(args[0]).toInt()
+
+            program.jump(program.instructionIndex + offset)
+        },
         Instruction(
             "l",
             "Loads property from provided device: r = d.property",
             listOf(resultVariable, targetDevice, propertyName)
-        ),
+        ) { args ->
+            val result = args[0].asRegister
+            val deviceId = program.getAsDeviceId(args[1])
+            val property = program.getAsValue(args[2]).toInt()
+
+            program.set(result, global.device(deviceId).property(property))
+        },
         Instruction(
             "lb",
             "Loads property from all devices with given typeHash and aggregates by batchMode: r = batchMode(findDevicesByType(typeHash).map(d -> d.property))",
@@ -189,78 +352,165 @@ object Instructions {
             "Loads property from given slot index of all devices with given typeHash and aggregates by batchMode: r = batchMode(findDevicesByType(typeHash).map(d -> d.slot[slotIndex].property))",
             listOf(resultVariable, value("typeHash"), value("slotIndex"), slotPropertyName, batchMode)
         ),
-        op("lerp", 3, "a * c + (1 - c) * b"),
-        op("log", 1, "log(a)"),
+        Instruction(
+            "ld",
+            "Loads property from device indicated by id: r = getDevice(id).property",
+            listOf(resultVariable, value("id"), propertyName)
+        ) { args ->
+            val result = args[0].asRegister
+            val deviceId = program.getAsValue(args[1])
+            val property = program.getAsValue(args[2]).toInt()
+
+            program.set(result, global.device(deviceId.toLong()).property(property))
+        }.deprecate("Use l instead."),
+        op("lerp", "a * c + (1 - c) * b") { a, b, c -> a * c + (1 - c) * b },
+        op("log", "log(a)") { a -> ln(a) },
         Instruction("lr", "Loads given reagent count from device based on reagentMode(Contents(0) - currently in the device, Required(1) - missing from the recipe, Recipe(2) - required by the recipe): r = d.reagentMode.count(reagentId)", listOf(
             resultVariable, targetDevice, value("reagentMode"), value("reagentId")
         )),
         Instruction("ls", "Loads property from given slot index of provided device: r = d.slot[slotIndex].property", listOf(
             resultVariable, targetDevice, value("slotIndex"), slotPropertyName
         )),
-        op("max", 2, "max of a or b"),
-        op("min", 2, "min of a or b"),
-        op("mod", 2, "a mod b(not: NOT the same as a % b)"),
-        op("move", 1, "a"),
-        op("mul", 2, "a * b"),
-        op("nor", 2, "!(a || b)"),
-        op("not", 1, "!a"),
-        op("or", 2, "a || b"),
-        op("peek", 0, "value at the top of the stack"),
-        Instruction("poke", "Store the provided value at the provided address in the stack: db.stack[address] = value", listOf(
-            value("address"), value("value")
-        )),
-        op("pop", 0, "the value at the top of the stack and decrements sp"),
-        Instruction("push", "Stores the provided value at the top of the stack and increments sp", listOf(value("value"))),
+        op("max", "max of a or b") { a, b -> max(a, b) },
+        op("min", "min of a or b") { a, b -> min(a, b) },
+        op("mod", "a mod b(NOT the same as a % b)") { a, b -> a.mod(b) },
+        op("move", "a") { a -> a },
+        op("mul", "a * b") { a, b -> a * b },
+        op("nor", "!(a || b)") { a, b -> (a.toValueBits() or b.toValueBits()).inv().toDouble() },
+        op("not", "!a") { a -> a.toValueBits().inv().toDouble() },
+        op("or", "a || b") { a, b -> (a.toValueBits() or b.toValueBits()).toDouble() },
+        Instruction("peek", "reads the value at the top of the stack", listOf(resultVariable)) { args ->
+            val result = args[0].asRegister
+            val stackPointer = program.get(Registers.sp).toInt()
+
+            program.set(result, memory.read(stackPointer))
+        },
+        Instruction(
+            "poke",
+            "Stores the provided value at the provided address in the stack: db.stack[address] = value",
+            listOf(value("address"), value("value"))
+        ) { args ->
+            val address = program.getAsValue(args[0]).toInt()
+            val value = program.getAsValue(args[1])
+
+            memory.write(address, value)
+        },
+        Instruction("pop", "reads the value at the top of the stack and decrements sp", listOf(resultVariable)) { args ->
+            val result = args[0].asRegister
+            val stackPointer = program.get(Registers.sp).toInt()
+
+            program.set(result, memory.read(stackPointer))
+            program.set(Registers.sp, stackPointer - 1.0 )
+        },
+        op("pow", "a to the power of b") { a, b -> a.pow(b) },
+        Instruction("push", "Stores the provided value at the top of the stack and increments sp", listOf(value("value"))) { args ->
+            val stackPointer = program.get(Registers.sp).toInt()
+            val value = program.getAsValue(args[0])
+
+            memory.write(stackPointer, value)
+            program.set(Registers.sp, stackPointer + 1.0)
+        },
         Instruction("put", "Stores the provided value at the provided address in the stack of the provided device: d.stack[address] = value", listOf(
             targetDevice, value("address"), value("value")
-        )),
+        )) { args ->
+            val deviceId = program.getAsDeviceId(args[0])
+            val address = program.getAsValue(args[1]).toInt()
+            val value = program.getAsValue(args[0])
+
+            global.device(deviceId).memory.write(address, value)
+        },
         Instruction("putd", "Stores the provided value at the provided address in the stack of device with provided id: findDeviceById(id).stack[address] = value", listOf(
             targetDevice, value("address"), value("value")
-        )),
-        op("rand", 0, "random value x, so that 0 <= x < 1"),
+        ), deprecationMessage = "Use put instead.") { args ->
+            val deviceId = program.getAsValue(args[0]).toLong()
+            val address = program.getAsValue(args[1]).toInt()
+            val value = program.getAsValue(args[0])
+
+            global.device(deviceId).memory.write(address, value)
+        },
+        opNoArgs("rand", "random value x, so that 0 <= x < 1") { Random.nextDouble() },
         Instruction("rmap", "Finds id of item that gives given reagent when placed into the machine, for example for Autolathe and id of Iron it will output id of ItemIronIngot", listOf(
             resultVariable, targetDevice, value("reagentId")
         )),
-        op("round", 1, "a rounded to the nearest integer"),
-        Instruction("s", "Writes value to property of device: d.property = value", listOf(targetDevice, propertyName, value("value"))),
-        op("sap", 3, "1 if abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8), 0 otherwise"),
-        op("sapz", 2, "1 if abs(a) <= max(c * abs(a), epsilon * 8), 0 otherwise"),
+        op("round", "a rounded to the nearest integer") { a -> round(a) },
+        Instruction(
+            "s",
+            "Writes value to the property of the device: d.property = value",
+            listOf(targetDevice, propertyName, value("value"))
+        ) { args ->
+            val target = program.getAsDeviceId(args[0])
+            val property = program.getAsValue(args[1])
+            val value = program.getAsValue(args[2])
+
+            global.device(target).setProperty(property.toInt(), value)
+        },
+        op("sap", "1 if abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8), 0 otherwise") { a, b, c -> select(ap(a, b, c)) },
+        op("sapz", "1 if abs(a) <= max(b * abs(a), epsilon * 8), 0 otherwise") { a, b -> select(ap(a, 0.0, b)) },
         Instruction("sb", "Writes value to property of all devices with given typeHash", listOf(value("typeHash"), propertyName, value("value"))),
         Instruction("sbn", "Writes value to property of all devices with given typeHash and nameHash", listOf(value("typeHash"), value("nameHash"), propertyName, value("value"))),
         Instruction("sbs", "Writes value to property of given slot on all devices with given typeHash", listOf(value("typeHash"), value("slotIndex"), slotPropertyName, value("value"))),
-        Instruction("sdns", "r = 1 if device is not set, 0 otherwise", listOf(resultVariable, targetDevice)),
-        Instruction("sdse", "r = 1 if device is set, 0 otherwise", listOf(resultVariable, targetDevice)),
-        op("select", 3, "a != 0 ? b : c"),
-        op("seq", 2, "a == b ? 1 : 0"),
-        op("seqz", 1, "a == 0 ? 1 : 0"),
-        op("sge", 2, "a >= b ? 1 : 0"),
-        op("sgez", 1, "a >= 0 ? 1 : 0"),
-        op("sgt", 2, "a > b ? 1 : 0"),
-        op("sgtz", 1, "a > 0 ? 1 : 0"),
-        op("sin", 1, "sin(a)"),
-        op("sla", 2, "a << b, vacated bits are filled with a copy of the sign bit"),
-        op("sle", 2, "a <= b ? 1 : 0"),
-        Instruction("sleep", "Pauses execution on the IC for time seconds", listOf(value("time"))),
-        op("slez", 1, "a <= 0 ? 1 : 0"),
-        op("sll", 2, "a << b"),
-        op("slt", 2, "a < b ? 1 : 0"),
-        op("sltz", 1, "a < 0 ? 1 : 0"),
-        op("sna", 3, "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8) ? 1 : 0"),
-        op("snan", 1, "1 if a is NaN, 0 otherwise"),
-        op("snanz", 1, "1 if a is not NaN, 0 otherwise"),
-        op("snaz", 3, "abs(a) > max(b * abs(a), epsilon * 8) ? 1 : 0"),
-        op("sne", 2, "a != b ? 1 : 0"),
-        op("snez", 1, "a != 0 ? 1 : 0"),
-        op("sqrt", 1, "sqrt(a)"),
-        op("sra", 2, "a >> b, vacated bits are filled with a copy of the sign bit"),
-        op("srl", 2, "a >> b"),
+        Instruction(
+            "sd",
+            "Writes value to property of the device indicated by id: getDevice(id).property = value",
+            listOf(value("id"), propertyName, value("value"))
+        ) { args ->
+            val target = program.getAsValue(args[0])
+            val property = program.getAsValue(args[1])
+            val value = program.getAsValue(args[2])
+
+            global.device(target.toLong()).setProperty(property.toInt(), value)
+        }.deprecate("Use s instead"),
+        Instruction("sdns", "r = 1 if device d is not set, 0 otherwise", listOf(resultVariable, targetDevice)) { args ->
+            val target = args[0].asRegister
+            val deviceSlot = args[1].asDevice
+
+            program.set(target, select (program.get(deviceSlot) == 0L))
+        },
+        Instruction("sdse", "r = 1 if device d is set, 0 otherwise", listOf(resultVariable, targetDevice)) { args ->
+            val target = args[0].asRegister
+            val deviceSlot = args[1].asDevice
+
+            program.set(target, select (program.get(deviceSlot) != 0L))
+        },
+        op("select", "a != 0 ? b : c") { a, b, c -> select(a != 0.0, b, c) },
+        op("seq", "a == b ? 1 : 0") { a, b -> select(a == b) },
+        op("seqz", "a == 0 ? 1 : 0") { a -> select(a == 0.0) },
+        op("sge", "a >= b ? 1 : 0") { a, b -> select(a >= b) },
+        op("sgez", "a >= 0 ? 1 : 0") { a -> select(a >= 0.0) },
+        op("sgt", "a > b ? 1 : 0") { a, b -> select(a > b) },
+        op("sgtz", "a > 0 ? 1 : 0") { a -> select(a > 0.0) },
+        op("sin", "sin(a)") { a -> sin(a) },
+        op("sla", "a << b, vacated bits are filled with a copy of the sign bit") { a, b -> (a.toLong() shl b.toInt()).toDouble() },
+        op("sle", "a <= b ? 1 : 0") { a, b -> select(a <= b) },
+        Instruction("sleep", "Pauses execution on the IC for time seconds", listOf(value("time"))) { args ->
+            val time = program.getAsValue(args[0])
+
+            program.waitFor(ceil(max(time, 0.0) * TICK_PER_SECOND).toInt())
+        },
+        op("slez", "a <= 0 ? 1 : 0") { a -> select(a <= 0.0) },
+        op("sll", "a << b") { a, b -> (a.toValueBits() shl b.toInt()).toDouble() },
+        op("slt", "a < b ? 1 : 0") { a, b -> select(a < b) },
+        op("sltz", "a < 0 ? 1 : 0") { a -> select(a < 0.0) },
+        op("sna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8) ? 1 : 0") { a, b, c -> select(!ap(a, b, c)) },
+        op("snan", "1 if a is NaN, 0 otherwise") { a -> select(a.isNaN()) },
+        op("snanz", "1 if a is not NaN, 0 otherwise") { a -> select(!a.isNaN()) },
+        op("snaz", "abs(a) > max(b * abs(a), epsilon * 8) ? 1 : 0") { a, b -> select(!ap(a, 0.0, b)) },
+        op("sne", "a != b ? 1 : 0") { a, b -> select(a != b) },
+        op("snez", "a != 0 ? 1 : 0") { a -> select(a != 0.0) },
+        op("sqrt", "sqrt(a)") { a -> sqrt(a) },
+        op("sra", "a >> b, vacated bits are filled with a copy of the sign bit") { a, b -> (a.toLong() shr b.toInt()).toDouble() },
+        op("srl", "a >> b") { a, b -> (a.toValueBits() ushr b.toInt()).toDouble() },
         Instruction("ss", "Writes value to property of given slot on the provided device", listOf(targetDevice, value("slotIndex"), slotPropertyName, value("value"))),
-        op("sub", 2, "a - b"),
-        op("tan", 1, "tan(a)"),
-        op("trunc", 1, "a with fractional part removed"),
-        op("xor", 2, "a ^ b"),
-        Instruction("yield", "Pauses execution for 1 tick")
+        op("sub", "a - b") { a, b -> a - b },
+        op("tan", "tan(a)") { a -> tan(a) },
+        op("trunc", "a with fractional part removed") { a -> truncate(a) },
+        op("xor", "a ^ b") { a, b -> (a.toValueBits() xor b.toValueBits()).toDouble() },
+        Instruction("yield", "Pauses execution for 1 tick", listOf()) {
+            program.waitFor(1)
+        }
     ).associateBy(Instruction::name)
     fun get(name: String) = operations[name]
     val all get() = operations.values.toList()
 }
+
+private fun Double.toValueBits(): Long = toLong() and ((1L shl 54) - 1L)

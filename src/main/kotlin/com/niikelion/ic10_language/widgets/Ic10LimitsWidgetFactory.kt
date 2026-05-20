@@ -65,8 +65,8 @@ class Ic10LimitsWidgetFactory: StatusBarEditorBasedWidgetFactory() {
 
             if (ic10File !is Ic10File) return WidgetState.HIDDEN
 
-            val linesText = "${ic10File.lineCount}/${Constraints.maxLines} lines"
-            val bytesText = "${ic10File.byteCount}/${Constraints.maxBytes} bytes"
+            val linesText = "${ic10File.linesCount}/${Constraints.MAX_LINES} lines"
+            val bytesText = "${ic10File.bytesCount}/${Constraints.MAX_BYTES} bytes"
             val text = arrayOf(linesText, bytesText).joinToString(" ")
 
             // TODO: eliminate update throttling

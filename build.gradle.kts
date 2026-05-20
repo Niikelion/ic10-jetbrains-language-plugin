@@ -1,9 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import de.undercouch.gradle.tasks.download.Download
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   id("java")
   id("org.jetbrains.kotlin.jvm") version "2.2.0"
   id("org.jetbrains.intellij.platform") version "2.10.5"
+  id("de.undercouch.download") version "5.7.0"
 }
 
 group = "com.niikelion.ic10-plugin-jetbrains"
@@ -20,7 +24,25 @@ repositories {
 dependencies {
   intellijPlatform {
     intellijIdeaUltimate("2025.3")
+    testFramework(TestFrameworkType.Platform)
   }
+
+  testImplementation("junit:junit:4.13.2")
+  testImplementation(kotlin("test"))
+}
+
+val dataDir = layout.projectDirectory.dir("src/main/resources/data")
+
+val downloadEnums by tasks.registering(Download::class) {
+  src("https://github.com/aproposmath/StationeersStationpediaExtractor/releases/download/stable/enums.json")
+  dest(dataDir.file("enums.json"))
+  onlyIfModified(true)
+}
+
+val downloadStationpedia by tasks.registering(Download::class) {
+  src("https://github.com/aproposmath/StationeersStationpediaExtractor/releases/download/stable/stationpedia.json")
+  dest(dataDir.file("stationpedia.json"))
+  onlyIfModified(true)
 }
 
 tasks {
@@ -30,12 +52,16 @@ tasks {
     targetCompatibility = "17"
   }
 
-  withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+  withType<KotlinCompile> {
     kotlin {
       compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
       }
     }
+  }
+
+  named<ProcessResources>("processResources") {
+    dependsOn(downloadEnums, downloadStationpedia)
   }
 
   signPlugin {

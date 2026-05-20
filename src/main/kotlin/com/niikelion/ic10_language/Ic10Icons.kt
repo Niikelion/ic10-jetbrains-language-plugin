@@ -16,5 +16,11 @@ object Ic10Icons {
     @JvmField
     val Function = getIcon("/icons/function.svg", javaClass)
     @JvmField
-    val Edit = getIcon("/icons/edit.svg", javaClass)
+    val Enum = getIcon("/icons/enum.svg", javaClass)
+    @JvmField
+    val Field = getIcon("/icons/fieldValue.svg", javaClass)
+    @JvmField
+    val Step = getIcon("/icons/step.svg", javaClass)
+    @JvmField
+    val StepBack = getIcon("/icons/stepBack.svg", javaClass)
 }

@@ -81,7 +81,7 @@
             implementation="com.niikelion.ic10_language.navigation.Ic10ChooseByNameContributor"
     />
     <iconProvider
-            implementation="com.niikelion.ic10_language.psi.impl.Ic10NamedElementIconProvider"
+            implementation="com.niikelion.ic10_language.psi.elements.impl.Ic10NamedElementIconProvider"
     />
     <lang.psiStructureViewFactory
             language="Ic10"
@@ -124,13 +124,19 @@
             implementation="com.niikelion.ic10_language.documentation.LabelDocumentationProvider"
     />
     <platform.backend.documentation.psiTargetProvider
-            implementation="com.niikelion.ic10_language.documentation.SymbolDocumentationProvider"
+            implementation="com.niikelion.ic10_language.documentation.ReferenceNameDocumentationProvider"
+    />
+    <platform.backend.documentation.psiTargetProvider
+            implementation="com.niikelion.ic10_language.documentation.EnumDocumentationProvider"
     />
     <toolWindow
             factoryClass="com.niikelion.ic10_language.simulation.Ic10SimulatorWindowFactory"
             id="Ic10 Simulator"
             anchor="right"
-            icon="/icons/edit.svg"
+            icon="/icons/runner.svg"
+    />
+    <configurationType
+            implementation="com.niikelion.ic10_language.simulation.Ic10RunConfigurationType"
     />
   </extensions>
 </idea-plugin>

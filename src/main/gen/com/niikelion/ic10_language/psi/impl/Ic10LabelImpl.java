@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10LabelImpl extends Ic10NamedElementImpl implements Ic10Label {
+public class Ic10LabelImpl extends com.niikelion.ic10_language.psi.elements.impl.Ic10LabelImpl implements Ic10Label {
 
   public Ic10LabelImpl(@NotNull ASTNode node) {
     super(node);

@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.niikelion.ic10_language.psi.*;
+import com.niikelion.ic10_language.logic.Instruction;
 
 public class Ic10OperationImpl extends ASTWrapperPsiElement implements Ic10Operation {
 
@@ -37,6 +38,21 @@ public class Ic10OperationImpl extends ASTWrapperPsiElement implements Ic10Opera
   @NotNull
   public List<Ic10Value> getValueList() {
     return PsiTreeUtil.getChildrenOfTypeAsList(this, Ic10Value.class);
+  }
+
+  @Override
+  public @Nullable String getDeclaredName() {
+    return Ic10PsiImplUtils.getDeclaredName(this);
+  }
+
+  @Override
+  public @Nullable Ic10ReferenceName getDeclarationToken() {
+    return Ic10PsiImplUtils.getDeclarationToken(this);
+  }
+
+  @Override
+  public @Nullable Instruction getInstruction() {
+    return Ic10PsiImplUtils.getInstruction(this);
   }
 
 }
