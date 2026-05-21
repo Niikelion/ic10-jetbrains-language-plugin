@@ -24,7 +24,7 @@ class ProgramCode(val lines: Array<Line>, val source: Ic10File) {
             val lineGroups = file.children.filter { it.elementType != TokenType.WHITE_SPACE }.splitWhen { it.elementType == Ic10Types.CRLF }
             val compiledLines = lineGroups.map { group ->
                 val line = compileLine(group)
-                if (line === emptyLine || document == null) line
+                if (document == null) line
                 else {
                     val sourceLine = group.firstOrNull { it.elementType == Ic10Types.LINE }
                         ?.let { document.getLineNumber(it.textOffset) }

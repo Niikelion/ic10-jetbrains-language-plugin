@@ -33,7 +33,8 @@ class Ic10RunConfiguration(
 
             val actions = if (processHandler is SimulationProcess) arrayOf(
                 StepBackSimulationAction(processHandler),
-                StepSimulationAction(processHandler)
+                StepSimulationAction(processHandler),
+                TickSimulationAction(processHandler)
             ) else emptyArray()
 
             console.attachToProcess(processHandler)

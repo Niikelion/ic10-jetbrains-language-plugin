@@ -13,6 +13,7 @@ interface DeviceAspect {
 
     fun renderDebuggerView(flow: StateFlow<State>, scope: Disposable): JComponent?
     fun tick(state: SimulationStateChangeBuilder, deviceId: Long) {}
+    fun tickEnd(state: SimulationStateChangeBuilder, deviceId: Long) {}
     fun initialize(): State
 
     interface State {

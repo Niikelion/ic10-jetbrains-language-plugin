@@ -4,6 +4,7 @@ import com.niikelion.ic10_language.logic.*
 import com.niikelion.ic10_language.logic.aspects.Ic10DeviceMemoryAspect
 import com.niikelion.ic10_language.logic.aspects.Ic10MemoryAspect
 import com.niikelion.ic10_language.logic.aspects.Ic10ProgramAspect
+import com.niikelion.ic10_language.logic.state.SimulationState
 
 class StructureCircuitHousing(id: Long, code: ProgramCode): Device(
     id,
@@ -22,6 +23,11 @@ class StructureCircuitHousing(id: Long, code: ProgramCode): Device(
     }
 
     val code = aspect<Ic10ProgramAspect>()!!
+
+    override fun tick(
+        current: SimulationState,
+        deviceNetworks: Map<Long, Pair<Long, Network>>
+    ): Sequence<SimulationState.StateChange> = code.step(id, current, deviceNetworks)
 
     override fun initialize(): DeviceState {
         val source = super.initialize()

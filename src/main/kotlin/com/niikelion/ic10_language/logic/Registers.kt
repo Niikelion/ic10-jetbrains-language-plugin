@@ -17,7 +17,7 @@ class Registers {
         fun isValidReference(str: String) = referenceRegex.matchEntire(str)?.let { it.groups["source"]?.value }?.let { isValidName(it) } ?: false
 
         fun get(n: Int) = if (n < 0 || n >= all.size) null else all.elementAtOrNull(n)
-        fun get(name: String) = all.find { it.name == name }
+        fun get(name: String) = aliases[name] ?: all.find { it.name == name }
 
         fun parseReference(str: String) = referenceRegex.matchEntire(str)
             ?.let { it.groups["source"]?.value }

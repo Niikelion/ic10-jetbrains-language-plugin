@@ -6,6 +6,7 @@ import com.niikelion.ic10_language.logic.aspects.Ic10DeviceMemoryAspect
 import com.niikelion.ic10_language.logic.aspects.Ic10MemoryAspect
 import com.niikelion.ic10_language.logic.aspects.Ic10ProgramAspect
 import com.niikelion.ic10_language.logic.devices.DeviceState
+import com.niikelion.ic10_language.logic.state.NetworkState
 import com.niikelion.ic10_language.logic.state.SimulationState
 import com.niikelion.ic10_language.logic.state.SimulationStateChangeBuilder
 import kotlin.math.abs
@@ -14,6 +15,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 private const val TEST_DEVICE_ID = 0L
+private const val TEST_NETWORK_ID = 0L
 private const val STACK_SIZE = 512
 
 /**
@@ -21,15 +23,13 @@ private const val STACK_SIZE = 512
  *
  * Usage:
  * ```
- * instructionTest {
+ * simulate {
  *     setup {
  *         register("r0", 3.0)
  *         register("r1", 5.0)
  *     }
  *     exec("add", reg("r2"), reg("r0"), reg("r1"))
- *     assert {
- *         register("r2", 8.0)
- *     }
+ *     assert { register("r2", 8.0) }
  * }
  * ```
  */
@@ -46,6 +46,11 @@ class InstructionTestBuilder {
     private val registers = mutableMapOf<Register, Double>()
     private val deviceSlotIds = mutableMapOf<DeviceSlot, Long>()
     private val stackContents = Array(STACK_SIZE) { 0.0 }
+
+    private val extraDevices = mutableMapOf<Long, DeviceState>()
+    private val networkChannels = mutableMapOf<Int, Double>()
+    private val dataConnectedExtra = mutableSetOf<Long>()
+    private val softConnectedExtra = mutableSetOf<Long>()
 
     private val steps = mutableListOf<(SimulationStateChangeBuilder) -> Unit>()
     private val assertions = mutableListOf<(SimulationState) -> Unit>()
@@ -72,6 +77,18 @@ class InstructionTestBuilder {
         }
         fun sp(value: Int) = register("sp", value.toDouble())
         fun ra(value: Int) = register("ra", value.toDouble())
+
+        /** Add a secondary device on the test network. */
+        fun addDevice(id: Long, properties: Map<Int, Double>, dataConnected: Boolean = true) {
+            this@InstructionTestBuilder.extraDevices[id] = DeviceState(properties, emptyMap())
+            if (dataConnected) this@InstructionTestBuilder.dataConnectedExtra.add(id)
+            else this@InstructionTestBuilder.softConnectedExtra.add(id)
+        }
+
+        /** Pre-set a channel value on the shared network. */
+        fun networkChannel(channelIndex: Int, value: Double) {
+            this@InstructionTestBuilder.networkChannels[channelIndex] = value
+        }
     }
 
     fun setup(block: SetupContext.() -> Unit) = SetupContext().apply(block)
@@ -85,13 +102,17 @@ class InstructionTestBuilder {
 
     fun exec(instruction: Instruction, vararg args: IValue) {
         val action = instruction.action ?: error("Instruction '${instruction.name}' is not implemented")
-        steps += { builder -> InstructionContext(builder, deviceId).action(args.toList().toTypedArray()) }
+        steps += { builder ->
+            val (netId, net) = builder.networkFor(deviceId) ?: Pair(TEST_NETWORK_ID, Network.single(setOf(deviceId)))
+            InstructionContext(builder, netId, net, deviceId).action(args.toList().toTypedArray())
+        }
     }
 
     // --- Assertions ---
 
     @InstructionTestDsl
-    inner class AssertContext(
+    class AssertContext(
+        private val state: SimulationState,
         private val programState: Ic10ProgramAspect.State,
         private val memoryState: Ic10DeviceMemoryAspect.State
     ) {
@@ -115,6 +136,24 @@ class InstructionTestBuilder {
         fun notOnFire() = assertFalse(programState.onFire, "Expected device not to be on fire")
         fun instructionIndex(expected: Int) =
             assertEquals(expected, programState.instructionIndex, "Instruction index")
+
+        fun deviceProperty(deviceId: Long, propertyId: Int, expected: Double) {
+            val actual = state.devices[deviceId]?.properties?.get(propertyId)
+                ?: error("Device $deviceId or property $propertyId not found")
+            assertEquals(expected, actual, "Device $deviceId property $propertyId")
+        }
+
+        fun networkChannel(channelIndex: Int, expected: Double) {
+            val actual = state.networks[TEST_NETWORK_ID]?.channels?.get(channelIndex)
+                ?: error("Network or channel $channelIndex not found")
+            assertEquals(expected, actual, "Channel $channelIndex")
+        }
+
+        fun deviceSlot(slotName: String, expectedId: Long) {
+            val slot = DeviceSlots.get(slotName) ?: error("Unknown slot: $slotName")
+            val actual = programState.devices[slot] ?: 0L
+            assertEquals(expectedId, actual, "Device slot $slotName")
+        }
     }
 
     fun assert(block: AssertContext.() -> Unit) {
@@ -125,7 +164,7 @@ class InstructionTestBuilder {
             val memoryState = state.devices[deviceId]
                 ?.aspects?.get(Ic10MemoryAspect.State::class) as? Ic10DeviceMemoryAspect.State
                 ?: error("Memory state not found")
-            AssertContext(programState, memoryState).apply(block)
+            AssertContext(state, programState, memoryState).apply(block)
         }
     }
 
@@ -135,13 +174,12 @@ class InstructionTestBuilder {
         val programState = Ic10ProgramAspect.State(
             registers = Registers.all.associateWith { registers[it] ?: 0.0 },
             devices = DeviceSlots.all.associateWith { deviceSlotIds[it] ?: 0L },
-            stack = Array(STACK_SIZE) { 0.0 }
         )
         val memoryState = Ic10DeviceMemoryAspect.State(
             contents = stackContents.copyOf()
         )
 
-        val deviceState = DeviceState(
+        val mainDevice = DeviceState(
             properties = emptyMap(),
             aspects = mapOf(
                 Ic10ProgramAspect.State::class to programState,
@@ -149,10 +187,19 @@ class InstructionTestBuilder {
             )
         )
 
-        var state = SimulationState(devices = mapOf(deviceId to deviceState))
+        val initialChannels = (0..7).associateWith { networkChannels[it] ?: 0.0 }
+
+        val allData = (dataConnectedExtra + deviceId)
+        val network = Network(dataConnected = allData, softConnected = softConnectedExtra)
+        val deviceNetworks = (allData + softConnectedExtra).associateWith { Pair(TEST_NETWORK_ID, network) }
+
+        var state = SimulationState(
+            devices = mapOf(deviceId to mainDevice) + extraDevices,
+            networks = mapOf(TEST_NETWORK_ID to NetworkState(initialChannels))
+        )
 
         for (step in steps) {
-            val builder = SimulationStateChangeBuilder(state)
+            val builder = SimulationStateChangeBuilder(state, deviceNetworks)
             step(builder)
             state = builder.stateChange.perform(state)
         }

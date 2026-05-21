@@ -5,6 +5,7 @@ import com.intellij.ui.components.JBTextField
 import com.niikelion.ic10_language.logic.*
 import com.niikelion.ic10_language.logic.devices.DeviceStateChangeBuilder
 import com.niikelion.ic10_language.logic.state.*
+import com.niikelion.ic10_language.logic.devices.DeviceState
 import com.niikelion.ic10_language.ui.swing.SwingBuilder
 import com.niikelion.ic10_language.ui.swing.fillWidth
 import com.niikelion.ic10_language.ui.swing.jb.label
@@ -84,41 +85,74 @@ class Ic10ProgramAspect(
             }
         }
     }
+    private fun State.Change.Builder.executeOneInstruction(
+        state: SimulationStateChangeBuilder,
+        deviceId: Long,
+        aspect: Ic10ProgramAspect,
+        device: DeviceStateChangeBuilder
+    ) {
+        if (waitingFor > 0) return
+        aspect.lineNumberPropertyId?.also { jump(device.property(it).toInt()) }
+        if (isOnFire) return
+        val line = aspect.code.lines.elementAtOrNull(instructionIndex)
+        val action = line?.instruction?.action
+        try {
+            if (action != null) {
+                val args = line.args
+                    .map { it.resolve(this) ?: throw Exception("Error resolving $it") }
+                    .toTypedArray()
+                val (netId, net) = state.networkFor(deviceId) ?: Pair(0L, Network.single(setOf(deviceId)))
+                InstructionContext(state, netId, net, deviceId).action(args)
+            }
+            jump((instructionIndex + 1) % 128)
+        } catch (_: Throwable) {
+            lightOnFire()
+        }
+        aspect.errorPropertyId?.also { device.setProperty(it, if (isOnFire) 1.0 else 0.0) }
+        aspect.lineNumberPropertyId?.also { device.setProperty(it, instructionIndex.toDouble()) }
+    }
+
     override fun tick(state: SimulationStateChangeBuilder, deviceId: Long) {
         state.device(deviceId).alsoLet {
+            val device = this
             aspect<State, State.Change.Builder, Unit> {
                 repeat(128) {
-                    if (waitingFor > 0) return@repeat
-
-                    // sync internal state with device properties if present
-                    lineNumberPropertyId?.also { jump(property(it).toInt()) }
-
-                    if (isOnFire) return@aspect
-
-                    val line = code.lines.elementAtOrNull(instructionIndex)
-                    val action = line?.instruction?.action
-
-                    try {
-                        if (action != null) {
-                            val args =
-                                line.args.map { it.resolve(this) ?: throw Exception("Error resolving $it") }
-                                    .toTypedArray()
-                            InstructionContext(state, deviceId)
-                                .action(args)
-                        }
-                        jump((instructionIndex + 1) % 128)
-                    } catch (_: Throwable) {
-                        lightOnFire()
-                        //TODO: report error, maybe by callback?
-                    }
-                    // if present, sync device properties with internal state
-                    errorPropertyId?.also { setProperty(it, if (isOnFire) 1.0 else 0.0) }
-                    lineNumberPropertyId?.also { setProperty(it, instructionIndex.toDouble()) }
+                    executeOneInstruction(state, deviceId, this@Ic10ProgramAspect, device)
                 }
-
-                if (waitingFor > 0)
-                    decrementWaitFor()
+                if (waitingFor > 0) decrementWaitFor()
             }
+        }
+    }
+
+    override fun tickEnd(state: SimulationStateChangeBuilder, deviceId: Long) {
+        state.device(deviceId).alsoLet {
+            aspect<State, State.Change.Builder, Unit> {
+                if (waitingFor > 0) decrementWaitFor()
+            }
+        }
+    }
+
+    fun step(
+        deviceId: Long,
+        initial: SimulationState,
+        deviceNetworks: Map<Long, Pair<Long, Network>>
+    ): Sequence<SimulationState.StateChange> = sequence {
+        var current = initial
+        var slot = 0
+        while (slot < 128) {
+            val change = current.change(deviceNetworks) {
+                val simBuilder = this
+                device(deviceId).alsoLet {
+                    val devBuilder = this
+                    aspect<State, State.Change.Builder, Unit> {
+                        executeOneInstruction(simBuilder, deviceId, this@Ic10ProgramAspect, devBuilder)
+                    }
+                }
+            }
+            yield(change)
+            current = change.perform(current)
+            slot++
+            if ((current.devices[deviceId]?.aspect<State>()?.waitingFor ?: 0) > 0) break
         }
     }
 
@@ -132,7 +166,7 @@ class Ic10ProgramAspect(
         val registers: Map<Register, Double> = Registers.all.associateWith { 0.0 },
         val devices: Map<DeviceSlot, Long> = DeviceSlots.all.associateWith { 0 },
         val onFire: Boolean = false,
-        val instructionIndex: Int = 1,
+        val instructionIndex: Int = 0,
         val waitingFor: Int = 0
     ): DeviceAspect.State {
         override fun change(): Change.Builder = Change.Builder(this)

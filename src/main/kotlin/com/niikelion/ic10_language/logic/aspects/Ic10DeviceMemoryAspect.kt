@@ -26,7 +26,7 @@ class Ic10DeviceMemoryAspect(
     override val size: Int
 ): Ic10MemoryAspect {
     override val name = "Device Memory"
-    override val stateClass: KClass<out DeviceAspect.State> = State::class
+    override val stateClass: KClass<out DeviceAspect.State> = Ic10MemoryAspect.State::class
 
     override fun renderDebuggerView(
         flow: StateFlow<DeviceAspect.State>,

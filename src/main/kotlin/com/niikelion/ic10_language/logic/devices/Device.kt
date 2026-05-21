@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.ui.components.JBTextField
 import com.niikelion.ic10_language.logic.DeviceDataRegistry
 import com.niikelion.ic10_language.logic.Macros
+import com.niikelion.ic10_language.logic.Network
 import com.niikelion.ic10_language.logic.StationeersEnumData
 import com.niikelion.ic10_language.logic.aspects.DeviceAspect
 import com.niikelion.ic10_language.logic.state.*
@@ -55,7 +56,8 @@ open class Device(
     val properties: Map<Int, PropertyDefinition>,
     val aspects: List<AspectEntry>,
     val prefabId: Long,
-    val customName: String? = null
+    val customName: String? = null,
+    val networkId: Long = 0L
 ) {
     companion object {
         val properties by lazy {
@@ -64,15 +66,16 @@ open class Device(
         }
     }
 
-    constructor(id: Long, data: DeviceDataRegistry.Entry, aspects: List<AspectEntry>, customName: String? = null) : this(
+    constructor(id: Long, data: DeviceDataRegistry.Entry, aspects: List<AspectEntry>, customName: String? = null, networkId: Long = 0L) : this(
         id,
         data.logicInfo.properties,
         aspects,
         data.hash,
-        customName
+        customName,
+        networkId
     )
 
-    constructor(id: Long, cls: KClass<*>, aspects: List<AspectEntry>, customName: String? = null) : this(
+    constructor(id: Long, cls: KClass<*>, aspects: List<AspectEntry>, customName: String? = null, networkId: Long = 0L) : this(
         id,
         DeviceDataRegistry.deviceFor(cls) ?: DeviceDataRegistry.Entry(
             cls.simpleName!!,
@@ -80,11 +83,20 @@ open class Device(
             DeviceDataRegistry.LogicInfo(emptyMap())
         ),
         aspects,
-        customName
+        customName,
+        networkId
     )
 
     inline fun <reified T : DeviceAspect> aspect() = aspects.find { a -> a.type == T::class }?.value as? T
-    open fun tick(state: SimulationStateChangeBuilder) = aspects.forEach { it.value.tick(state, id) }
+
+    open fun tick(
+        current: SimulationState,
+        deviceNetworks: Map<Long, Pair<Long, Network>>
+    ): Sequence<SimulationState.StateChange> = sequence {
+        yield(current.change(deviceNetworks) { aspects.forEach { entry -> entry.value.tick(this, id) } })
+    }
+
+    open fun tickEnd(state: SimulationStateChangeBuilder) = aspects.forEach { it.value.tickEnd(state, id) }
     open val name get() = customName ?: this::class.simpleName ?: "UnknownDevice"
 
     open fun initialize(): DeviceState = DeviceState(
