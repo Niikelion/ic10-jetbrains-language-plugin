@@ -10,8 +10,9 @@ public interface Ic10Types {
 
   IElementType CHANNEL = new Ic10ElementType("CHANNEL");
   IElementType CHANNEL_NUMBER = new Ic10ElementType("CHANNEL_NUMBER");
-  IElementType CONSTANT = new Ic10ElementType("CONSTANT");
-  IElementType CONSTANT_NAME = new Ic10ElementType("CONSTANT_NAME");
+  IElementType ENUM = new Ic10ElementType("ENUM");
+  IElementType ENUM_NAME = new Ic10ElementType("ENUM_NAME");
+  IElementType ENUM_PROPERTY = new Ic10ElementType("ENUM_PROPERTY");
   IElementType LABEL = new Ic10ElementType("LABEL");
   IElementType LABEL_NAME = new Ic10ElementType("LABEL_NAME");
   IElementType LINE = new Ic10ElementType("LINE");
@@ -46,11 +47,14 @@ public interface Ic10Types {
       else if (type == CHANNEL_NUMBER) {
         return new Ic10ChannelNumberImpl(node);
       }
-      else if (type == CONSTANT) {
-        return new Ic10ConstantImpl(node);
+      else if (type == ENUM) {
+        return new Ic10EnumImpl(node);
       }
-      else if (type == CONSTANT_NAME) {
-        return new Ic10ConstantNameImpl(node);
+      else if (type == ENUM_NAME) {
+        return new Ic10EnumNameImpl(node);
+      }
+      else if (type == ENUM_PROPERTY) {
+        return new Ic10EnumPropertyImpl(node);
       }
       else if (type == LABEL) {
         return new Ic10LabelImpl(node);

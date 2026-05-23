@@ -16,7 +16,7 @@ class Ic10SyntaxHighlighter: SyntaxHighlighterBase() {
     companion object {
         val INSTRUCTION = createTextAttributesKey("IC10_INSTRUCTION", DefaultLanguageHighlighterColors.KEYWORD)
         val LABEL = createTextAttributesKey("IC10_LABEL", DefaultLanguageHighlighterColors.INSTANCE_FIELD)
-        val CONSTANT = createTextAttributesKey("IC10_CONSTANT", DefaultLanguageHighlighterColors.STATIC_FIELD)
+        val ENUM = createTextAttributesKey("IC10_ENUM", DefaultLanguageHighlighterColors.STATIC_FIELD)
         private val COMMENT = createTextAttributesKey("IC10_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
         private val NAME = createTextAttributesKey("IC10_NAME", DefaultLanguageHighlighterColors.IDENTIFIER)
         val NUMBER = createTextAttributesKey("IC10_NUMBER", DefaultLanguageHighlighterColors.NUMBER)
@@ -36,13 +36,9 @@ class Ic10SyntaxHighlighter: SyntaxHighlighterBase() {
     override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> {
         return when (tokenType) {
             Ic10Types.COMMENT -> COMMENT_KEYS
-
             Ic10Types.NAME -> NAME_KEYS
-
             Ic10Types.MACRO_CONTENT -> MACRO_KEYS
-
             Ic10Types.DECIMAL, Ic10Types.FLOAT, Ic10Types.HEXADECIMAL, Ic10Types.BINARY -> NUMBER_KEYS
-
             TokenType.BAD_CHARACTER -> BAD_CHARACTER_KEYS
             else -> EMPTY_KEYS
         }

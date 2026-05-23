@@ -19,6 +19,15 @@
 
   <change-notes><![CDATA[
     <ul>
+      <li><b>2.0</b>
+        <ul>
+          <li>IC10 debugger: run configurations, breakpoints, step-over, full-tick, and step-back via JetBrains XDebugger.</li>
+          <li>Simulation engine: complete IC10 instruction set, device and network model, stack memory, reagents and crafting support.</li>
+          <li>Stationpedia integration: all game devices and their logic properties loaded from live game data.</li>
+          <li>Enum syntax support: <code>LogicType.Activate</code> style values with highlighting, completions, and quick-docs.</li>
+          <li>Quick-docs for registers, device references, and enum values (including deprecation notices).</li>
+        </ul>
+      </li>
       <li><b>1.5</b> Improved quick-docs, added parameter info hints and formatting support.</li>
       <li><b>1.4</b> Updated compatible ide versions.</li>
       <li><b>1.3</b> Improved navigation.</li>
@@ -42,85 +51,101 @@
             extensions="ic10"
     />
     <lang.parserDefinition
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.Ic10ParserDefinition"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.Ic10ParserDefinition"
     />
     <lang.syntaxHighlighterFactory
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.annotations.Ic10SyntaxHighlighterFactory"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.annotations.Ic10SyntaxHighlighterFactory"
     />
     <annotator
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.annotations.Ic10Annotator"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.annotations.Ic10Annotator"
     />
     <codeInsight.lineMarkerProvider
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.annotations.Ic10NameSourceLineMarkerProvider"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.annotations.Ic10NameSourceLineMarkerProvider"
     />
     <codeInsight.lineMarkerProvider
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.annotations.Ic10DefinitionLineMarkerProvider"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.annotations.Ic10DefinitionLineMarkerProvider"
+    />
+    <codeInsight.parameterNameHints
+            implementationClass="com.niikelion.ic10_language.annotations.Ic10InlayParameterHintsProvider"
+            language="Ic10"
     />
     <completion.contributor
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.Ic10CompletionContributor"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.Ic10CompletionContributor"
     />
     <psi.referenceContributor
-      language="Ic10"
-      implementation="com.niikelion.ic10_language.Ic10ReferenceContributor"
+            language="Ic10"
+            implementation="com.niikelion.ic10_language.Ic10ReferenceContributor"
     />
     <lang.refactoringSupport
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.Ic10RefactoringSupportProvider"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.Ic10RefactoringSupportProvider"
     />
     <gotoSymbolContributor
-      implementation="com.niikelion.ic10_language.navigation.Ic10ChooseByNameContributor"
+            implementation="com.niikelion.ic10_language.navigation.Ic10ChooseByNameContributor"
     />
     <iconProvider
-      implementation="com.niikelion.ic10_language.psi.impl.Ic10NamedElementIconProvider"
+            implementation="com.niikelion.ic10_language.psi.elements.impl.Ic10NamedElementIconProvider"
     />
     <lang.psiStructureViewFactory
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.Ic10StructureViewFactory"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.Ic10StructureViewFactory"
     />
     <lang.commenter
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.Ic10Commenter"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.Ic10Commenter"
     />
     <lang.documentationProvider
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.Ic10DocumentationProvider"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.Ic10DocumentationProvider"
     />
     <lang.findUsagesProvider
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.navigation.Ic10FindUsagesProvider"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.navigation.Ic10FindUsagesProvider"
     />
     <statusBarWidgetFactory
-      id="Ic10.FileLimitsWidget"
-      implementation="com.niikelion.ic10_language.widgets.Ic10LimitsWidgetFactory"
+            id="Ic10.FileLimitsWidget"
+            implementation="com.niikelion.ic10_language.widgets.Ic10LimitsWidgetFactory"
     />
     <lang.formatter
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.formatting.Ic10FormattingModelBuilder"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.formatting.Ic10FormattingModelBuilder"
     />
     <enterHandlerDelegate
-      implementation="com.niikelion.ic10_language.formatting.Ic10EnterHandler"
+            implementation="com.niikelion.ic10_language.formatting.Ic10EnterHandler"
     />
     <codeInsight.parameterInfo
-      language="Ic10"
-      implementationClass="com.niikelion.ic10_language.annotations.Ic10ParameterInfoHandler"
+            language="Ic10"
+            implementationClass="com.niikelion.ic10_language.annotations.Ic10ParameterInfoHandler"
     />
     <platform.backend.documentation.psiTargetProvider
-      implementation="com.niikelion.ic10_language.documentation.InstructionDocumentationProvider"
+            implementation="com.niikelion.ic10_language.documentation.InstructionDocumentationProvider"
     />
     <platform.backend.documentation.psiTargetProvider
-      implementation="com.niikelion.ic10_language.documentation.MacroDocumentationProvider"
+            implementation="com.niikelion.ic10_language.documentation.MacroDocumentationProvider"
     />
     <platform.backend.documentation.psiTargetProvider
-      implementation="com.niikelion.ic10_language.documentation.LabelDocumentationProvider"
+            implementation="com.niikelion.ic10_language.documentation.LabelDocumentationProvider"
     />
     <platform.backend.documentation.psiTargetProvider
-      implementation="com.niikelion.ic10_language.documentation.SymbolDocumentationProvider"
+            implementation="com.niikelion.ic10_language.documentation.ReferenceNameDocumentationProvider"
+    />
+    <platform.backend.documentation.psiTargetProvider
+            implementation="com.niikelion.ic10_language.documentation.EnumDocumentationProvider"
+    />
+    <configurationType
+            implementation="com.niikelion.ic10_language.simulation.Ic10RunConfigurationType"
+    />
+    <programRunner
+            implementation="com.niikelion.ic10_language.simulation.debug.Ic10DebugProgramRunner"
+    />
+    <xdebugger.breakpointType
+            implementation="com.niikelion.ic10_language.simulation.debug.Ic10LineBreakpointType"
     />
   </extensions>
 </idea-plugin>

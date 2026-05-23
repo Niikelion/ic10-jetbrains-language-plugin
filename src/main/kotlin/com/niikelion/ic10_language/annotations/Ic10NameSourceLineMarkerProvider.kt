@@ -19,7 +19,7 @@ class Ic10NameSourceLineMarkerProvider: RelatedItemLineMarkerProvider() {
         if (element.elementType == Ic10Types.NAME) {
             val referenceParent = element.findParentOfType<Ic10ReferenceName>() ?: return
 
-            val targets = Ic10PsiUtils.findLabelsInFile(element.containingFile, referenceParent.name!!)
+            val targets = Ic10PsiUtils.findLabelsInFile(element.containingFile, referenceParent.name)
 
             if (targets.isEmpty()) return
 

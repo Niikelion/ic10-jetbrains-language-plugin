@@ -12,16 +12,22 @@ data class Macro(
     sealed class ParseResult {
         data class Success(val value: Long): ParseResult()
         data class Failure(val error: String): ParseResult()
+
+        val uncheckedValue get(): Long? = when (this) {
+            is Success -> value
+            is Failure -> null
+        }
     }
 
-    fun parse(macro: Ic10Macro): ParseResult = parser(macro.valueText)
+    fun parse(value: String): ParseResult = parser(value)
 }
 
 object Macros {
+    val hash = Macro("HASH", "Converts given string to numeric hash") { value ->
+        CRC32().apply { update(value.toByteArray()) }.value.let(Macro.ParseResult::Success)
+    }
     private val macros = arrayOf(
-        Macro("HASH", "Converts given string to numeric hash") { value ->
-            CRC32().apply { update(value.toByteArray()) }.value.let(Macro.ParseResult::Success)
-        },
+        hash,
         Macro("STR", "Packs up to 5 characters of given string into an integer") { value ->
             if (value.length > 5) Macro.ParseResult.Failure("Text exceeds 5 characters")
             else value.map { it.code.toLong() }.reduce { acc, i -> (acc shl 8) or i }.let(Macro.ParseResult::Success)
@@ -29,12 +35,13 @@ object Macros {
     ).associateBy(Macro::name)
 
     fun resolve(source: Ic10Macro): Macro? = macros[source.name]
+    fun get(name: String) = macros[name]
 }
 
 val Ic10Macro.name get(): String = macroName.text.substringBeforeLast("(")
 val Ic10Macro.valueText get(): String = macroValue.text.let { it.substring(1, it.length - 1) }
-fun Ic10Macro.parse() = Macros.resolve(this)?.parse(this)
-val Ic10Macro.value get() = when (val result = parse()) {
+fun Ic10Macro.parse() = Macros.resolve(this)?.parse(this.valueText)
+val Ic10Macro.intValue get() = when (val result = parse()) {
     is Macro.ParseResult.Success -> result.value
     else -> null
 }

@@ -8,10 +8,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.niikelion.ic10_language.psi.Ic10Types.*;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10MacroImpl extends ASTWrapperPsiElement implements Ic10Macro {
+public class Ic10MacroImpl extends com.niikelion.ic10_language.psi.elements.impl.Ic10MacroImpl implements Ic10Macro {
 
   public Ic10MacroImpl(@NotNull ASTNode node) {
     super(node);

@@ -8,7 +8,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.util.PsiTreeUtil
 import com.niikelion.ic10_language.documentation.ui.grayed
-import com.niikelion.ic10_language.instruction
 import com.niikelion.ic10_language.logic.Instruction
 import com.niikelion.ic10_language.psi.Ic10Operation
 import com.niikelion.ic10_language.ui.html.HtmlBuilder

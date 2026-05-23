@@ -4,8 +4,9 @@ package com.niikelion.ic10_language.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.niikelion.ic10_language.psi.elements.Ic10LabelElement;
 
-public interface Ic10Label extends Ic10NamedElement {
+public interface Ic10Label extends Ic10LabelElement {
 
   @NotNull
   Ic10LabelName getLabelName();

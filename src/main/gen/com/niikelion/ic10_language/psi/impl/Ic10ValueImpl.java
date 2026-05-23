@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.niikelion.ic10_language.psi.*;
+import com.niikelion.ic10_language.logic.IUnresolvedValue;
 
 public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
 
@@ -35,8 +36,8 @@ public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
 
   @Override
   @Nullable
-  public Ic10Constant getConstant() {
-    return findChildByClass(Ic10Constant.class);
+  public Ic10Enum getEnum() {
+    return findChildByClass(Ic10Enum.class);
   }
 
   @Override
@@ -55,6 +56,11 @@ public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
   @Nullable
   public Ic10ReferenceName getReferenceName() {
     return findChildByClass(Ic10ReferenceName.class);
+  }
+
+  @Override
+  public @Nullable IUnresolvedValue getValue() {
+    return Ic10PsiImplUtils.getValue(this);
   }
 
 }

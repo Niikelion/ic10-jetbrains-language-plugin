@@ -40,3 +40,11 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+.claude
+CLAUDE.md
+.intellijPlatform
+
+### Downloaded game data ###
+src/main/resources/data/enums.json
+src/main/resources/data/stationpedia.json

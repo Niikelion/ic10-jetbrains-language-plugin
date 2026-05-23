@@ -4,6 +4,7 @@ package com.niikelion.ic10_language.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
+import com.niikelion.ic10_language.logic.Instruction;
 
 public interface Ic10Operation extends PsiElement {
 
@@ -12,5 +13,11 @@ public interface Ic10Operation extends PsiElement {
 
   @NotNull
   List<Ic10Value> getValueList();
+
+  @Nullable String getDeclaredName();
+
+  @Nullable Ic10ReferenceName getDeclarationToken();
+
+  @Nullable Instruction getInstruction();
 
 }

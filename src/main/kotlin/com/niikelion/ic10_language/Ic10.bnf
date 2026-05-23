@@ -10,6 +10,8 @@
     elementTypeHolderClass="com.niikelion.ic10_language.psi.Ic10Types"
     elementTypeClass="com.niikelion.ic10_language.psi.Ic10ElementType"
     tokenTypeClass="com.niikelion.ic10_language.psi.Ic10TokenType"
+
+    psiImplUtilClass="com.niikelion.ic10_language.psi.Ic10PsiImplUtils"
 }
 
 ic10File ::= line_*
@@ -19,24 +21,41 @@ private line_ ::= (line|CRLF|COMMENT)
 line ::= (label | operation)
 
 label ::= labelName COLON {
-    mixin="com.niikelion.ic10_language.psi.impl.Ic10NamedElementImpl"
-    implements="com.niikelion.ic10_language.psi.Ic10NamedElement"
-}
-
-operation ::= operationName value*
-
-value ::= channel | macro | number | constant | referenceName
-constant ::= constantName DOT constantName
-channel ::= referenceName COLON channelNumber
-channelNumber ::= DECIMAL
-number ::= BINARY | DECIMAL | HEXADECIMAL | FLOAT
-macro ::= macroName macroValue MACRO_END
-macroName ::= MACRO_START
-macroValue ::= MACRO_CONTENT
-referenceName ::= NAME {
-    mixin="com.niikelion.ic10_language.psi.impl.Ic10NamedElementImpl"
-    implements="com.niikelion.ic10_language.psi.Ic10NamedElement"
+    mixin="com.niikelion.ic10_language.psi.elements.impl.Ic10LabelImpl"
+    implements="com.niikelion.ic10_language.psi.elements.Ic10LabelElement"
 }
 labelName ::= NAME
+
+operation ::= operationName value* {
+    methods=[getDeclaredName getDeclarationToken getInstruction]
+}
 operationName ::= NAME
-constantName ::= NAME
+
+value ::= channel | macro | number | enum | referenceName {
+    methods=[getValue]
+}
+channel ::= referenceName COLON channelNumber {
+    mixin="com.niikelion.ic10_language.psi.elements.impl.Ic10ChannelImpl"
+    implements="com.niikelion.ic10_language.psi.elements.Ic10ValueLikeElement"
+}
+channelNumber ::= DECIMAL
+macro ::= macroName macroValue MACRO_END {
+    mixin="com.niikelion.ic10_language.psi.elements.impl.Ic10MacroImpl"
+    implements="com.niikelion.ic10_language.psi.elements.Ic10ValueLikeElement"
+}
+macroName ::= MACRO_START
+macroValue ::= MACRO_CONTENT
+number ::= BINARY | DECIMAL | HEXADECIMAL | FLOAT {
+    mixin="com.niikelion.ic10_language.psi.elements.impl.Ic10NumberImpl"
+    implements="com.niikelion.ic10_language.psi.elements.Ic10ValueLikeElement"
+}
+enum ::= enumName DOT enumProperty {
+    mixin="com.niikelion.ic10_language.psi.elements.impl.Ic10EnumImpl"
+    implements="com.niikelion.ic10_language.psi.elements.Ic10ValueLikeElement"
+}
+enumName ::= NAME
+enumProperty ::= NAME
+referenceName ::= NAME {
+    mixin="com.niikelion.ic10_language.psi.elements.impl.Ic10ReferenceNameImpl"
+    implements="com.niikelion.ic10_language.psi.elements.Ic10ReferenceNameElement"
+}

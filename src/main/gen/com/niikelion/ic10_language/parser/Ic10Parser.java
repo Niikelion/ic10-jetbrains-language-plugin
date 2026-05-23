@@ -62,28 +62,40 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // constantName DOT constantName
-  public static boolean constant(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constant")) return false;
+  // enumName DOT enumProperty
+  public static boolean enum_$(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enum_$")) return false;
     if (!nextTokenIs(b, NAME)) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = constantName(b, l + 1);
+    r = enumName(b, l + 1);
     r = r && consumeToken(b, DOT);
-    r = r && constantName(b, l + 1);
-    exit_section_(b, m, CONSTANT, r);
+    r = r && enumProperty(b, l + 1);
+    exit_section_(b, m, ENUM, r);
     return r;
   }
 
   /* ********************************************************** */
   // NAME
-  public static boolean constantName(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "constantName")) return false;
+  public static boolean enumName(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumName")) return false;
     if (!nextTokenIs(b, NAME)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, NAME);
-    exit_section_(b, m, CONSTANT_NAME, r);
+    exit_section_(b, m, ENUM_NAME, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // NAME
+  public static boolean enumProperty(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumProperty")) return false;
+    if (!nextTokenIs(b, NAME)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, NAME);
+    exit_section_(b, m, ENUM_PROPERTY, r);
     return r;
   }
 
@@ -249,7 +261,7 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // channel | macro | number | constant | referenceName
+  // channel | macro | number | enum | referenceName
   public static boolean value(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "value")) return false;
     boolean r;
@@ -257,7 +269,7 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
     r = channel(b, l + 1);
     if (!r) r = macro(b, l + 1);
     if (!r) r = number(b, l + 1);
-    if (!r) r = constant(b, l + 1);
+    if (!r) r = enum_$(b, l + 1);
     if (!r) r = referenceName(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;

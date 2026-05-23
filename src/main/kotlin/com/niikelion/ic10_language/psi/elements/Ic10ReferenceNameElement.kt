@@ -1,0 +1,3 @@
+package com.niikelion.ic10_language.psi.elements
+
+interface Ic10ReferenceNameElement: Ic10NamedElement, Ic10ValueLikeElement, Ic10EntitySourceElement

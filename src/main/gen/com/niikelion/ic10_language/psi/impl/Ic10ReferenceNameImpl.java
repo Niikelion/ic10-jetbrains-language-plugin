@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10ReferenceNameImpl extends Ic10NamedElementImpl implements Ic10ReferenceName {
+public class Ic10ReferenceNameImpl extends com.niikelion.ic10_language.psi.elements.impl.Ic10ReferenceNameImpl implements Ic10ReferenceName {
 
   public Ic10ReferenceNameImpl(@NotNull ASTNode node) {
     super(node);
