@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.niikelion.ic10-plugin-jetbrains"
-version = "1.5"
+version = "2.0"
 
 repositories {
   mavenCentral()
@@ -64,14 +64,9 @@ tasks {
     dependsOn(downloadEnums, downloadStationpedia)
   }
 
-  signPlugin {
-    certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
-    privateKey.set(System.getenv("PRIVATE_KEY"))
-    password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
-  }
-
   publishPlugin {
     token.set(System.getenv("PUBLISH_TOKEN"))
+    hidden.set(true)
   }
 
   compileKotlin {

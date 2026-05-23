@@ -6,10 +6,6 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
-import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
@@ -17,9 +13,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
-import com.intellij.util.application
 import com.niikelion.ic10_language.Ic10FileType
-import com.niikelion.ic10_language.Ic10Icons
 import com.niikelion.ic10_language.Ic10PsiUtils
 import com.niikelion.ic10_language.logic.CompilationError
 import com.niikelion.ic10_language.logic.Context
@@ -30,10 +24,8 @@ import com.niikelion.ic10_language.logic.state.IChange
 import com.niikelion.ic10_language.logic.state.SimulationState
 import com.niikelion.ic10_language.logic.state.SnapshotStateChange
 import com.niikelion.ic10_language.psi.Ic10File
-import com.niikelion.ic10_language.utils.mapSync
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import java.io.File
 import java.io.OutputStream
 
@@ -53,22 +45,14 @@ private class Terminated: ProcessHandler() {
 @Service(Service.Level.PROJECT)
 class SimulationService(private val project: Project) {
     private val process = MutableStateFlow<SimulationProcess?>(null)
-    val processFlow = process.mapSync { if (it == null) null else SimulationProcessProxy(it.context, it.state.asStateFlow()) }
 
     private fun startNewProcess(context: Context): SimulationProcess {
         process.value?.run { stop() }
         return SimulationProcess(context).also {
             process.value = it
-            SimulatorWindow.get(project)?.also { window ->
-                window.isAvailable = true
-                window.show()
-            }
             it.addProcessListener(object: ProcessListener {
                 override fun processTerminated(event: ProcessEvent) {
                     process.value = null
-                    application.invokeLater {
-                        SimulatorWindow.get(project)?.isAvailable = false
-                    }
                 }
             })
         }
@@ -120,17 +104,15 @@ class SimulationService(private val project: Project) {
     }
 }
 
-class SimulationProcessProxy(val context: Context, val stateFlow: StateFlow<SimulationState>) {
-    override fun equals(other: Any?): Boolean = other is SimulationProcessProxy && other.context == context
-    override fun hashCode(): Int {
-        return context.hashCode()
-    }
-}
-
 class SimulationProcess(val context: Context): ProcessHandler() {
-    val state = MutableStateFlow(context.initialize())
+    private var simulationState: SimulationState = context.initialize()
+    private val _state = MutableStateFlow(simulationState)
+    val state: StateFlow<SimulationState> = _state
+    val currentState: SimulationState get() = simulationState
+
     private val history = mutableListOf<IChange<SimulationState>>()
     val canGoBack get() = history.isNotEmpty() || tickStart != null
+    val isInTick get() = stepIterator != null || tickStart != null
 
     private var tickStart: SimulationState? = null
     private var stepIterator: Iterator<SimulationState.StateChange>? = null
@@ -141,8 +123,8 @@ class SimulationProcess(val context: Context): ProcessHandler() {
 
     fun step(): Iterator<SimulationState.StateChange> {
         if (stepIterator == null) {
-            tickStart = state.value
-            stepIterator = context.step(state.value).iterator()
+            tickStart = simulationState
+            stepIterator = context.step(simulationState).iterator()
         }
         return stepIterator!!
     }
@@ -150,27 +132,49 @@ class SimulationProcess(val context: Context): ProcessHandler() {
     fun advanceStep() {
         val iter = step()
         if (iter.hasNext()) {
-            state.value = iter.next().perform(state.value)
+            simulationState = iter.next().perform(simulationState)
+            _state.value = simulationState
             if (!iter.hasNext()) finalizeStep()
-            else notifyTextAvailable("Step\n", ProcessOutputTypes.STDOUT)
         }
+    }
+
+    fun advanceStepSilent() {
+        val iter = step()
+        if (iter.hasNext()) {
+            simulationState = iter.next().perform(simulationState)
+            if (!iter.hasNext()) finalizeStepSilent()
+        }
+    }
+
+    fun publishCurrentState() {
+        _state.value = simulationState
     }
 
     private fun finalizeStep() {
         val start = tickStart ?: return
-        state.value = context.endTick(state.value).perform(state.value)
-        history.add(SnapshotStateChange(start, state.value))
+        simulationState = context.endTick(simulationState).perform(simulationState)
+        _state.value = simulationState
+        history.add(SnapshotStateChange(start, simulationState))
         stepIterator = null
         tickStart = null
         notifyTextAvailable("History at ${history.size}\n", ProcessOutputTypes.STDOUT)
     }
 
+    private fun finalizeStepSilent() {
+        val start = tickStart ?: return
+        simulationState = context.endTick(simulationState).perform(simulationState)
+        history.add(SnapshotStateChange(start, simulationState))
+        stepIterator = null
+        tickStart = null
+    }
+
     fun tick() {
-        val start = tickStart ?: state.value
+        val start = tickStart ?: simulationState
         val iter = step()
-        while (iter.hasNext()) state.value = iter.next().perform(state.value)
-        state.value = context.endTick(state.value).perform(state.value)
-        history.add(SnapshotStateChange(start, state.value))
+        while (iter.hasNext()) simulationState = iter.next().perform(simulationState)
+        simulationState = context.endTick(simulationState).perform(simulationState)
+        _state.value = simulationState
+        history.add(SnapshotStateChange(start, simulationState))
         stepIterator = null
         tickStart = null
         notifyTextAvailable("History at ${history.size}\n", ProcessOutputTypes.STDOUT)
@@ -180,17 +184,20 @@ class SimulationProcess(val context: Context): ProcessHandler() {
         val ts = tickStart
         stepIterator = null
         if (ts != null) {
-            state.value = ts
+            simulationState = ts
+            _state.value = simulationState
             tickStart = null
         } else {
             val change = history.removeLastOrNull() ?: return
-            state.value = change.revert(state.value)
+            simulationState = change.revert(simulationState)
+            _state.value = simulationState
         }
         notifyTextAvailable("History at ${history.size}\n", ProcessOutputTypes.STDOUT)
     }
 
     fun stop() {
-        state.value = SimulationState()
+        simulationState = SimulationState()
+        _state.value = simulationState
         history.clear()
         tickStart = null
         stepIterator = null
@@ -202,27 +209,4 @@ class SimulationProcess(val context: Context): ProcessHandler() {
 
     override fun detachIsDefault(): Boolean = false
     override fun getProcessInput(): OutputStream? = null
-}
-
-class StepSimulationAction(
-    private val process: SimulationProcess
-): AnAction("Step", "Executes one IC10 instruction", AllIcons.Actions.TraceInto) {
-    override fun actionPerformed(event: AnActionEvent) = process.advanceStep()
-}
-
-class TickSimulationAction(
-    private val process: SimulationProcess
-): AnAction("Tick", "Computes next full tick of the simulation", Ic10Icons.Step) {
-    override fun actionPerformed(event: AnActionEvent) = process.tick()
-}
-
-class StepBackSimulationAction(
-    private val process: SimulationProcess
-): AnAction("Step Back", "Goes back to the beginning of the current tick, or to the previous tick", Ic10Icons.StepBack) {
-    override fun actionPerformed(event: AnActionEvent) = process.stepBack()
-    override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = process.canGoBack
-    }
-
-    override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }

@@ -1,6 +1,7 @@
 package com.niikelion.ic10_language.logic
 
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.logic.devices.PropertyDefinition
 import kotlin.reflect.KClass
@@ -31,21 +32,40 @@ data class StationeersEnumData(
 
 data class StationeersRegistryData(
     val scriptCommands: Map<String, StationeersScriptCommand>,
-    val pages: List<StationpediaPage>
+    val pages: List<StationpediaPage>,
+    val reagents: Map<String, StationeersReagent> = emptyMap()
 ) {
     data class StationeersScriptCommand(
         val desc: String,
         val example: String
     )
 
+    data class StationeersReagent(
+        val Hash: Long,
+        val Unit: String,
+        val Sources: Map<String, Double>?
+    )
+
     data class StationpediaPage(
         val Key: String,
         val PrefabName: String?,
         val PrefabHash: Long?,
-        val LogicInfo: StationeersLogicInfo?
+        val LogicInfo: StationeersLogicInfo?,
+        val ResourceConsumer: StationeersResourceConsumer?,
+        val Device: StationeersDeviceInfo?
     ) {
         data class StationeersLogicInfo(
             val LogicTypes: Map<String, String>
+        )
+        data class StationeersResourceConsumer(
+            val ConsumedResources: List<String>,
+            val ProcessedReagents: List<Long>
+        )
+        data class StationeersDeviceInfo(
+            val Fabricator: StationneersFabricator?
+        )
+        data class StationneersFabricator(
+            val Recipes: Map<String, JsonObject>?
         )
     }
 

@@ -1,28 +1,11 @@
 package com.niikelion.ic10_language.logic.devices
 
-import com.intellij.openapi.Disposable
-import com.intellij.ui.components.JBTextField
 import com.niikelion.ic10_language.logic.DeviceDataRegistry
 import com.niikelion.ic10_language.logic.Macros
 import com.niikelion.ic10_language.logic.Network
 import com.niikelion.ic10_language.logic.StationeersEnumData
 import com.niikelion.ic10_language.logic.aspects.DeviceAspect
 import com.niikelion.ic10_language.logic.state.*
-import com.niikelion.ic10_language.ui.swing.SwingBuilder
-import com.niikelion.ic10_language.ui.swing.fillWidth
-import com.niikelion.ic10_language.ui.swing.jb.label
-import com.niikelion.ic10_language.ui.swing.jb.titledFoldout
-import com.niikelion.ic10_language.ui.swing.layout.Alignment
-import com.niikelion.ic10_language.ui.swing.layout.Justification
-import com.niikelion.ic10_language.ui.swing.layout.column
-import com.niikelion.ic10_language.ui.swing.layout.row
-import com.niikelion.ic10_language.ui.swing.maxWidth
-import com.niikelion.ic10_language.ui.swing.state.coroutineScope
-import com.niikelion.ic10_language.utils.mapSync
-import com.niikelion.ic10_language.utils.toPrettyString
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlin.reflect.KClass
 
 class PropertyDefinition(
@@ -32,6 +15,11 @@ class PropertyDefinition(
 ) {
     val defaultValue: Double = 0.0
 }
+
+data class DeviceInfo(
+    val prefabHash: Long,
+    val properties: Map<Int, PropertyDefinition>
+)
 
 //class SlotDefinition //TODO: do
 
@@ -91,9 +79,10 @@ open class Device(
 
     open fun tick(
         current: SimulationState,
-        deviceNetworks: Map<Long, Pair<Long, Network>>
+        deviceNetworks: Map<Long, Pair<Long, Network>>,
+        deviceDefinitions: Map<Long, DeviceInfo> = emptyMap()
     ): Sequence<SimulationState.StateChange> = sequence {
-        yield(current.change(deviceNetworks) { aspects.forEach { entry -> entry.value.tick(this, id) } })
+        yield(current.change(deviceNetworks, deviceDefinitions) { aspects.forEach { entry -> entry.value.tick(this, id) } })
     }
 
     open fun tickEnd(state: SimulationStateChangeBuilder) = aspects.forEach { it.value.tickEnd(state, id) }
@@ -112,40 +101,6 @@ open class Device(
         },
         aspects.associate { Pair(it.value.stateClass, it.value.initialize()) }
     )
-
-    open fun renderDebuggerView(flow: StateFlow<DeviceState>, scope: Disposable) = SwingBuilder().column {
-        if (properties.isNotEmpty()) {
-            titledFoldout("Properties") {
-                column {
-                    properties.forEach { (k, v) ->
-                        row({ align(Alignment.CENTER); justify(Justification.FILL) }) {
-                            label("${v.name}: ")
-                            element {
-                                JBTextField((flow.value.properties[k] ?: 0.0).toPrettyString()).also {
-                                    it.isEditable = false
-                                    it.isEnabled = false
-                                    it.maxWidth(100)
-                                    it.fillWidth()
-                                    flow.onEach { state ->
-                                        it.text = (state.properties[k] ?: 0.0).toPrettyString()
-                                    }.launchIn(scope.coroutineScope())
-                                }
-                            }
-                        }
-                    }
-                }.also { it.maxWidth(250) }
-            }
-        }
-        aspects.forEach { aspect ->
-            val aspectView = aspect.value.renderDebuggerView(flow.mapSync { device ->
-                device.aspects[aspect.value.stateClass]!!
-            }, scope)
-
-            aspectView?.also { view ->
-                titledFoldout(aspect.value.name) { view }
-            }
-        }
-    }
 
     class AspectEntry(val type: KClass<out DeviceAspect>, val value: DeviceAspect) {
         companion object {
@@ -185,8 +140,14 @@ class DeviceStateChangeBuilder(
         return aspects.computeIfAbsent(stateClass) { state.change() }
     }
 
+    fun aspectOrNull(stateClass: KClass<out DeviceAspect.State>): DeviceAspect.State.Change.Builder? =
+        previousState.aspects[stateClass]?.let { state -> aspects.computeIfAbsent(stateClass) { state.change() } }
+
     inline fun <reified S: DeviceAspect.State, reified B: DeviceAspect.State.Change.Builder> aspect() =
         aspect(S::class) as? B ?: throw IllegalArgumentException("Aspect state change builder type missmatch")
+
+    inline fun <reified S: DeviceAspect.State, reified B: DeviceAspect.State.Change.Builder> aspectOrNull() =
+        aspectOrNull(S::class) as? B
 
     fun <T> aspect(stateClass: KClass<out DeviceAspect.State>, builder: DeviceAspect.State.Change.Builder.() -> T): T {
         return aspect(stateClass).let(builder)

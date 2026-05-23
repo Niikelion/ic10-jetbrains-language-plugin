@@ -1,61 +1,19 @@
 package com.niikelion.ic10_language.logic.aspects
 
-import com.intellij.openapi.Disposable
-import com.intellij.ui.components.JBTextField
 import com.niikelion.ic10_language.logic.state.CompositeChange
 import com.niikelion.ic10_language.logic.state.CompositeChangeAction
 import com.niikelion.ic10_language.logic.state.SimpleChange
-import com.niikelion.ic10_language.ui.swing.SwingBuilder
-import com.niikelion.ic10_language.ui.swing.fillWidth
-import com.niikelion.ic10_language.ui.swing.jb.label
-import com.niikelion.ic10_language.ui.swing.layout.Alignment
-import com.niikelion.ic10_language.ui.swing.layout.Justification
-import com.niikelion.ic10_language.ui.swing.layout.row
-import com.niikelion.ic10_language.ui.swing.layout.wrap
-import com.niikelion.ic10_language.ui.swing.maxWidth
-import com.niikelion.ic10_language.ui.swing.state.coroutineScope
 import com.niikelion.ic10_language.utils.toPrettyString
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import java.awt.Dimension
-import javax.swing.JComponent
 import kotlin.reflect.KClass
 
 class Ic10DeviceMemoryAspect(
     override val size: Int
 ): Ic10MemoryAspect {
     override val name = "Device Memory"
+    override val debuggerLabel = "{size = $size}"
+    override val debuggerType = "Double[]"
+    override val debuggerTableView = true
     override val stateClass: KClass<out DeviceAspect.State> = Ic10MemoryAspect.State::class
-
-    override fun renderDebuggerView(
-        flow: StateFlow<DeviceAspect.State>,
-        scope: Disposable
-    ): JComponent = SwingBuilder().wrap({ gap(4) }) {
-        val initialValue = flow.value
-        if (initialValue !is State) return@wrap
-
-        initialValue.contents.forEachIndexed { index, value ->
-            row({ align(Alignment.CENTER); justify(Justification.FILL) }) {
-                label("${index}:")
-                element {
-                    JBTextField(value.toPrettyString()).also {
-                        it.isEditable = false
-                        it.isEnabled = false
-                        it.maxWidth(100)
-                        it.fillWidth()
-                        flow.onEach { state ->
-                            if (state !is State) return@onEach
-                            it.text = state.contents[index].toPrettyString()
-                        }.launchIn(scope.coroutineScope())
-                    }
-                }
-            }.also {
-                it.maxWidth(160)
-                it.preferredSize = Dimension(160, it.preferredSize.height)
-            }
-        }
-    }
 
     override fun initialize(): State = State(
         contents = Array(size) { 0.0 }
@@ -65,6 +23,11 @@ class Ic10DeviceMemoryAspect(
         val contents: Array<Double>
     ): Ic10MemoryAspect.State {
         override fun change(): Change.Builder = Change.Builder(this)
+
+        override fun debuggerEntries(): List<Pair<String, Double>> = buildList {
+            add("size" to contents.size.toDouble())
+            contents.forEachIndexed { index, value -> add("[$index]" to value) }
+        }
 
         class Change(
             val contents: Map<Int, SimpleChange<Double>>

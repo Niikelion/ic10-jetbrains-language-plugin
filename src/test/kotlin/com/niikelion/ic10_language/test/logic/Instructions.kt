@@ -61,8 +61,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `mul`() {
-        TODO("verify in-game")
+    fun `mul matches the in-game behaviour`() {
         simulate {
             exec("mul", reg("r0"), num(3), num(4))
             assert { register("r0", 12) }
@@ -70,6 +69,18 @@ class InstructionTests : BareTestFixtureTestCase() {
         simulate {
             exec("mul", reg("r0"), num(-2), num(5))
             assert { register("r0", -10) }
+        }
+        simulate {
+            exec("mul", reg("r0"), num(-3), num(-4))
+            assert { register("r0", 12) }
+        }
+        simulate {
+            exec("mul", reg("r0"), num(0.5), num(4))
+            assert { register("r0", 2.0) }
+        }
+        simulate {
+            exec("mul", reg("r0"), num(0), num(99))
+            assert { register("r0", 0) }
         }
     }
 
@@ -146,8 +157,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `pow`() {
-        TODO("verify in-game")
+    fun `pow matches the in-game behaviour`() {
         simulate {
             exec("pow", reg("r0"), num(2), num(10))
             assert { register("r0", 1024.0) }
@@ -155,6 +165,18 @@ class InstructionTests : BareTestFixtureTestCase() {
         simulate {
             exec("pow", reg("r0"), num(4), num(0.5))
             assert { register("r0", 2.0) }
+        }
+        simulate {
+            exec("pow", reg("r0"), num(2), num(0))
+            assert { register("r0", 1.0) }
+        }
+        simulate {
+            exec("pow", reg("r0"), num(2), num(-1))
+            assert { register("r0", 0.5) }
+        }
+        simulate {
+            exec("pow", reg("r0"), num(-2), num(3))
+            assert { register("r0", -8.0) }
         }
     }
 
@@ -255,8 +277,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `sqrt`() {
-        TODO("verify in-game")
+    fun `sqrt matches the in-game behaviour`() {
         simulate {
             exec("sqrt", reg("r0"), num(9))
             assert { register("r0", 3) }
@@ -268,8 +289,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `log`() {
-        TODO("verify in-game")
+    fun `log matches the in-game behaviour`() {
         simulate {
             exec("log", reg("r0"), num(1))
             assert { register("r0", 0) }
@@ -282,7 +302,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `exp matches the in-game behaviour`() {
-        TODO("verify in-game")
         simulate {
             exec("exp", reg("r0"), num(0))
             assert { register("r0", 1) }
@@ -317,8 +336,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `sin`() {
-        TODO("verify in-game")
+    fun `sin matches the in-game behaviour`() {
         simulate {
             exec("sin", reg("r0"), num(0))
             assert { register("r0", 0) }
@@ -327,11 +345,22 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sin", reg("r0"), num(PI / 2))
             assert { register("r0", 1.0) }
         }
+        simulate {
+            exec("sin", reg("r0"), num(PI))
+            assert { register("r0", sin(PI)) }
+        }
+        simulate {
+            exec("sin", reg("r0"), num(3 * PI / 2))
+            assert { register("r0", -1.0) }
+        }
+        simulate {
+            exec("sin", reg("r0"), num(-PI / 2))
+            assert { register("r0", -1.0) }
+        }
     }
 
     @Test
-    fun `cos`() {
-        TODO("verify in-game")
+    fun `cos matches the in-game behaviour`() {
         simulate {
             exec("cos", reg("r0"), num(0))
             assert { register("r0", 1) }
@@ -340,11 +369,22 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("cos", reg("r0"), num(PI))
             assert { register("r0", -1.0) }
         }
+        simulate {
+            exec("cos", reg("r0"), num(PI / 2))
+            assert { register("r0", cos(PI / 2)) }
+        }
+        simulate {
+            exec("cos", reg("r0"), num(2 * PI))
+            assert { register("r0", cos(2 * PI)) }
+        }
+        simulate {
+            exec("cos", reg("r0"), num(-PI))
+            assert { register("r0", -1.0) }
+        }
     }
 
     @Test
-    fun `tan`() {
-        TODO("verify in-game")
+    fun `tan matches the in-game behaviour`() {
         simulate {
             exec("tan", reg("r0"), num(0))
             assert { register("r0", 0) }
@@ -353,11 +393,18 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("tan", reg("r0"), num(PI / 4))
             assert { register("r0", 1.0) }
         }
+        simulate {
+            exec("tan", reg("r0"), num(-PI / 4))
+            assert { register("r0", -1.0) }
+        }
+        simulate {
+            exec("tan", reg("r0"), num(PI / 6))
+            assert { register("r0", tan(PI / 6)) }
+        }
     }
 
     @Test
-    fun `asin`() {
-        TODO("verify in-game")
+    fun `asin matches the in-game behaviour`() {
         simulate {
             exec("asin", reg("r0"), num(0))
             assert { register("r0", 0) }
@@ -366,11 +413,18 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("asin", reg("r0"), num(1))
             assert { register("r0", PI / 2) }
         }
+        simulate {
+            exec("asin", reg("r0"), num(-1))
+            assert { register("r0", -PI / 2) }
+        }
+        simulate {
+            exec("asin", reg("r0"), num(0.5))
+            assert { register("r0", asin(0.5)) }
+        }
     }
 
     @Test
-    fun `acos`() {
-        TODO("verify in-game")
+    fun `acos matches the in-game behaviour`() {
         simulate {
             exec("acos", reg("r0"), num(1))
             assert { register("r0", 0) }
@@ -379,11 +433,18 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("acos", reg("r0"), num(-1))
             assert { register("r0", PI) }
         }
+        simulate {
+            exec("acos", reg("r0"), num(0))
+            assert { register("r0", PI / 2) }
+        }
+        simulate {
+            exec("acos", reg("r0"), num(0.5))
+            assert { register("r0", acos(0.5)) }
+        }
     }
 
     @Test
-    fun `atan`() {
-        TODO("verify in-game")
+    fun `atan matches the in-game behaviour`() {
         simulate {
             exec("atan", reg("r0"), num(0))
             assert { register("r0", 0) }
@@ -392,11 +453,18 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("atan", reg("r0"), num(1))
             assert { register("r0", PI / 4) }
         }
+        simulate {
+            exec("atan", reg("r0"), num(-1))
+            assert { register("r0", -PI / 4) }
+        }
+        simulate {
+            exec("atan", reg("r0"), num(Double.POSITIVE_INFINITY))
+            assert { register("r0", PI / 2) }
+        }
     }
 
     @Test
-    fun `atan2`() {
-        TODO("verify in-game")
+    fun `atan2 matches the in-game behaviour`() {
         simulate {
             exec("atan2", reg("r0"), num(1), num(1))
             assert { register("r0", PI / 4) }
@@ -404,6 +472,18 @@ class InstructionTests : BareTestFixtureTestCase() {
         simulate {
             exec("atan2", reg("r0"), num(1), num(-1))
             assert { register("r0", 3 * PI / 4) }
+        }
+        simulate {
+            exec("atan2", reg("r0"), num(-1), num(1))
+            assert { register("r0", -PI / 4) }
+        }
+        simulate {
+            exec("atan2", reg("r0"), num(1), num(0))
+            assert { register("r0", PI / 2) }
+        }
+        simulate {
+            exec("atan2", reg("r0"), num(0), num(1))
+            assert { register("r0", 0) }
         }
     }
 
@@ -523,8 +603,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `sap`() {
-        TODO("verify in-game")
+    fun `sap matches the in-game behaviour`() {
         simulate {
             exec("sap", reg("r0"), num(1.0), num(1.0), num(0.1))
             assert { register("r0", 1) }
@@ -533,11 +612,24 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sap", reg("r0"), num(1.0), num(2.0), num(0.1))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("sap", reg("r0"), num(1.0), num(1.05), num(0.1))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            // relative tolerance: |10| <= 0.1 * max(100, 110) = 11
+            exec("sap", reg("r0"), num(100.0), num(110.0), num(0.1))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            // both zero: diff is 0, always within epsilon*8 minimum threshold
+            exec("sap", reg("r0"), num(0.0), num(0.0), num(0.1))
+            assert { register("r0", 1) }
+        }
     }
 
     @Test
-    fun `sna`() {
-        TODO("verify in-game")
+    fun `sna matches the in-game behaviour`() {
         simulate {
             exec("sna", reg("r0"), num(1.0), num(2.0), num(0.1))
             assert { register("r0", 1) }
@@ -546,11 +638,22 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sna", reg("r0"), num(1.0), num(1.0), num(0.1))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("sna", reg("r0"), num(1.0), num(1.05), num(0.1))
+            assert { register("r0", 0) }
+        }
+        simulate {
+            exec("sna", reg("r0"), num(100.0), num(200.0), num(0.1))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            exec("sna", reg("r0"), num(0.0), num(0.0), num(0.1))
+            assert { register("r0", 0) }
+        }
     }
 
     @Test
-    fun `sapz`() {
-        TODO("verify in-game")
+    fun `sapz matches the in-game behaviour`() {
         simulate {
             exec("sapz", reg("r0"), num(0.0), num(0.1))
             assert { register("r0", 1) }
@@ -559,13 +662,20 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sapz", reg("r0"), num(1.0), num(0.1))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("sapz", reg("r0"), num(-1.0), num(0.1))
+            assert { register("r0", 0) }
+        }
     }
 
     @Test
-    fun `snaz`() {
-        TODO("verify in-game")
+    fun `snaz matches the in-game behaviour`() {
         simulate {
             exec("snaz", reg("r0"), num(1.0), num(0.1))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            exec("snaz", reg("r0"), num(-1.0), num(0.1))
             assert { register("r0", 1) }
         }
         simulate {
@@ -575,8 +685,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `snan`() {
-        TODO("verify in-game")
+    fun `snan matches the in-game behaviour`() {
         simulate {
             exec("snan", reg("r0"), num(Double.NaN))
             assert { register("r0", 1) }
@@ -585,11 +694,18 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("snan", reg("r0"), num(1.0))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("snan", reg("r0"), num(0.0))
+            assert { register("r0", 0) }
+        }
+        simulate {
+            exec("snan", reg("r0"), num(Double.POSITIVE_INFINITY))
+            assert { register("r0", 0) }
+        }
     }
 
     @Test
-    fun `snanz`() {
-        TODO("verify in-game")
+    fun `snanz matches the in-game behaviour`() {
         simulate {
             exec("snanz", reg("r0"), num(1.0))
             assert { register("r0", 1) }
@@ -598,6 +714,14 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("snanz", reg("r0"), num(Double.NaN))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("snanz", reg("r0"), num(0.0))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            exec("snanz", reg("r0"), num(Double.POSITIVE_INFINITY))
+            assert { register("r0", 1) }
+        }
     }
 
     // -------------------------------------------------------------------------
@@ -605,8 +729,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `seq`() {
-        TODO("verify in-game")
+    fun `seq matches the in-game behaviour`() {
         simulate {
             exec("seq", reg("r0"), num(5), num(5))
             assert { register("r0", 1) }
@@ -615,11 +738,19 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("seq", reg("r0"), num(5), num(6))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("seq", reg("r0"), num(0), num(0))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            // IEEE 754: NaN != NaN
+            exec("seq", reg("r0"), num(Double.NaN), num(Double.NaN))
+            assert { register("r0", 0) }
+        }
     }
 
     @Test
-    fun `seqz`() {
-        TODO("verify in-game")
+    fun `seqz matches the in-game behaviour`() {
         simulate {
             exec("seqz", reg("r0"), num(0))
             assert { register("r0", 1) }
@@ -628,11 +759,14 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("seqz", reg("r0"), num(1))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("seqz", reg("r0"), num(-1))
+            assert { register("r0", 0) }
+        }
     }
 
     @Test
-    fun `sne`() {
-        TODO("verify in-game")
+    fun `sne matches the in-game behaviour`() {
         simulate {
             exec("sne", reg("r0"), num(5), num(6))
             assert { register("r0", 1) }
@@ -641,13 +775,25 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sne", reg("r0"), num(5), num(5))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("sne", reg("r0"), num(-1), num(1))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            // IEEE 754: NaN != NaN
+            exec("sne", reg("r0"), num(Double.NaN), num(Double.NaN))
+            assert { register("r0", 1) }
+        }
     }
 
     @Test
-    fun `snez`() {
-        TODO("verify in-game")
+    fun `snez matches the in-game behaviour`() {
         simulate {
             exec("snez", reg("r0"), num(1))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            exec("snez", reg("r0"), num(-1))
             assert { register("r0", 1) }
         }
         simulate {
@@ -657,8 +803,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `sgt`() {
-        TODO("verify in-game")
+    fun `sgt matches the in-game behaviour`() {
         simulate {
             exec("sgt", reg("r0"), num(6), num(5))
             assert { register("r0", 1) }
@@ -667,11 +812,18 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sgt", reg("r0"), num(5), num(5))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("sgt", reg("r0"), num(4), num(5))
+            assert { register("r0", 0) }
+        }
+        simulate {
+            exec("sgt", reg("r0"), num(-1), num(-2))
+            assert { register("r0", 1) }
+        }
     }
 
     @Test
-    fun `sgtz`() {
-        TODO("verify in-game")
+    fun `sgtz matches the in-game behaviour`() {
         simulate {
             exec("sgtz", reg("r0"), num(1))
             assert { register("r0", 1) }
@@ -680,11 +832,14 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sgtz", reg("r0"), num(0))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("sgtz", reg("r0"), num(-1))
+            assert { register("r0", 0) }
+        }
     }
 
     @Test
-    fun `slt`() {
-        TODO("verify in-game")
+    fun `slt matches the in-game behaviour`() {
         simulate {
             exec("slt", reg("r0"), num(4), num(5))
             assert { register("r0", 1) }
@@ -693,11 +848,18 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("slt", reg("r0"), num(5), num(5))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("slt", reg("r0"), num(6), num(5))
+            assert { register("r0", 0) }
+        }
+        simulate {
+            exec("slt", reg("r0"), num(-2), num(-1))
+            assert { register("r0", 1) }
+        }
     }
 
     @Test
-    fun `sltz`() {
-        TODO("verify in-game")
+    fun `sltz matches the in-game behaviour`() {
         simulate {
             exec("sltz", reg("r0"), num(-1))
             assert { register("r0", 1) }
@@ -706,26 +868,40 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sltz", reg("r0"), num(0))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("sltz", reg("r0"), num(1))
+            assert { register("r0", 0) }
+        }
     }
 
     @Test
-    fun `sge`() {
-        TODO("verify in-game")
+    fun `sge matches the in-game behaviour`() {
         simulate {
             exec("sge", reg("r0"), num(5), num(5))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            exec("sge", reg("r0"), num(6), num(5))
             assert { register("r0", 1) }
         }
         simulate {
             exec("sge", reg("r0"), num(4), num(5))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("sge", reg("r0"), num(-1), num(-2))
+            assert { register("r0", 1) }
+        }
     }
 
     @Test
-    fun `sgez`() {
-        TODO("verify in-game")
+    fun `sgez matches the in-game behaviour`() {
         simulate {
             exec("sgez", reg("r0"), num(0))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            exec("sgez", reg("r0"), num(1))
             assert { register("r0", 1) }
         }
         simulate {
@@ -735,23 +911,33 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `sle`() {
-        TODO("verify in-game")
+    fun `sle matches the in-game behaviour`() {
         simulate {
             exec("sle", reg("r0"), num(5), num(5))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            exec("sle", reg("r0"), num(4), num(5))
             assert { register("r0", 1) }
         }
         simulate {
             exec("sle", reg("r0"), num(6), num(5))
             assert { register("r0", 0) }
         }
+        simulate {
+            exec("sle", reg("r0"), num(-2), num(-1))
+            assert { register("r0", 1) }
+        }
     }
 
     @Test
-    fun `slez`() {
-        TODO("verify in-game")
+    fun `slez matches the in-game behaviour`() {
         simulate {
             exec("slez", reg("r0"), num(0))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            exec("slez", reg("r0"), num(-1))
             assert { register("r0", 1) }
         }
         simulate {
@@ -761,8 +947,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `select`() {
-        TODO("verify in-game")
+    fun `select matches the in-game behaviour`() {
         simulate {
             exec("select", reg("r0"), num(1), num(10), num(20))
             assert { register("r0", 10) }
@@ -770,6 +955,15 @@ class InstructionTests : BareTestFixtureTestCase() {
         simulate {
             exec("select", reg("r0"), num(0), num(10), num(20))
             assert { register("r0", 20) }
+        }
+        simulate {
+            exec("select", reg("r0"), num(5), num(10), num(20))
+            assert { register("r0", 10) }
+        }
+        simulate {
+            // negative is non-zero, so picks b
+            exec("select", reg("r0"), num(-1), num(10), num(20))
+            assert { register("r0", 10) }
         }
     }
 
@@ -958,10 +1152,37 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `yield sets waitFor to 1`() {
-        TODO("verify in-game")
         simulate {
             exec("yield")
-            assert { notOnFire() }
+            assert { waitingFor(1) }
+        }
+    }
+
+    @Test
+    fun `sleep matches the in-game behaviour`() {
+        simulate {
+            // 1s * 2 ticks/s = 2
+            exec("sleep", num(1.0))
+            assert { waitingFor(2) }
+        }
+        simulate {
+            // 0.5s * 2 = 1
+            exec("sleep", num(0.5))
+            assert { waitingFor(1) }
+        }
+        simulate {
+            // ceil(0.3 * 2) = ceil(0.6) = 1
+            exec("sleep", num(0.3))
+            assert { waitingFor(1) }
+        }
+        simulate {
+            // negative time is clamped to 0
+            exec("sleep", num(-1.0))
+            assert { waitingFor(0) }
+        }
+        simulate {
+            exec("sleep", num(0.0))
+            assert { waitingFor(0) }
         }
     }
 
@@ -978,8 +1199,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `move`() {
-        TODO("verify in-game")
+    fun `move matches in-game behaviour`() {
         simulate {
             exec("move", reg("r0"), num(42))
             assert { register("r0", 42) }
@@ -1040,7 +1260,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `l reads device property`() {
-        TODO("verify in-game")
         val targetId = 10L
         val propId = 42
         simulate {

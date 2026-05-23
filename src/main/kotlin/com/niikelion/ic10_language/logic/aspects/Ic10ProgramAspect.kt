@@ -1,25 +1,10 @@
 package com.niikelion.ic10_language.logic.aspects
 
-import com.intellij.openapi.Disposable
-import com.intellij.ui.components.JBTextField
 import com.niikelion.ic10_language.logic.*
+import com.niikelion.ic10_language.logic.devices.DeviceInfo
 import com.niikelion.ic10_language.logic.devices.DeviceStateChangeBuilder
 import com.niikelion.ic10_language.logic.state.*
-import com.niikelion.ic10_language.logic.devices.DeviceState
-import com.niikelion.ic10_language.ui.swing.SwingBuilder
-import com.niikelion.ic10_language.ui.swing.fillWidth
-import com.niikelion.ic10_language.ui.swing.jb.label
-import com.niikelion.ic10_language.ui.swing.jb.titledFoldout
-import com.niikelion.ic10_language.ui.swing.layout.*
-import com.niikelion.ic10_language.ui.swing.maxWidth
-import com.niikelion.ic10_language.ui.swing.state.coroutineScope
 import com.niikelion.ic10_language.utils.alsoLet
-import com.niikelion.ic10_language.utils.toPrettyString
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import java.awt.Dimension
-import javax.swing.JComponent
 import kotlin.math.max
 import kotlin.reflect.KClass
 
@@ -36,55 +21,6 @@ class Ic10ProgramAspect(
     override val name = "Program Memory"
     override val stateClass: KClass<out DeviceAspect.State> = State::class
 
-    override fun renderDebuggerView(flow: StateFlow<DeviceAspect.State>, scope: Disposable): JComponent = SwingBuilder().column({
-        justify(Justification.FILL)
-    }) {
-        val initialValue = flow.value
-        if (initialValue !is State) return@column
-
-        row({ align(Alignment.CENTER); justify(Justification.FILL) }) {
-            label("Sleeping for(ticks)")
-            element {
-                JBTextField(initialValue.waitingFor.toString()).also {
-                    it.isEnabled = false
-                    it.isEditable = false
-                    it.maxWidth(200)
-                    it.fillWidth()
-                    flow.onEach { state ->
-                        if (state !is State) return@onEach
-                        it.text = state.waitingFor.toString()
-                    }.launchIn(scope.coroutineScope())
-                }
-            }
-        }
-        titledFoldout("Registers") {
-            wrap({ gap(4) }) {
-                Registers.all.forEach { register ->
-                    row({ align(Alignment.CENTER); justify(Justification.FILL) }) {
-                        val registerAliasesPart = Registers
-                            .aliasesFor(register)
-                            .let { if (it.isEmpty()) "" else "(${it.joinToString(", ")})" }
-                        label("${register.name}${registerAliasesPart}:")
-                        element {
-                            JBTextField((initialValue.registers[register] ?: 0.0).toPrettyString()).also {
-                                it.isEditable = false
-                                it.isEnabled = false
-                                it.maxWidth(100)
-                                it.fillWidth()
-                                flow.onEach { state ->
-                                    if (state !is State) return@onEach
-                                    it.text = (state.registers[register] ?: 0.0).toPrettyString()
-                                }.launchIn(scope.coroutineScope())
-                            }
-                        }
-                    }.also {
-                        it.maxWidth(160)
-                        it.preferredSize = Dimension(160, it.preferredSize.height)
-                    }
-                }
-            }
-        }
-    }
     private fun State.Change.Builder.executeOneInstruction(
         state: SimulationStateChangeBuilder,
         deviceId: Long,
@@ -102,7 +38,7 @@ class Ic10ProgramAspect(
                     .map { it.resolve(this) ?: throw Exception("Error resolving $it") }
                     .toTypedArray()
                 val (netId, net) = state.networkFor(deviceId) ?: Pair(0L, Network.single(setOf(deviceId)))
-                InstructionContext(state, netId, net, deviceId).action(args)
+                InstructionContext(state, NetworkContext(netId, net, state, get(DeviceSlots.db)), deviceId).action(args)
             }
             jump((instructionIndex + 1) % 128)
         } catch (_: Throwable) {
@@ -135,12 +71,13 @@ class Ic10ProgramAspect(
     fun step(
         deviceId: Long,
         initial: SimulationState,
-        deviceNetworks: Map<Long, Pair<Long, Network>>
+        deviceNetworks: Map<Long, Pair<Long, Network>>,
+        deviceDefinitions: Map<Long, DeviceInfo> = emptyMap()
     ): Sequence<SimulationState.StateChange> = sequence {
         var current = initial
         var slot = 0
         while (slot < 128) {
-            val change = current.change(deviceNetworks) {
+            val change = current.change(deviceNetworks, deviceDefinitions) {
                 val simBuilder = this
                 device(deviceId).alsoLet {
                     val devBuilder = this
@@ -170,6 +107,13 @@ class Ic10ProgramAspect(
         val waitingFor: Int = 0
     ): DeviceAspect.State {
         override fun change(): Change.Builder = Change.Builder(this)
+
+        override fun debuggerEntries(): List<Pair<String, Double>> = registers.map { (register, value) ->
+            val aliases = Registers.aliasesFor(register)
+            val name = if (aliases.isEmpty()) register.name
+                else "${register.name} (${aliases.joinToString(", ")})"
+            name to value
+        }
 
         class Change(
             val registers: Map<Register, SimpleChange<Double>> = emptyMap(),

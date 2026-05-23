@@ -1,6 +1,7 @@
 package com.niikelion.ic10_language.test.logic
 
 import com.niikelion.ic10_language.logic.*
+import com.niikelion.ic10_language.logic.NetworkContext
 import com.niikelion.ic10_language.logic.Instructions
 import com.niikelion.ic10_language.logic.aspects.Ic10DeviceMemoryAspect
 import com.niikelion.ic10_language.logic.aspects.Ic10MemoryAspect
@@ -104,7 +105,7 @@ class InstructionTestBuilder {
         val action = instruction.action ?: error("Instruction '${instruction.name}' is not implemented")
         steps += { builder ->
             val (netId, net) = builder.networkFor(deviceId) ?: Pair(TEST_NETWORK_ID, Network.single(setOf(deviceId)))
-            InstructionContext(builder, netId, net, deviceId).action(args.toList().toTypedArray())
+            InstructionContext(builder, NetworkContext(netId, net, builder, deviceId), deviceId).action(args.toList().toTypedArray())
         }
     }
 
@@ -132,6 +133,8 @@ class InstructionTestBuilder {
         fun stackAt(address: Int, expected: Double) =
             assertEquals(expected, memoryState.contents[address], "Stack[$address]")
         fun stackAt(address: Int, expected: Number) = stackAt(address, expected.toDouble())
+        fun waitingFor(expected: Int) =
+            assertEquals(expected, programState.waitingFor, "waitingFor")
         fun onFire() = assertTrue(programState.onFire, "Expected device to be on fire")
         fun notOnFire() = assertFalse(programState.onFire, "Expected device not to be on fire")
         fun instructionIndex(expected: Int) =

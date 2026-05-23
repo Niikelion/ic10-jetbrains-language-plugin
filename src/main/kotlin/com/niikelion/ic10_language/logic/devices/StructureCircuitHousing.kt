@@ -26,8 +26,9 @@ class StructureCircuitHousing(id: Long, code: ProgramCode): Device(
 
     override fun tick(
         current: SimulationState,
-        deviceNetworks: Map<Long, Pair<Long, Network>>
-    ): Sequence<SimulationState.StateChange> = code.step(id, current, deviceNetworks)
+        deviceNetworks: Map<Long, Pair<Long, Network>>,
+        deviceDefinitions: Map<Long, DeviceInfo>
+    ): Sequence<SimulationState.StateChange> = code.step(id, current, deviceNetworks, deviceDefinitions)
 
     override fun initialize(): DeviceState {
         val source = super.initialize()

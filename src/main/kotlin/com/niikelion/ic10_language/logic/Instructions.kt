@@ -2,12 +2,20 @@ package com.niikelion.ic10_language.logic
 
 import com.niikelion.ic10_language.logic.aspects.*
 import com.niikelion.ic10_language.logic.aspects.Ic10ProgramAspect.Companion.TICK_PER_SECOND
+import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.logic.state.SimulationStateChangeBuilder
 import kotlin.math.*
 import kotlin.random.Random
 
 private val typeLabels = listOf("d?", "r?", "num")
 private fun select(cond: Boolean, ifTrue: Double = 1.0, ifFalse: Double = 0.0) = if (cond) ifTrue else ifFalse
+private fun aggregate(mode: Int, values: List<Double>): Double = when (mode) {
+    0 -> if (values.isEmpty()) 0.0 else values.sum() / values.size
+    1 -> values.sum()
+    2 -> values.minOrNull() ?: 0.0
+    3 -> values.maxOrNull() ?: 0.0
+    else -> 0.0
+}
 typealias InstructionAction = InstructionContext.(args: Array<IValue>) -> Unit
 
 private fun ap(a: Double, b: Double, c: Double): Boolean {
@@ -79,8 +87,7 @@ class Instruction(
 
 class InstructionContext(
     val global: SimulationStateChangeBuilder,
-    val networkId: Long,
-    val network: Network,
+    val network: NetworkContext,
     private val deviceId: Long
 ) {
     val self by lazy { global.device(deviceId) }
@@ -187,14 +194,12 @@ object Instructions {
         branch("bdnvl", "device d is not valid for a load instruction for property", listOf(targetDevice, propertyName, value("a")), relative = false, call = false) { args ->
             val targetId = program.getAsDeviceId(args[0])
             val property = program.getAsValue(args[1]).toInt()
-            val observerId = program.get(DeviceSlots.db)
-            !network.canAccessProperty(observerId, targetId, property)
+            !network.canReadProperty(targetId, property)
         },
         branch("bdnvs", "device d is not valid for a store instruction for property", listOf(targetDevice, propertyName, value("a")), relative = false, call = false) { args ->
             val targetId = program.getAsDeviceId(args[0])
             val property = program.getAsValue(args[1]).toInt()
-            val observerId = program.get(DeviceSlots.db)
-            !network.canAccessProperty(observerId, targetId, property)
+            !network.canWriteProperty(targetId, property)
         },
         branchDevice("bdse", "is set", call = false) { id -> id != 0L },
         branchDevice("bdseal", "device d is set", call = true) { id -> id != 0L },
@@ -359,16 +364,13 @@ object Instructions {
             when (val deviceArg = args[1]) {
                 is ChannelValue -> {
                     val slotDeviceId = program.get(deviceArg.slot)
-                    val (netId, _) = global.networkFor(slotDeviceId) ?: throw Exception("Device not on any network")
-                    program.set(result, global.network(netId).readChannel(deviceArg.channelIndex))
+                    val channels = network.channelsOf(slotDeviceId) ?: throw Exception("Device not on any network")
+                    program.set(result, channels.readChannel(deviceArg.channelIndex))
                 }
                 else -> {
                     val targetId = program.getAsDeviceId(deviceArg)
                     val property = program.getAsValue(args[2]).toInt()
-                    val observerId = program.get(DeviceSlots.db)
-                    if (!network.canAccessProperty(observerId, targetId, property))
-                        throw Exception("Device $targetId not accessible")
-                    program.set(result, global.device(targetId).property(property))
+                    program.set(result, network.device(targetId).property(property))
                 }
             }
         },
@@ -376,22 +378,39 @@ object Instructions {
             "lb",
             "Loads property from all devices with given typeHash and aggregates by batchMode: r = batchMode(findDevicesByType(typeHash).map(d -> d.property))",
             listOf(resultVariable, value("typeHash"), propertyName, batchMode)
-        ) { _ -> /* TODO: batch ops require network device enumeration */ },
+        ) { args ->
+            val result = args[0].asRegister
+            val typeHash = program.getAsValue(args[1]).toLong()
+            val property = program.getAsValue(args[2]).toInt()
+            val mode = program.getAsValue(args[3]).toInt()
+            program.set(result, aggregate(mode, network.devicesByType(typeHash).map { it.property(property) }))
+        },
         Instruction(
             "lbn",
             "Loads property from all devices with given typeHash and nameHash and aggregates by batchMode: r = batchMode(findDevicesByTypeAndName(typeHash, nameHash).map(d -> d.property))",
             listOf(resultVariable, value("typeHash"), value("nameHash"), propertyName, batchMode)
-        ) { _ -> },
+        ) { args ->
+            val result = args[0].asRegister
+            val typeHash = program.getAsValue(args[1]).toLong()
+            val nameHash = program.getAsValue(args[2]).toLong()
+            val property = program.getAsValue(args[3]).toInt()
+            val mode = program.getAsValue(args[4]).toInt()
+            program.set(result, aggregate(mode, network.devicesByTypeAndName(typeHash, nameHash).map { it.property(property) }))
+        },
+        /* TODO: implement */
         Instruction(
             "lbns",
             "Loads property from given slot index of all devices with given typeHash and nameHash and aggregates by batchMode: r = batchMode(findDevicesByTypeAndName(typeHash, nameHash).map(d -> d.slot[slotIndex].property))",
-            listOf(resultVariable, value("typeHash"), value("nameHash"), value("slotIndex"), slotPropertyName, batchMode)
-        ) { _ -> },
+            listOf(resultVariable, value("typeHash"), value("nameHash"), value("slotIndex"), slotPropertyName, batchMode),
+            action = null
+        ),
+        /* TODO: implement */
         Instruction(
             "lbs",
             "Loads property from given slot index of all devices with given typeHash and aggregates by batchMode: r = batchMode(findDevicesByType(typeHash).map(d -> d.slot[slotIndex].property))",
-            listOf(resultVariable, value("typeHash"), value("slotIndex"), slotPropertyName, batchMode)
-        ) { _ -> },
+            listOf(resultVariable, value("typeHash"), value("slotIndex"), slotPropertyName, batchMode),
+            action = null
+        ),
         Instruction(
             "ld",
             "Loads property from device indicated by id: r = getDevice(id).property",
@@ -400,19 +419,39 @@ object Instructions {
             val result = args[0].asRegister
             val targetId = program.getAsValue(args[1]).toLong()
             val property = program.getAsValue(args[2]).toInt()
-            val observerId = program.get(DeviceSlots.db)
-            if (!network.canAccessProperty(observerId, targetId, property))
-                throw Exception("Device $targetId not accessible")
-            program.set(result, global.device(targetId).property(property))
+            program.set(result, network.device(targetId).property(property))
         }.deprecate("Use l instead."),
         op("lerp", "a * c + (1 - c) * b") { a, b, c -> a * c + (1 - c) * b },
         op("log", "log(a)") { a -> ln(a) },
         Instruction("lr", "Loads given reagent count from device based on reagentMode(Contents(0) - currently in the device, Required(1) - missing from the recipe, Recipe(2) - required by the recipe): r = d.reagentMode.count(reagentId)", listOf(
             resultVariable, targetDevice, value("reagentMode"), value("reagentId")
-        )) { _ -> /* TODO: reagent/slot model not yet implemented */ },
+        )) { args ->
+            val result = args[0].asRegister
+            val deviceId = program.getAsDeviceId(args[1])
+            val mode = program.getAsValue(args[2]).toInt()
+            val reagentHash = program.getAsValue(args[3]).toLong()
+            val recipeHashPropId = Device.properties["RecipeHash"]
+            val quantity = when (mode) {
+                0 -> network.device(deviceId).crafting?.read(reagentHash) ?: 0.0
+                1 -> {
+                    val devicePrefabHash = global.prefabHash(deviceId) ?: 0L
+                    val selectedItem = recipeHashPropId?.let { network.device(deviceId).property(it).toLong() } ?: 0L
+                    val required = if (selectedItem != 0L) Reagents.recipeFor(devicePrefabHash, selectedItem)?.get(reagentHash) ?: 0.0 else 0.0
+                    maxOf(0.0, required - (network.device(deviceId).crafting?.read(reagentHash) ?: 0.0))
+                }
+                2 -> {
+                    val devicePrefabHash = global.prefabHash(deviceId) ?: 0L
+                    val selectedItem = recipeHashPropId?.let { network.device(deviceId).property(it).toLong() } ?: 0L
+                    if (selectedItem != 0L) Reagents.recipeFor(devicePrefabHash, selectedItem)?.get(reagentHash) ?: 0.0 else 0.0
+                }
+                else -> 0.0
+            }
+            program.set(result, quantity)
+        },
+        /* TODO: implement */
         Instruction("ls", "Loads property from given slot index of provided device: r = d.slot[slotIndex].property", listOf(
             resultVariable, targetDevice, value("slotIndex"), slotPropertyName
-        )) { _ -> },
+        ), action = null),
         op("max", "max of a or b") { a, b -> max(a, b) },
         op("min", "min of a or b") { a, b -> min(a, b) },
         op("mod", "a mod b(NOT the same as a % b)") { a, b -> if (a > 0 || b > 0) a.mod(b.absoluteValue) else a },
@@ -457,7 +496,7 @@ object Instructions {
         )) { args ->
             val deviceId = program.getAsDeviceId(args[0])
             val address = program.getAsValue(args[1]).toInt()
-            val value = program.getAsValue(args[0])
+            val value = program.getAsValue(args[2])
 
             global.device(deviceId).memory.write(address, value)
         },
@@ -466,14 +505,20 @@ object Instructions {
         ), deprecationMessage = "Use put instead.") { args ->
             val deviceId = program.getAsValue(args[0]).toLong()
             val address = program.getAsValue(args[1]).toInt()
-            val value = program.getAsValue(args[0])
+            val value = program.getAsValue(args[2])
 
             global.device(deviceId).memory.write(address, value)
         },
         opNoArgs("rand", "random value x, so that 0 <= x < 1") { Random.nextDouble() },
         Instruction("rmap", "Finds id of item that gives given reagent when placed into the machine, for example for Autolathe and id of Iron it will output id of ItemIronIngot", listOf(
             resultVariable, targetDevice, value("reagentId")
-        )) { _ -> },
+        )) { args ->
+            val result = args[0].asRegister
+            val deviceId = program.getAsDeviceId(args[1])
+            val reagentHash = program.getAsValue(args[2]).toLong()
+            val devicePrefabHash = global.prefabHash(deviceId) ?: throw Exception("Device $deviceId not found")
+            program.set(result, (Reagents.findSourcePrefabHash(devicePrefabHash, reagentHash) ?: 0L).toDouble())
+        },
         op("round", "a rounded to the nearest integer") { a -> round(a) },
         Instruction(
             "s",
@@ -484,25 +529,34 @@ object Instructions {
                 is ChannelValue -> {
                     val slotDeviceId = program.get(deviceArg.slot)
                     val value = program.getAsValue(args[1])
-                    val (netId, _) = global.networkFor(slotDeviceId) ?: throw Exception("Device not on any network")
-                    global.network(netId).writeChannel(deviceArg.channelIndex, value)
+                    val channels = network.channelsOf(slotDeviceId) ?: throw Exception("Device not on any network")
+                    channels.writeChannel(deviceArg.channelIndex, value)
                 }
                 else -> {
                     val target = program.getAsDeviceId(deviceArg)
                     val property = program.getAsValue(args[1]).toInt()
                     val value = program.getAsValue(args[2])
-                    val observerId = program.get(DeviceSlots.db)
-                    if (!network.canAccessProperty(observerId, target, property))
-                        throw Exception("Device $target not accessible")
-                    global.device(target).setProperty(property, value)
+                    network.device(target).setProperty(property, value)
                 }
             }
         },
         op("sap", "1 if abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8), 0 otherwise") { a, b, c -> select(ap(a, b, c)) },
         op("sapz", "1 if abs(a) <= max(b * abs(a), epsilon * 8), 0 otherwise") { a, b -> select(ap(a, 0.0, b)) },
-        Instruction("sb", "Writes value to property of all devices with given typeHash", listOf(value("typeHash"), propertyName, value("value"))) { _ -> /* TODO: batch ops */ },
-        Instruction("sbn", "Writes value to property of all devices with given typeHash and nameHash", listOf(value("typeHash"), value("nameHash"), propertyName, value("value"))) { _ -> },
-        Instruction("sbs", "Writes value to property of given slot on all devices with given typeHash", listOf(value("typeHash"), value("slotIndex"), slotPropertyName, value("value"))) { _ -> },
+        Instruction("sb", "Writes value to property of all devices with given typeHash", listOf(value("typeHash"), propertyName, value("value"))) { args ->
+            val typeHash = program.getAsValue(args[0]).toLong()
+            val property = program.getAsValue(args[1]).toInt()
+            val value = program.getAsValue(args[2])
+            network.devicesByType(typeHash).forEach { it.setProperty(property, value) }
+        },
+        Instruction("sbn", "Writes value to property of all devices with given typeHash and nameHash", listOf(value("typeHash"), value("nameHash"), propertyName, value("value"))) { args ->
+            val typeHash = program.getAsValue(args[0]).toLong()
+            val nameHash = program.getAsValue(args[1]).toLong()
+            val property = program.getAsValue(args[2]).toInt()
+            val value = program.getAsValue(args[3])
+            network.devicesByTypeAndName(typeHash, nameHash).forEach { it.setProperty(property, value) }
+        },
+        /* TODO: implement */
+        Instruction("sbs", "Writes value to property of given slot on all devices with given typeHash", listOf(value("typeHash"), value("slotIndex"), slotPropertyName, value("value")), action = null),
         Instruction(
             "sd",
             "Writes value to property of the device indicated by id: getDevice(id).property = value",
@@ -511,10 +565,7 @@ object Instructions {
             val target = program.getAsValue(args[0]).toLong()
             val property = program.getAsValue(args[1]).toInt()
             val value = program.getAsValue(args[2])
-            val observerId = program.get(DeviceSlots.db)
-            if (!network.canAccessProperty(observerId, target, property))
-                throw Exception("Device $target not accessible")
-            global.device(target).setProperty(property, value)
+            network.device(target).setProperty(property, value)
         }.deprecate("Use s instead"),
         Instruction("sdns", "r = 1 if device d is not set, 0 otherwise", listOf(resultVariable, targetDevice)) { args ->
             val target = args[0].asRegister
@@ -556,7 +607,8 @@ object Instructions {
         op("sqrt", "sqrt(a)") { a -> sqrt(a) },
         op("sra", "a >> b, vacated bits are filled with a copy of the sign bit") { a, b -> (a.toLong() shr b.toInt()).toDouble() },
         op("srl", "a >> b") { a, b -> (a.toValueBits() ushr b.toInt()).toDouble() },
-        Instruction("ss", "Writes value to property of given slot on the provided device", listOf(targetDevice, value("slotIndex"), slotPropertyName, value("value"))) { _ -> /* TODO: slot model */ },
+        /* TODO: implement */
+        Instruction("ss", "Writes value to property of given slot on the provided device", listOf(targetDevice, value("slotIndex"), slotPropertyName, value("value")), action = null),
         op("sub", "a - b") { a, b -> a - b },
         op("tan", "tan(a)") { a -> tan(a) },
         op("trunc", "a with fractional part removed") { a -> truncate(a) },

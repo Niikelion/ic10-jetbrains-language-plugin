@@ -38,6 +38,13 @@ class Ic10Annotator: Annotator, DumbAware {
                 .range(element.operationName)
                 .create()
 
+        instruction.deprecationMessage?.let { msg ->
+            holder
+                .newAnnotation(HighlightSeverity.WARNING, msg)
+                .range(element.operationName)
+                .create()
+        }
+
         val values = element.valueList
         values.forEachIndexed { index, value ->
             if (instruction.arguments.size <= index)

@@ -2,7 +2,9 @@ package com.niikelion.ic10_language.logic.state
 
 import com.niikelion.ic10_language.logic.Network
 import com.niikelion.ic10_language.logic.devices.DeviceState
+import com.niikelion.ic10_language.logic.devices.DeviceInfo
 import com.niikelion.ic10_language.logic.devices.DeviceStateChangeBuilder
+import com.niikelion.ic10_language.logic.devices.PropertyDefinition
 
 class SimulationState(
     val devices: Map<Long, DeviceState> = emptyMap(),
@@ -27,7 +29,8 @@ class SimulationState(
  */
 class SimulationStateChangeBuilder(
     private val previousState: SimulationState,
-    private val deviceNetworks: Map<Long, Pair<Long, Network>> = emptyMap()
+    private val deviceNetworks: Map<Long, Pair<Long, Network>> = emptyMap(),
+    private val deviceDefinitions: Map<Long, DeviceInfo> = emptyMap()
 ) {
     private val devices = mutableMapOf<Long, DeviceStateChangeBuilder>()
     private val networks = mutableMapOf<Long, NetworkStateChangeBuilder>()
@@ -36,6 +39,11 @@ class SimulationStateChangeBuilder(
         val deviceState = previousState.devices[deviceId] ?: throw Exception("Device $deviceId not found")
         return devices.getOrPut(deviceId) { DeviceStateChangeBuilder(deviceState) }
     }
+
+    fun propertyDefinition(deviceId: Long, propId: Int): PropertyDefinition? =
+        deviceDefinitions[deviceId]?.properties?.get(propId)
+
+    fun prefabHash(deviceId: Long): Long? = deviceDefinitions[deviceId]?.prefabHash
 
     fun network(networkId: Long): NetworkStateChangeBuilder {
         val networkState = previousState.networks[networkId] ?: NetworkState()
@@ -61,8 +69,9 @@ class SnapshotStateChange(
 
 fun SimulationState.change(
     deviceNetworks: Map<Long, Pair<Long, Network>> = emptyMap(),
+    deviceDefinitions: Map<Long, DeviceInfo> = emptyMap(),
     build: SimulationStateChangeBuilder.() -> Unit
 ): SimulationState.StateChange {
-    val built = SimulationStateChangeBuilder(this, deviceNetworks).apply(build)
+    val built = SimulationStateChangeBuilder(this, deviceNetworks, deviceDefinitions).apply(build)
     return built.stateChange
 }
