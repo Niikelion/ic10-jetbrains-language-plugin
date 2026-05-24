@@ -2,9 +2,17 @@ package com.niikelion.ic10_language.test.logic
 
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.niikelion.ic10_language.logic.Instructions
+import com.niikelion.ic10_language.logic.Network
+import com.niikelion.ic10_language.logic.NetworkContext
 import com.niikelion.ic10_language.logic.StationeersRegistryData
+import com.niikelion.ic10_language.logic.state.NetworkState
+import com.niikelion.ic10_language.logic.state.SimulationState
+import com.niikelion.ic10_language.logic.state.SimulationStateChangeBuilder
+import com.niikelion.ic10_language.logic.devices.DeviceState
 import kotlin.math.*
 import kotlin.test.Test
+import kotlin.test.assertNull
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class InstructionTests : BareTestFixtureTestCase() {
@@ -1321,5 +1329,111 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sdse", reg("r0"), device("d0"))
             assert { register("r0", 1) }
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Network semantics: softConnected vs dataConnected
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `channel read works for dataConnected device`() {
+        val targetId = 20L
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, emptyMap(), dataConnected = true)
+                networkChannel(0, 7.0)
+            }
+            // l r0 d0:0 Channel0
+            exec("l", reg("r0"), channel("d0"), channelType(0))
+            assert { register("r0", 7.0) }
+        }
+    }
+
+    @Test
+    fun `channel read works for softConnected device on same network`() {
+        val targetId = 21L
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, emptyMap(), dataConnected = false)
+                networkChannel(0, 5.0)
+            }
+            // l r0 d0:0 Channel0
+            exec("l", reg("r0"), channel("d0"), channelType(0))
+            assert { register("r0", 5.0) }
+        }
+    }
+
+    @Test
+    fun `channel write works for softConnected device on same network`() {
+        val targetId = 22L
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, emptyMap(), dataConnected = false)
+            }
+            // s d0:0 Channel2 99
+            exec("s", channel("d0"), channelType(2), num(99.0))
+            assert { networkChannel(2, 99.0) }
+        }
+    }
+
+    @Test
+    fun `property read is blocked for softConnected device`() {
+        val targetId = 23L
+        val propId = 42
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, mapOf(propId to 1.0), dataConnected = false)
+            }
+            execFails("l", reg("r0"), device("d0"), num(propId))
+        }
+    }
+
+    @Test
+    fun `property write is blocked for softConnected device`() {
+        val targetId = 24L
+        val propId = 42
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, mapOf(propId to 0.0), dataConnected = false)
+            }
+            execFails("s", device("d0"), num(propId), num(1.0))
+        }
+    }
+
+    @Test
+    fun `channel write via db slot writes to own network`() {
+        // s db:0 Channel2 4 — db holds the IC10's own device ID; db:0 identifies the
+        // IC10's first (only) data network; Channel2 is the channel; 4 is the value.
+        simulate {
+            setup { /* db slot is pre-initialised to the IC10's own device ID (0L) */ }
+            exec("s", channel("db"), channelType(2), num(4.0))
+            assert { networkChannel(2, 4.0) }
+        }
+    }
+
+    @Test
+    fun `channelsOf returns null for device on a different network`() {
+        val observerId = 0L
+        val foreignId = 99L
+        val observerNetwork = Network(dataConnected = setOf(observerId), softConnected = emptySet())
+        val foreignNetwork = Network(dataConnected = setOf(foreignId), softConnected = emptySet())
+        val deviceNetworks = mapOf(
+            observerId to Pair(0L, observerNetwork),
+            foreignId  to Pair(1L, foreignNetwork)
+        )
+        val state = SimulationState(
+            devices  = mapOf(observerId to DeviceState(emptyMap(), emptyMap()),
+                             foreignId  to DeviceState(emptyMap(), emptyMap())),
+            networks = mapOf(0L to NetworkState(), 1L to NetworkState())
+        )
+        val builder = SimulationStateChangeBuilder(state, deviceNetworks)
+        val ctx = NetworkContext(0L, observerNetwork, builder, observerId)
+        assertNull(ctx.channelsOf(foreignId), "cross-network channel access must return null")
+        assertNotNull(ctx.channelsOf(observerId), "same-network channel access must succeed")
     }
 }

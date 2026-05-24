@@ -11,14 +11,14 @@ import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10ChannelNumberImpl extends ASTWrapperPsiElement implements Ic10ChannelNumber {
+public class Ic10PortIndexImpl extends ASTWrapperPsiElement implements Ic10PortIndex {
 
-  public Ic10ChannelNumberImpl(@NotNull ASTNode node) {
+  public Ic10PortIndexImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull Ic10Visitor visitor) {
-    visitor.visitChannelNumber(this);
+    visitor.visitPortIndex(this);
   }
 
   @Override

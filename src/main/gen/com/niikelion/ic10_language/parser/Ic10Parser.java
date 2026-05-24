@@ -36,28 +36,28 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // referenceName COLON channelNumber
-  public static boolean channel(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "channel")) return false;
+  // referenceName COLON portIndex
+  public static boolean networkRef(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "networkRef")) return false;
     if (!nextTokenIs(b, NAME)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = referenceName(b, l + 1);
     r = r && consumeToken(b, COLON);
-    r = r && channelNumber(b, l + 1);
-    exit_section_(b, m, CHANNEL, r);
+    r = r && portIndex(b, l + 1);
+    exit_section_(b, m, NETWORK_REF, r);
     return r;
   }
 
   /* ********************************************************** */
   // DECIMAL
-  public static boolean channelNumber(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "channelNumber")) return false;
+  public static boolean portIndex(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "portIndex")) return false;
     if (!nextTokenIs(b, DECIMAL)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeToken(b, DECIMAL);
-    exit_section_(b, m, CHANNEL_NUMBER, r);
+    exit_section_(b, m, PORT_INDEX, r);
     return r;
   }
 
@@ -261,12 +261,12 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // channel | macro | number | enum | referenceName
+  // networkRef | macro | number | enum | referenceName
   public static boolean value(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "value")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, VALUE, "<value>");
-    r = channel(b, l + 1);
+    r = networkRef(b, l + 1);
     if (!r) r = macro(b, l + 1);
     if (!r) r = number(b, l + 1);
     if (!r) r = enum_$(b, l + 1);

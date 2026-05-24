@@ -41,8 +41,13 @@ class NetworkContext(
     fun readChannel(index: Int): Double = global.network(id).readChannel(index)
     fun writeChannel(index: Int, value: Double) = global.network(id).writeChannel(index, value)
 
-    fun channelsOf(deviceId: Long): NetworkStateChangeBuilder? =
-        global.networkFor(deviceId)?.let { (netId, _) -> global.network(netId) }
+    fun channelsOf(deviceId: Long): NetworkStateChangeBuilder? {
+        val (netId, _) = global.networkFor(deviceId) ?: return null
+        // Channel access is only valid when the target is on the same network as the observer.
+        // softConnected devices share network channels but cannot be addressed by property slot.
+        if (netId != id) return null
+        return global.network(netId)
+    }
 
     companion object {
         private val prefabHashPropId: Int? by lazy { Device.properties["PrefabHash"] }

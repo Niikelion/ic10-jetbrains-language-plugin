@@ -362,10 +362,14 @@ object Instructions {
         ) { args ->
             val result = args[0].asRegister
             when (val deviceArg = args[1]) {
-                is ChannelValue -> {
+                is NetworkRefValue -> {
+                    // db:0 is the network reference (device + port); args[2] is the channel
+                    // (e.g. Channel2 = LogicType 167). The port index is intentionally unused
+                    // while the simulation only supports one network per device.
                     val slotDeviceId = program.get(deviceArg.slot)
+                    val channelKey = program.getAsValue(args[2]).toInt()
                     val channels = network.channelsOf(slotDeviceId) ?: throw Exception("Device not on any network")
-                    program.set(result, channels.readChannel(deviceArg.channelIndex))
+                    program.set(result, channels.readChannel(channelKey))
                 }
                 else -> {
                     val targetId = program.getAsDeviceId(deviceArg)
@@ -526,11 +530,14 @@ object Instructions {
             listOf(targetDevice, propertyName, value("value"))
         ) { args ->
             when (val deviceArg = args[0]) {
-                is ChannelValue -> {
+                is NetworkRefValue -> {
+                    // db:0 is the network reference (device + port); args[1] is the channel
+                    // (e.g. Channel2 = LogicType 167) and args[2] is the value to write.
                     val slotDeviceId = program.get(deviceArg.slot)
-                    val value = program.getAsValue(args[1])
+                    val channelKey = program.getAsValue(args[1]).toInt()
+                    val value = program.getAsValue(args[2])
                     val channels = network.channelsOf(slotDeviceId) ?: throw Exception("Device not on any network")
-                    channels.writeChannel(deviceArg.channelIndex, value)
+                    channels.writeChannel(channelKey, value)
                 }
                 else -> {
                     val target = program.getAsDeviceId(deviceArg)

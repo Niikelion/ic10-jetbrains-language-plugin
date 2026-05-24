@@ -9,7 +9,7 @@ import com.niikelion.ic10_language.logic.IUnresolvedValue;
 public interface Ic10Value extends PsiElement {
 
   @Nullable
-  Ic10Channel getChannel();
+  Ic10NetworkRef getNetworkRef();
 
   @Nullable
   Ic10Enum getEnum();

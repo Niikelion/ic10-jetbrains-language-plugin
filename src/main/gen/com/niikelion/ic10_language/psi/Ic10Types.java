@@ -8,8 +8,8 @@ import com.niikelion.ic10_language.psi.impl.*;
 
 public interface Ic10Types {
 
-  IElementType CHANNEL = new Ic10ElementType("CHANNEL");
-  IElementType CHANNEL_NUMBER = new Ic10ElementType("CHANNEL_NUMBER");
+  IElementType NETWORK_REF = new Ic10ElementType("NETWORK_REF");
+  IElementType PORT_INDEX = new Ic10ElementType("PORT_INDEX");
   IElementType ENUM = new Ic10ElementType("ENUM");
   IElementType ENUM_NAME = new Ic10ElementType("ENUM_NAME");
   IElementType ENUM_PROPERTY = new Ic10ElementType("ENUM_PROPERTY");
@@ -41,11 +41,11 @@ public interface Ic10Types {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-      if (type == CHANNEL) {
-        return new Ic10ChannelImpl(node);
+      if (type == NETWORK_REF) {
+        return new Ic10NetworkRefImpl(node);
       }
-      else if (type == CHANNEL_NUMBER) {
-        return new Ic10ChannelNumberImpl(node);
+      else if (type == PORT_INDEX) {
+        return new Ic10PortIndexImpl(node);
       }
       else if (type == ENUM) {
         return new Ic10EnumImpl(node);

@@ -10,14 +10,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.niikelion.ic10_language.psi.Ic10Types.*;
 import com.niikelion.ic10_language.psi.*;
 
-public class Ic10ChannelImpl extends com.niikelion.ic10_language.psi.elements.impl.Ic10ChannelImpl implements Ic10Channel {
+public class Ic10NetworkRefImpl extends com.niikelion.ic10_language.psi.elements.impl.Ic10NetworkRefImpl implements Ic10NetworkRef {
 
-  public Ic10ChannelImpl(@NotNull ASTNode node) {
+  public Ic10NetworkRefImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull Ic10Visitor visitor) {
-    visitor.visitChannel(this);
+    visitor.visitNetworkRef(this);
   }
 
   @Override
@@ -28,8 +28,8 @@ public class Ic10ChannelImpl extends com.niikelion.ic10_language.psi.elements.im
 
   @Override
   @NotNull
-  public Ic10ChannelNumber getChannelNumber() {
-    return findNotNullChildByClass(Ic10ChannelNumber.class);
+  public Ic10PortIndex getPortIndex() {
+    return findNotNullChildByClass(Ic10PortIndex.class);
   }
 
   @Override

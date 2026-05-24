@@ -30,8 +30,8 @@ public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
 
   @Override
   @Nullable
-  public Ic10Channel getChannel() {
-    return findChildByClass(Ic10Channel.class);
+  public Ic10NetworkRef getNetworkRef() {
+    return findChildByClass(Ic10NetworkRef.class);
   }
 
   @Override

@@ -5,6 +5,6 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface Ic10ChannelNumber extends PsiElement {
+public interface Ic10PortIndex extends PsiElement {
 
 }

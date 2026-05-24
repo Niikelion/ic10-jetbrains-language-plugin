@@ -15,7 +15,7 @@ class NumberValue(val value: Double): IValue
 class RegisterValue(val value: Register): IValue
 class DeviceValue(val value: DeviceSlot): IValue
 class NameValue(val name: String): IValue
-class ChannelValue(val slot: DeviceSlot, val channelIndex: Int): IValue
+class NetworkRefValue(val slot: DeviceSlot, val portIndex: Int): IValue
 
 class RegisterReferenceValue(val startingValue: Register, val hoops: Int): IUnresolvedValue {
     companion object {
