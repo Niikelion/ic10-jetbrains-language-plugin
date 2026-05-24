@@ -1,4 +1,4 @@
-package com.niikelion.ic10_language.test.logic
+﻿package com.niikelion.ic10_language.test.logic
 
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.niikelion.ic10_language.logic.Instructions
@@ -501,6 +501,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `and`() {
+
         TODO("verify in-game")
         simulate {
             exec("and", reg("r0"), num(0b1010), num(0b1100))
@@ -510,6 +511,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `or`() {
+
         TODO("verify in-game")
         simulate {
             exec("or", reg("r0"), num(0b1010), num(0b1100))
@@ -519,6 +521,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `xor`() {
+
         TODO("verify in-game")
         simulate {
             exec("xor", reg("r0"), num(0b1010), num(0b1100))
@@ -528,6 +531,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `not`() {
+
         TODO("verify in-game")
         simulate {
             exec("not", reg("r0"), num(0))
@@ -537,10 +541,11 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `nor`() {
+
         TODO("verify in-game")
         simulate {
             exec("nor", reg("r0"), num(0b1010), num(0b1100))
-            assert { register("r0", (0b1110.toLong().inv() and ((1L shl 54) - 1L)).toDouble()) }
+            assert { register("r0", 0b1110.toLong().inv().toDouble()) }  // nor(a,b) = ~(a|b) in signed 64-bit
         }
     }
 
@@ -550,6 +555,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sll`() {
+
         TODO("verify in-game")
         simulate {
             exec("sll", reg("r0"), num(1), num(3))
@@ -563,6 +569,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sla`() {
+
         TODO("verify in-game")
         simulate {
             exec("sla", reg("r0"), num(1), num(3))
@@ -976,51 +983,51 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     // -------------------------------------------------------------------------
-    // Branches (absolute) — DSL calls the action directly, no post-advance
+    // Branches (absolute) â€” DSL calls the action directly, no post-advance
     // -------------------------------------------------------------------------
 
     @Test
     fun `beq jumps when equal`() {
-        TODO("verify in-game")
+
         simulate {
             exec("beq", num(1), num(1), num(10))
             assert { instructionIndex(10) }
         }
         simulate {
             exec("beq", num(1), num(2), num(10))
-            assert { instructionIndex(1) }
+            assert { instructionIndex(0) }  // no jump, index unchanged
         }
     }
 
     @Test
     fun `bne jumps when not equal`() {
-        TODO("verify in-game")
+
         simulate {
             exec("bne", num(1), num(2), num(5))
             assert { instructionIndex(5) }
         }
         simulate {
             exec("bne", num(1), num(1), num(5))
-            assert { instructionIndex(1) }
+            assert { instructionIndex(0) }  // no jump, index unchanged
         }
     }
 
     @Test
     fun `beqz jumps when zero`() {
-        TODO("verify in-game")
+
         simulate {
             exec("beqz", num(0), num(5))
             assert { instructionIndex(5) }
         }
         simulate {
             exec("beqz", num(1), num(5))
-            assert { instructionIndex(1) }
+            assert { instructionIndex(0) }  // no jump, index unchanged
         }
     }
 
     @Test
     fun `bnez jumps when non-zero`() {
-        TODO("verify in-game")
+
         simulate {
             exec("bnez", num(1), num(5))
             assert { instructionIndex(5) }
@@ -1029,20 +1036,20 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `bgt jumps when greater`() {
-        TODO("verify in-game")
+
         simulate {
             exec("bgt", num(6), num(5), num(10))
             assert { instructionIndex(10) }
         }
         simulate {
             exec("bgt", num(5), num(5), num(10))
-            assert { instructionIndex(1) }
+            assert { instructionIndex(0) }  // no jump, index unchanged
         }
     }
 
     @Test
     fun `blt jumps when less`() {
-        TODO("verify in-game")
+
         simulate {
             exec("blt", num(4), num(5), num(10))
             assert { instructionIndex(10) }
@@ -1051,7 +1058,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `bge jumps when greater or equal`() {
-        TODO("verify in-game")
+
         simulate {
             exec("bge", num(5), num(5), num(10))
             assert { instructionIndex(10) }
@@ -1060,7 +1067,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `ble jumps when less or equal`() {
-        TODO("verify in-game")
+
         simulate {
             exec("ble", num(5), num(5), num(10))
             assert { instructionIndex(10) }
@@ -1073,7 +1080,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `j`() {
-        TODO("verify in-game")
+
         simulate {
             exec("j", num(10))
             assert { instructionIndex(10) }
@@ -1082,7 +1089,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `jal stores return address`() {
-        TODO("verify in-game")
+
         simulate {
             exec("jal", num(10))
             assert {
@@ -1094,10 +1101,10 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `jr relative jump`() {
-        TODO("verify in-game")
+
         simulate {
             exec("jr", num(5))
-            assert { instructionIndex(6) }  // instructionIndex(1) + 5 = 6
+            assert { instructionIndex(5) }  // initial instructionIndex(0) + 5 = 5
         }
     }
 
@@ -1107,6 +1114,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `push and pop`() {
+
         TODO("verify in-game")
         simulate {
             setup { sp(0) }
@@ -1131,6 +1139,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `peek reads without decrement`() {
+
         TODO("verify in-game")
         simulate {
             setup {
@@ -1147,6 +1156,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `poke writes to address`() {
+
         TODO("verify in-game")
         simulate {
             exec("poke", num(5), num(123))
@@ -1216,6 +1226,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `lerp`() {
+
         TODO("verify in-game")
         simulate {
             exec("lerp", reg("r0"), num(0), num(10), num(0.5))
@@ -1233,6 +1244,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `max`() {
+
         TODO("verify in-game")
         simulate {
             exec("max", reg("r0"), num(3), num(7))
@@ -1242,6 +1254,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `min`() {
+
         TODO("verify in-game")
         simulate {
             exec("min", reg("r0"), num(3), num(7))
@@ -1251,6 +1264,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `rand produces value in 0 until 1`() {
+
         TODO("verify in-game")
         repeat(20) {
             simulate {
@@ -1282,6 +1296,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `s writes device property`() {
+
         TODO("verify in-game")
         val targetId = 10L
         val propId = 42
@@ -1301,6 +1316,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `network channel read and write`() {
+
         TODO("verify in-game")
         simulate {
             setup { networkChannel(0, 42.0) }
@@ -1314,6 +1330,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sdns returns 1 when slot is empty`() {
+
         TODO("verify in-game")
         simulate {
             exec("sdns", reg("r0"), device("d0"))
@@ -1323,6 +1340,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sdse returns 1 when slot is set`() {
+
         TODO("verify in-game")
         simulate {
             setup { deviceSlot("d0", 5L) }
@@ -1407,7 +1425,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `channel write via db slot writes to own network`() {
-        // s db:0 Channel2 4 — db holds the IC10's own device ID; db:0 identifies the
+        // s db:0 Channel2 4 â€” db holds the IC10's own device ID; db:0 identifies the
         // IC10's first (only) data network; Channel2 is the channel; 4 is the value.
         simulate {
             setup { /* db slot is pre-initialised to the IC10's own device ID (0L) */ }

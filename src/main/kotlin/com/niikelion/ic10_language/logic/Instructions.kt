@@ -149,8 +149,8 @@ object Instructions {
 
                     if (shouldJump) {
                         val jumpTarget = program.getAsValue(args.last())
-                        val normalizedJumpTarget = if (relative) program.instructionIndex + jumpTarget - 1 else jumpTarget
-                        val returnAddress = program.instructionIndex
+                        val normalizedJumpTarget = if (relative) program.instructionIndex + jumpTarget else jumpTarget
+                        val returnAddress = program.instructionIndex + 1
                         program.jump(normalizedJumpTarget.toInt())
                         if (call)
                             program.set(Registers.ra, returnAddress.toDouble())
@@ -343,7 +343,7 @@ object Instructions {
         ) { args ->
             val targetLine = program.getAsValue(args[0]).toInt()
 
-            program.set(Registers.ra, program.instructionIndex.toDouble())
+            program.set(Registers.ra, (program.instructionIndex + 1).toDouble())
             program.jump(targetLine)
         },
         Instruction(
@@ -602,7 +602,7 @@ object Instructions {
             program.waitFor(ceil(max(time, 0.0) * TICK_PER_SECOND).toInt())
         },
         op("slez", "a <= 0 ? 1 : 0") { a -> select(a <= 0.0) },
-        op("sll", "a << b") { a, b -> (a.toValueBits() shl b.toInt()).toDouble() },
+        op("sll", "a << b") { a, b -> (a.toLong() shl b.toInt()).toDouble() },
         op("slt", "a < b ? 1 : 0") { a, b -> select(a < b) },
         op("sltz", "a < 0 ? 1 : 0") { a -> select(a < 0.0) },
         op("sna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8) ? 1 : 0") { a, b, c -> select(!ap(a, b, c)) },
