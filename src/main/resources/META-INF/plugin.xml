@@ -52,6 +52,14 @@
 
   <change-notes><![CDATA[
     <ul>
+      <li><b>2.1</b>
+        <ul>
+          <li>Multi-device simulation: new <b>IC10 Environment</b> run configuration driven by an <code>.ic10env</code> config file.</li>
+          <li>Environment config supports IC10 circuit housings, passive stationpedia devices (e.g. StructureMemory), and fabricator-class devices (Autolathe, PipeBender, …) with initial property overrides.</li>
+          <li>Networks can be declared explicitly or default to a single shared data network.</li>
+          <li><code>.ic10env</code> files accept YAML or JSON, with full schema validation and autocompletion in the editor.</li>
+        </ul>
+      </li>
       <li><b>2.0</b>
         <ul>
           <li>IC10 debugger: run configurations, breakpoints, step-over, full-tick, and step-back via JetBrains XDebugger.</li>

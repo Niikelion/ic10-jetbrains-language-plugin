@@ -3,6 +3,8 @@
 Full IDE support for the **IC10 MIPS-like scripting language** used in
 [Stationeers](https://store.steampowered.com/app/544550/Stationeers/).
 
+**Current version: 2.1**
+
 ## Features
 
 ### Editor
@@ -172,3 +174,25 @@ src/main/kotlin/…/ic10_language/
 ├── formatting/         # Formatter and Enter handler
 └── navigation/         # Go-to-definition, find usages, structure view
 ```
+
+
+## Changelog
+
+### 2.1
+- Multi-device simulation via a new **IC10 Environment** run configuration driven by an `.ic10env` config file.
+- Environment config supports IC10 circuit housings, passive stationpedia devices (e.g. `StructureMemory`), and fabricator-class devices (`StructureAutolathe`, `StructurePipeBender`, …) with initial property value overrides.
+- Network topology is fully configurable; defaults to a single shared data network when omitted.
+- `.ic10env` files accept YAML or JSON, with schema-based field completion, type checking, and validation in the editor.
+
+### 2.0
+- IC10 debugger with breakpoints, step-over, full-tick, and step-back via JetBrains XDebugger.
+- Complete IC10 instruction simulation engine with device model, network model, and stack memory.
+- Stationpedia integration: all game devices and their logic properties loaded from live game data.
+- Enum syntax support: `LogicType.Activate` style values with highlighting, completions, and quick-docs.
+- Quick-docs for registers, device references, and enum values (including deprecation notices).
+
+### 1.5
+- Improved quick-docs, parameter info hints, and formatting support.
+
+### 1.x
+- Navigation (go-to-definition, find usages), channel and printer constant support, instruction documentation.
