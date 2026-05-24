@@ -8,8 +8,6 @@ import com.niikelion.ic10_language.psi.impl.*;
 
 public interface Ic10Types {
 
-  IElementType NETWORK_REF = new Ic10ElementType("NETWORK_REF");
-  IElementType PORT_INDEX = new Ic10ElementType("PORT_INDEX");
   IElementType ENUM = new Ic10ElementType("ENUM");
   IElementType ENUM_NAME = new Ic10ElementType("ENUM_NAME");
   IElementType ENUM_PROPERTY = new Ic10ElementType("ENUM_PROPERTY");
@@ -19,9 +17,11 @@ public interface Ic10Types {
   IElementType MACRO = new Ic10ElementType("MACRO");
   IElementType MACRO_NAME = new Ic10ElementType("MACRO_NAME");
   IElementType MACRO_VALUE = new Ic10ElementType("MACRO_VALUE");
+  IElementType NETWORK_REF = new Ic10ElementType("NETWORK_REF");
   IElementType NUMBER = new Ic10ElementType("NUMBER");
   IElementType OPERATION = new Ic10ElementType("OPERATION");
   IElementType OPERATION_NAME = new Ic10ElementType("OPERATION_NAME");
+  IElementType PORT_INDEX = new Ic10ElementType("PORT_INDEX");
   IElementType REFERENCE_NAME = new Ic10ElementType("REFERENCE_NAME");
   IElementType VALUE = new Ic10ElementType("VALUE");
 
@@ -41,13 +41,7 @@ public interface Ic10Types {
   class Factory {
     public static PsiElement createElement(ASTNode node) {
       IElementType type = node.getElementType();
-      if (type == NETWORK_REF) {
-        return new Ic10NetworkRefImpl(node);
-      }
-      else if (type == PORT_INDEX) {
-        return new Ic10PortIndexImpl(node);
-      }
-      else if (type == ENUM) {
+      if (type == ENUM) {
         return new Ic10EnumImpl(node);
       }
       else if (type == ENUM_NAME) {
@@ -74,6 +68,9 @@ public interface Ic10Types {
       else if (type == MACRO_VALUE) {
         return new Ic10MacroValueImpl(node);
       }
+      else if (type == NETWORK_REF) {
+        return new Ic10NetworkRefImpl(node);
+      }
       else if (type == NUMBER) {
         return new Ic10NumberImpl(node);
       }
@@ -82,6 +79,9 @@ public interface Ic10Types {
       }
       else if (type == OPERATION_NAME) {
         return new Ic10OperationNameImpl(node);
+      }
+      else if (type == PORT_INDEX) {
+        return new Ic10PortIndexImpl(node);
       }
       else if (type == REFERENCE_NAME) {
         return new Ic10ReferenceNameImpl(node);

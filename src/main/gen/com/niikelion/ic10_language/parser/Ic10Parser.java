@@ -36,32 +36,6 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // referenceName COLON portIndex
-  public static boolean networkRef(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "networkRef")) return false;
-    if (!nextTokenIs(b, NAME)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = referenceName(b, l + 1);
-    r = r && consumeToken(b, COLON);
-    r = r && portIndex(b, l + 1);
-    exit_section_(b, m, NETWORK_REF, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // DECIMAL
-  public static boolean portIndex(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "portIndex")) return false;
-    if (!nextTokenIs(b, DECIMAL)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, DECIMAL);
-    exit_section_(b, m, PORT_INDEX, r);
-    return r;
-  }
-
-  /* ********************************************************** */
   // enumName DOT enumProperty
   public static boolean enum_$(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "enum_$")) return false;
@@ -199,6 +173,20 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // referenceName COLON portIndex
+  public static boolean networkRef(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "networkRef")) return false;
+    if (!nextTokenIs(b, NAME)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = referenceName(b, l + 1);
+    r = r && consumeToken(b, COLON);
+    r = r && portIndex(b, l + 1);
+    exit_section_(b, m, NETWORK_REF, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // BINARY | DECIMAL | HEXADECIMAL | FLOAT
   public static boolean number(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "number")) return false;
@@ -245,6 +233,18 @@ public class Ic10Parser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, NAME);
     exit_section_(b, m, OPERATION_NAME, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // DECIMAL
+  public static boolean portIndex(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "portIndex")) return false;
+    if (!nextTokenIs(b, DECIMAL)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, DECIMAL);
+    exit_section_(b, m, PORT_INDEX, r);
     return r;
   }
 
