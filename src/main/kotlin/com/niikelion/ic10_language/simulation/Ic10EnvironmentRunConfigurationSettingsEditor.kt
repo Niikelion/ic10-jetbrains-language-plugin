@@ -14,7 +14,7 @@ class Ic10EnvironmentRunConfigurationSettingsEditor : SettingsEditor<Ic10Environ
             null,
             FileChooserDescriptorFactory.createSingleFileDescriptor("ic10env")
                 .withTitle("Select IC10 Environment Config")
-                .withDescription("Choose an .ic10env file")
+                .withDescription("Choose an .ic10env file (YAML or JSON format)")
         )
         FormBuilder.createFormBuilder()
             .addLabeledComponent("Environment file:", configFileField)
