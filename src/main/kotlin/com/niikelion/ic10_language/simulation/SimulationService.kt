@@ -21,9 +21,7 @@ import com.niikelion.ic10_language.logic.Network
 import com.niikelion.ic10_language.logic.ProgramCode
 import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.logic.devices.StructureCircuitHousing
-import com.niikelion.ic10_language.logic.state.IChange
 import com.niikelion.ic10_language.logic.state.SimulationState
-import com.niikelion.ic10_language.logic.state.SnapshotStateChange
 import com.niikelion.ic10_language.psi.Ic10File
 import com.niikelion.ic10_language.simulation.environment.DeviceFactory
 import com.niikelion.ic10_language.simulation.environment.EnvironmentConfig
@@ -169,11 +167,14 @@ class SimulationProcess(val context: Context, initialState: SimulationState? = n
     val state: StateFlow<SimulationState> = _state
     val currentState: SimulationState get() = simulationState
 
-    private val history = mutableListOf<IChange<SimulationState>>()
+    private val history = mutableListOf<SimulationState.StateChange>()
     val canGoBack get() = history.isNotEmpty() || tickStart != null
     val isInTick get() = stepIterator != null || tickStart != null
 
+    // tickStart is kept for instant within-tick revert (no recomputation needed).
     private var tickStart: SimulationState? = null
+    // Accumulated sparse change for the current tick, composed from per-instruction changes.
+    private var tickAccumulated: SimulationState.StateChange? = null
     private var stepIterator: Iterator<SimulationState.StateChange>? = null
 
     init {
@@ -183,6 +184,7 @@ class SimulationProcess(val context: Context, initialState: SimulationState? = n
     fun step(): Iterator<SimulationState.StateChange> {
         if (stepIterator == null) {
             tickStart = simulationState
+            tickAccumulated = null
             stepIterator = context.step(simulationState).iterator()
         }
         return stepIterator!!
@@ -191,7 +193,9 @@ class SimulationProcess(val context: Context, initialState: SimulationState? = n
     fun advanceStep() {
         val iter = step()
         if (iter.hasNext()) {
-            simulationState = iter.next().perform(simulationState)
+            val change = iter.next()
+            simulationState = change.perform(simulationState)
+            tickAccumulated = tickAccumulated?.let { it + change } ?: change
             _state.value = simulationState
             if (!iter.hasNext()) finalizeStep()
         }
@@ -200,7 +204,9 @@ class SimulationProcess(val context: Context, initialState: SimulationState? = n
     fun advanceStepSilent() {
         val iter = step()
         if (iter.hasNext()) {
-            simulationState = iter.next().perform(simulationState)
+            val change = iter.next()
+            simulationState = change.perform(simulationState)
+            tickAccumulated = tickAccumulated?.let { it + change } ?: change
             if (!iter.hasNext()) finalizeStepSilent()
         }
     }
@@ -210,32 +216,45 @@ class SimulationProcess(val context: Context, initialState: SimulationState? = n
     }
 
     private fun finalizeStep() {
-        val start = tickStart ?: return
-        simulationState = context.endTick(simulationState).perform(simulationState)
+        if (tickStart == null) return
+        val endChange = context.endTick(simulationState)
+        simulationState = endChange.perform(simulationState)
         _state.value = simulationState
-        history.add(SnapshotStateChange(start, simulationState))
+        history.add(tickAccumulated?.let { it + endChange } ?: endChange)
         stepIterator = null
         tickStart = null
+        tickAccumulated = null
         notifyTextAvailable("History at ${history.size}\n", ProcessOutputTypes.STDOUT)
     }
 
     private fun finalizeStepSilent() {
-        val start = tickStart ?: return
-        simulationState = context.endTick(simulationState).perform(simulationState)
-        history.add(SnapshotStateChange(start, simulationState))
+        if (tickStart == null) return
+        val endChange = context.endTick(simulationState)
+        simulationState = endChange.perform(simulationState)
+        history.add(tickAccumulated?.let { it + endChange } ?: endChange)
         stepIterator = null
         tickStart = null
+        tickAccumulated = null
     }
 
     fun tick() {
-        val start = tickStart ?: simulationState
+        if (stepIterator == null) {
+            tickStart = simulationState
+            tickAccumulated = null
+        }
         val iter = step()
-        while (iter.hasNext()) simulationState = iter.next().perform(simulationState)
-        simulationState = context.endTick(simulationState).perform(simulationState)
+        while (iter.hasNext()) {
+            val change = iter.next()
+            simulationState = change.perform(simulationState)
+            tickAccumulated = tickAccumulated?.let { it + change } ?: change
+        }
+        val endChange = context.endTick(simulationState)
+        simulationState = endChange.perform(simulationState)
         _state.value = simulationState
-        history.add(SnapshotStateChange(start, simulationState))
+        history.add(tickAccumulated?.let { it + endChange } ?: endChange)
         stepIterator = null
         tickStart = null
+        tickAccumulated = null
         notifyTextAvailable("History at ${history.size}\n", ProcessOutputTypes.STDOUT)
     }
 
@@ -243,9 +262,11 @@ class SimulationProcess(val context: Context, initialState: SimulationState? = n
         val ts = tickStart
         stepIterator = null
         if (ts != null) {
-            simulationState = ts
+            // Within-tick: revert via accumulated change, or fall back to the snapshot.
+            simulationState = tickAccumulated?.revert(simulationState) ?: ts
             _state.value = simulationState
             tickStart = null
+            tickAccumulated = null
         } else {
             val change = history.removeLastOrNull() ?: return
             simulationState = change.revert(simulationState)
@@ -259,6 +280,7 @@ class SimulationProcess(val context: Context, initialState: SimulationState? = n
         _state.value = simulationState
         history.clear()
         tickStart = null
+        tickAccumulated = null
         stepIterator = null
         notifyProcessTerminated(0)
     }

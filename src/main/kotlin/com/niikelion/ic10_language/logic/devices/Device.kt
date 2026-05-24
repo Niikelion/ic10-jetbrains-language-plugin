@@ -126,6 +126,21 @@ class DeviceState(
                 compose(source.aspects, aspects)
             )
         }
+
+        operator fun plus(other: StateChange): StateChange {
+            val mergedAspects = buildMap {
+                for (key in aspects.keys + other.aspects.keys) {
+                    val a = aspects[key]
+                    val b = other.aspects[key]
+                    put(key, when {
+                        a == null -> b!!
+                        b == null -> a
+                        else -> a + b
+                    })
+                }
+            }
+            return StateChange(properties.composeWith(other.properties), mergedAspects)
+        }
     }
 }
 

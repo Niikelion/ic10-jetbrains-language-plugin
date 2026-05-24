@@ -136,6 +136,23 @@ class Ic10ProgramAspect(
                 }
             }
 
+            override operator fun plus(other: DeviceAspect.State.Change): Change {
+                if (other !is Change) return this
+                return Change(
+                    registers.composeWith(other.registers),
+                    devices.composeWith(other.devices),
+                    composeNullable(onFire, other.onFire),
+                    composeNullable(instructionIndex, other.instructionIndex),
+                    composeNullable(waitingFor, other.waitingFor)
+                )
+            }
+
+            private fun <V> composeNullable(a: SimpleChange<V>?, b: SimpleChange<V>?): SimpleChange<V>? = when {
+                a == null -> b
+                b == null -> a
+                else -> a + b
+            }
+
             class Builder(
                 private val previousState: State
             ): DeviceAspect.State.Change.Builder, IProgramState {

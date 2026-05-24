@@ -53,3 +53,16 @@ fun <K, T, V: IChange<T>>CompositeChangeAction.compose(source: Map<K, T>, change
     CompositeChangeAction.Type.PERFORM -> change.perform(source)
     CompositeChangeAction.Type.REVERT -> change.revert(source)
 }
+
+/**
+ * Merges two sparse change maps into one composite change.
+ * For a key present in both, the result keeps [this]'s previousValue and [other]'s nextValue.
+ */
+fun <K, V: Additive<V>> Map<K, V>.composeWith(other: Map<K, V>): Map<K, V> {
+    if (other.isEmpty()) return this
+    val result = HashMap(this)
+    for ((k, v) in other) {
+        result[k] = result[k]?.let { it + v } ?: v
+    }
+    return result
+}
