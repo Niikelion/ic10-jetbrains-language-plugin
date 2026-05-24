@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "IC10 Environment Config",
+  "description": "Multi-device simulation environment for the IC10 JetBrains plugin (.ic10env). Accepts YAML or JSON.",
+  "type": "object",
+  "required": ["devices"],
+  "additionalProperties": false,
+  "properties": {
+    "devices": {
+      "type": "array",
+      "description": "Devices in the simulation. At least one is required.",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/device" }
+    },
+    "networks": {
+      "type": "array",
+      "description": "Network topology. If omitted, all devices are placed on a single shared data network.",
+      "items": { "$ref": "#/definitions/network" }
+    }
+  },
+  "definitions": {
+    "device": {
+      "type": "object",
+      "description": "A single device in the simulation environment.",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique numeric ID for this device. IDs are auto-assigned starting from 1 if omitted; explicit IDs are never overwritten."
+        },
+        "name": {
+          "type": "string",
+          "description": "Optional display name shown in the debugger panel."
+        },
+        "source": {
+          "type": "string",
+          "description": "Path to an .ic10 source file, relative to this config file. Mutually exclusive with 'prefab'. The device is created as a StructureCircuitHousing."
+        },
+        "prefab": {
+          "type": "string",
+          "description": "Stationpedia prefab name of a non-IC10 device (e.g. StructureMemory, StructureAutolathe). Mutually exclusive with 'source'."
+        },
+        "class": {
+          "type": "string",
+          "description": "Device behaviour class. Only meaningful when 'prefab' is set. 'crafter' selects StructureCrafter (Autolathe, PipeBender, etc.); omit for passive devices.",
+          "enum": ["crafter"]
+        },
+        "properties": {
+          "type": "object",
+          "description": "Initial logic property values, keyed by logic-type name (e.g. Setting, On, Pressure). Applied after the device is initialised.",
+          "additionalProperties": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "network": {
+      "type": "object",
+      "description": "A named network connecting a set of devices.",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Network ID. Referenced for routing; must be unique across networks.",
+          "default": 0
+        },
+        "dataConnected": {
+          "type": "array",
+          "description": "Device IDs on this data network. IC10 instructions can read/write any device on the same data network.",
+          "items": { "type": "integer" },
+          "uniqueItems": true
+        },
+        "softConnected": {
+          "type": "array",
+          "description": "Device IDs reachable via cable only (power / channel access). IC10 cannot directly address these by slot.",
+          "items": { "type": "integer" },
+          "uniqueItems": true
+        }
+      }
+    }
+  }
+}

@@ -33,6 +33,8 @@ dependencies {
   intellijPlatform {
     intellijIdeaUltimate("2025.3")
     testFramework(TestFrameworkType.Platform)
+    bundledPlugin("com.intellij.modules.json")
+    bundledPlugin("org.jetbrains.plugins.yaml")
   }
 
   testImplementation("junit:junit:4.13.2")

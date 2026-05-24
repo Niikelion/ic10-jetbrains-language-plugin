@@ -72,10 +72,16 @@
   <!-- Product and plugin compatibility requirements.
        Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
   <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.json</depends>
+  <depends>org.jetbrains.plugins.yaml</depends>
 
   <!-- Extension points defined by the plugin.
        Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
   <extensions defaultExtensionNs="com.intellij">
+    <!-- Associate .ic10env with the YAML file type so YAML editing features apply -->
+    <fileType name="YAML" extensions="ic10env"/>
+
+
     <fileType
             name="Ic10 File"
             implementationClass="com.niikelion.ic10_language.Ic10FileType"
@@ -186,5 +192,10 @@
     <xdebugger.breakpointType
             implementation="com.niikelion.ic10_language.simulation.debug.Ic10LineBreakpointType"
     />
+  </extensions>
+
+  <extensions defaultExtensionNs="JavaScript">
+    <JsonSchema.ProviderFactory
+            implementation="com.niikelion.ic10_language.simulation.environment.Ic10EnvSchemaProviderFactory"/>
   </extensions>
 </idea-plugin>
