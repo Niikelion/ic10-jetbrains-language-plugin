@@ -24,6 +24,7 @@ import com.niikelion.ic10_language.logic.state.IChange
 import com.niikelion.ic10_language.logic.state.SimulationState
 import com.niikelion.ic10_language.logic.state.SnapshotStateChange
 import com.niikelion.ic10_language.psi.Ic10File
+import com.niikelion.ic10_language.simulation.environment.EnvironmentConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.File
@@ -101,6 +102,79 @@ class SimulationService(private val project: Project) {
         console.print("Starting simulation with ${devices.size} device(s)\n", ConsoleViewContentType.LOG_INFO_OUTPUT)
         val network = Network.single(devices.map { it.id })
         return startNewProcess(Context(devices, mapOf(0L to network)))
+    }
+
+    fun startFromEnvironment(console: ConsoleView, configFilePath: String): ProcessHandler {
+        if (configFilePath.isBlank()) {
+            console.print("ERROR: No environment config file configured.\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+            return Terminated()
+        }
+
+        val configFile = File(configFilePath)
+        if (!configFile.exists()) {
+            console.print("ERROR: Environment config not found: $configFilePath\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+            return Terminated()
+        }
+
+        val config = try {
+            EnvironmentConfig.load(configFile).resolveIds()
+        } catch (e: Exception) {
+            console.print("ERROR: Failed to parse environment config: ${e.message}\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+            return Terminated()
+        }
+
+        val baseDir = configFile.parentFile
+        val deviceById = mutableMapOf<Long, StructureCircuitHousing>()
+
+        for (deviceConfig in config.devices) {
+            val id = deviceConfig.id!! // guaranteed by resolveIds()
+            val sourceFile = baseDir.resolve(deviceConfig.source)
+            val label = deviceConfig.name ?: deviceConfig.source
+
+            try {
+                val vf = LocalFileSystem.getInstance().findFileByPath(sourceFile.canonicalPath)
+                val psiFile = vf?.findPsiFile(project)
+                    ?: ReadAction.compute<PsiFile, Throwable> {
+                        val text = sourceFile.readText()
+                        PsiFileFactory.getInstance(project).createFileFromText("Program.ic10", Ic10FileType.Instance, text)
+                    }
+
+                if (psiFile !is Ic10File) {
+                    console.print("ERROR: $label is not an IC10 file\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+                    continue
+                }
+
+                console.print("Compiling $label\n", ConsoleViewContentType.LOG_INFO_OUTPUT)
+                val code = ProgramCode.compile(psiFile)
+                deviceById[id] = StructureCircuitHousing(id, code)
+            } catch (t: Throwable) {
+                if (t is CompilationError) {
+                    val line = t.target?.let { Ic10PsiUtils.getLineNumber(it) }?.let { "($it)" } ?: ""
+                    console.print("Compilation error$line in $label: ${t.message}\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+                } else {
+                    console.print("ERROR: Could not load $label: ${t.message}\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+                }
+            }
+        }
+
+        if (deviceById.isEmpty()) {
+            console.print("ERROR: No devices could be compiled.\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+            return Terminated()
+        }
+
+        val networks: Map<Long, Network> = if (config.networks.isEmpty()) {
+            mapOf(0L to Network.single(deviceById.keys))
+        } else {
+            config.networks.associate { nc ->
+                nc.id to Network(
+                    dataConnected = nc.dataConnected.filter { it in deviceById }.toSet(),
+                    softConnected = nc.softConnected.filter { it in deviceById }.toSet()
+                )
+            }
+        }
+
+        console.print("Starting environment simulation with ${deviceById.size} device(s)\n", ConsoleViewContentType.LOG_INFO_OUTPUT)
+        return startNewProcess(Context(deviceById.values.toList(), networks))
     }
 }
 

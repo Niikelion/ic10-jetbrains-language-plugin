@@ -174,8 +174,14 @@
     <configurationType
             implementation="com.niikelion.ic10_language.simulation.Ic10RunConfigurationType"
     />
+    <configurationType
+            implementation="com.niikelion.ic10_language.simulation.Ic10EnvironmentConfigurationType"
+    />
     <programRunner
             implementation="com.niikelion.ic10_language.simulation.debug.Ic10DebugProgramRunner"
+    />
+    <programRunner
+            implementation="com.niikelion.ic10_language.simulation.debug.Ic10EnvironmentDebugProgramRunner"
     />
     <xdebugger.breakpointType
             implementation="com.niikelion.ic10_language.simulation.debug.Ic10LineBreakpointType"
