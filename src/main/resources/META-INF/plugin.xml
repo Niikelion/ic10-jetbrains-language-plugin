@@ -89,6 +89,8 @@
     <!-- Associate .ic10env with the YAML file type so YAML editing features apply -->
     <fileType name="YAML" extensions="ic10env"/>
 
+    <internalFileTemplate name="IC10 Environment Config"/>
+
 
     <fileType
             name="Ic10 File"
