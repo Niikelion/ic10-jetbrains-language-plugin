@@ -1,7 +1,5 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import de.undercouch.gradle.tasks.download.Download
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   id("java")
@@ -12,6 +10,16 @@ plugins {
 
 group = "com.niikelion.ic10-plugin-jetbrains"
 version = "2.0"
+
+java {
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(21))
+  }
+}
+
+kotlin {
+  jvmToolchain(21)
+}
 
 repositories {
   mavenCentral()
@@ -46,20 +54,6 @@ val downloadStationpedia by tasks.registering(Download::class) {
 }
 
 tasks {
-  // Set the JVM compatibility versions
-  withType<JavaCompile> {
-    sourceCompatibility = "17"
-    targetCompatibility = "17"
-  }
-
-  withType<KotlinCompile> {
-    kotlin {
-      compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
-      }
-    }
-  }
-
   named<ProcessResources>("processResources") {
     dependsOn(downloadEnums, downloadStationpedia)
   }
@@ -67,22 +61,6 @@ tasks {
   publishPlugin {
     token.set(System.getenv("PUBLISH_TOKEN"))
     hidden.set(true)
-  }
-
-  compileKotlin {
-    kotlin {
-      compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
-      }
-    }
-  }
-
-  compileTestKotlin {
-    kotlin {
-      compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
-      }
-    }
   }
 }
 
