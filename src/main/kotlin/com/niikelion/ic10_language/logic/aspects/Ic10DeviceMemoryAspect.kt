@@ -3,6 +3,7 @@ package com.niikelion.ic10_language.logic.aspects
 import com.niikelion.ic10_language.logic.state.CompositeChange
 import com.niikelion.ic10_language.logic.state.CompositeChangeAction
 import com.niikelion.ic10_language.logic.state.SimpleChange
+import com.niikelion.ic10_language.logic.state.composeWith
 import com.niikelion.ic10_language.utils.toPrettyString
 import kotlin.reflect.KClass
 
@@ -42,6 +43,11 @@ class Ic10DeviceMemoryAspect(
                         }.toTypedArray()
                     )
                 }
+            }
+
+            override operator fun plus(other: DeviceAspect.State.Change): Change {
+                if (other !is Change) return this
+                return Change(contents.composeWith(other.contents))
             }
 
             class Builder(val previousState: State): Ic10MemoryAspect.State.Change.Builder {

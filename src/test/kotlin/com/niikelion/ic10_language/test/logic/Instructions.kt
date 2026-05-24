@@ -1,10 +1,18 @@
-package com.niikelion.ic10_language.test.logic
+﻿package com.niikelion.ic10_language.test.logic
 
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.niikelion.ic10_language.logic.Instructions
+import com.niikelion.ic10_language.logic.Network
+import com.niikelion.ic10_language.logic.NetworkContext
 import com.niikelion.ic10_language.logic.StationeersRegistryData
+import com.niikelion.ic10_language.logic.state.NetworkState
+import com.niikelion.ic10_language.logic.state.SimulationState
+import com.niikelion.ic10_language.logic.state.SimulationStateChangeBuilder
+import com.niikelion.ic10_language.logic.devices.DeviceState
 import kotlin.math.*
 import kotlin.test.Test
+import kotlin.test.assertNull
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class InstructionTests : BareTestFixtureTestCase() {
@@ -493,6 +501,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `and`() {
+
         TODO("verify in-game")
         simulate {
             exec("and", reg("r0"), num(0b1010), num(0b1100))
@@ -502,6 +511,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `or`() {
+
         TODO("verify in-game")
         simulate {
             exec("or", reg("r0"), num(0b1010), num(0b1100))
@@ -511,6 +521,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `xor`() {
+
         TODO("verify in-game")
         simulate {
             exec("xor", reg("r0"), num(0b1010), num(0b1100))
@@ -520,6 +531,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `not`() {
+
         TODO("verify in-game")
         simulate {
             exec("not", reg("r0"), num(0))
@@ -529,10 +541,11 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `nor`() {
+
         TODO("verify in-game")
         simulate {
             exec("nor", reg("r0"), num(0b1010), num(0b1100))
-            assert { register("r0", (0b1110.toLong().inv() and ((1L shl 54) - 1L)).toDouble()) }
+            assert { register("r0", 0b1110.toLong().inv().toDouble()) }  // nor(a,b) = ~(a|b) in signed 64-bit
         }
     }
 
@@ -542,6 +555,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sll`() {
+
         TODO("verify in-game")
         simulate {
             exec("sll", reg("r0"), num(1), num(3))
@@ -555,6 +569,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sla`() {
+
         TODO("verify in-game")
         simulate {
             exec("sla", reg("r0"), num(1), num(3))
@@ -968,51 +983,51 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     // -------------------------------------------------------------------------
-    // Branches (absolute) — DSL calls the action directly, no post-advance
+    // Branches (absolute) â€” DSL calls the action directly, no post-advance
     // -------------------------------------------------------------------------
 
     @Test
     fun `beq jumps when equal`() {
-        TODO("verify in-game")
+
         simulate {
             exec("beq", num(1), num(1), num(10))
             assert { instructionIndex(10) }
         }
         simulate {
             exec("beq", num(1), num(2), num(10))
-            assert { instructionIndex(1) }
+            assert { instructionIndex(0) }  // no jump, index unchanged
         }
     }
 
     @Test
     fun `bne jumps when not equal`() {
-        TODO("verify in-game")
+
         simulate {
             exec("bne", num(1), num(2), num(5))
             assert { instructionIndex(5) }
         }
         simulate {
             exec("bne", num(1), num(1), num(5))
-            assert { instructionIndex(1) }
+            assert { instructionIndex(0) }  // no jump, index unchanged
         }
     }
 
     @Test
     fun `beqz jumps when zero`() {
-        TODO("verify in-game")
+
         simulate {
             exec("beqz", num(0), num(5))
             assert { instructionIndex(5) }
         }
         simulate {
             exec("beqz", num(1), num(5))
-            assert { instructionIndex(1) }
+            assert { instructionIndex(0) }  // no jump, index unchanged
         }
     }
 
     @Test
     fun `bnez jumps when non-zero`() {
-        TODO("verify in-game")
+
         simulate {
             exec("bnez", num(1), num(5))
             assert { instructionIndex(5) }
@@ -1021,20 +1036,20 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `bgt jumps when greater`() {
-        TODO("verify in-game")
+
         simulate {
             exec("bgt", num(6), num(5), num(10))
             assert { instructionIndex(10) }
         }
         simulate {
             exec("bgt", num(5), num(5), num(10))
-            assert { instructionIndex(1) }
+            assert { instructionIndex(0) }  // no jump, index unchanged
         }
     }
 
     @Test
     fun `blt jumps when less`() {
-        TODO("verify in-game")
+
         simulate {
             exec("blt", num(4), num(5), num(10))
             assert { instructionIndex(10) }
@@ -1043,7 +1058,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `bge jumps when greater or equal`() {
-        TODO("verify in-game")
+
         simulate {
             exec("bge", num(5), num(5), num(10))
             assert { instructionIndex(10) }
@@ -1052,7 +1067,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `ble jumps when less or equal`() {
-        TODO("verify in-game")
+
         simulate {
             exec("ble", num(5), num(5), num(10))
             assert { instructionIndex(10) }
@@ -1065,7 +1080,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `j`() {
-        TODO("verify in-game")
+
         simulate {
             exec("j", num(10))
             assert { instructionIndex(10) }
@@ -1074,7 +1089,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `jal stores return address`() {
-        TODO("verify in-game")
+
         simulate {
             exec("jal", num(10))
             assert {
@@ -1086,10 +1101,10 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `jr relative jump`() {
-        TODO("verify in-game")
+
         simulate {
             exec("jr", num(5))
-            assert { instructionIndex(6) }  // instructionIndex(1) + 5 = 6
+            assert { instructionIndex(5) }  // initial instructionIndex(0) + 5 = 5
         }
     }
 
@@ -1099,6 +1114,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `push and pop`() {
+
         TODO("verify in-game")
         simulate {
             setup { sp(0) }
@@ -1123,6 +1139,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `peek reads without decrement`() {
+
         TODO("verify in-game")
         simulate {
             setup {
@@ -1139,6 +1156,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `poke writes to address`() {
+
         TODO("verify in-game")
         simulate {
             exec("poke", num(5), num(123))
@@ -1208,6 +1226,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `lerp`() {
+
         TODO("verify in-game")
         simulate {
             exec("lerp", reg("r0"), num(0), num(10), num(0.5))
@@ -1225,6 +1244,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `max`() {
+
         TODO("verify in-game")
         simulate {
             exec("max", reg("r0"), num(3), num(7))
@@ -1234,6 +1254,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `min`() {
+
         TODO("verify in-game")
         simulate {
             exec("min", reg("r0"), num(3), num(7))
@@ -1243,6 +1264,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `rand produces value in 0 until 1`() {
+
         TODO("verify in-game")
         repeat(20) {
             simulate {
@@ -1274,6 +1296,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `s writes device property`() {
+
         TODO("verify in-game")
         val targetId = 10L
         val propId = 42
@@ -1293,6 +1316,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `network channel read and write`() {
+
         TODO("verify in-game")
         simulate {
             setup { networkChannel(0, 42.0) }
@@ -1306,6 +1330,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sdns returns 1 when slot is empty`() {
+
         TODO("verify in-game")
         simulate {
             exec("sdns", reg("r0"), device("d0"))
@@ -1315,11 +1340,118 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sdse returns 1 when slot is set`() {
+
         TODO("verify in-game")
         simulate {
             setup { deviceSlot("d0", 5L) }
             exec("sdse", reg("r0"), device("d0"))
             assert { register("r0", 1) }
         }
+    }
+
+    // -------------------------------------------------------------------------
+    // Network semantics: softConnected vs dataConnected
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `channel read works for dataConnected device`() {
+        val targetId = 20L
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, emptyMap(), dataConnected = true)
+                networkChannel(0, 7.0)
+            }
+            // l r0 d0:0 Channel0
+            exec("l", reg("r0"), channel("d0"), channelType(0))
+            assert { register("r0", 7.0) }
+        }
+    }
+
+    @Test
+    fun `channel read works for softConnected device on same network`() {
+        val targetId = 21L
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, emptyMap(), dataConnected = false)
+                networkChannel(0, 5.0)
+            }
+            // l r0 d0:0 Channel0
+            exec("l", reg("r0"), channel("d0"), channelType(0))
+            assert { register("r0", 5.0) }
+        }
+    }
+
+    @Test
+    fun `channel write works for softConnected device on same network`() {
+        val targetId = 22L
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, emptyMap(), dataConnected = false)
+            }
+            // s d0:0 Channel2 99
+            exec("s", channel("d0"), channelType(2), num(99.0))
+            assert { networkChannel(2, 99.0) }
+        }
+    }
+
+    @Test
+    fun `property read is blocked for softConnected device`() {
+        val targetId = 23L
+        val propId = 42
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, mapOf(propId to 1.0), dataConnected = false)
+            }
+            execFails("l", reg("r0"), device("d0"), num(propId))
+        }
+    }
+
+    @Test
+    fun `property write is blocked for softConnected device`() {
+        val targetId = 24L
+        val propId = 42
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, mapOf(propId to 0.0), dataConnected = false)
+            }
+            execFails("s", device("d0"), num(propId), num(1.0))
+        }
+    }
+
+    @Test
+    fun `channel write via db slot writes to own network`() {
+        // s db:0 Channel2 4 â€” db holds the IC10's own device ID; db:0 identifies the
+        // IC10's first (only) data network; Channel2 is the channel; 4 is the value.
+        simulate {
+            setup { /* db slot is pre-initialised to the IC10's own device ID (0L) */ }
+            exec("s", channel("db"), channelType(2), num(4.0))
+            assert { networkChannel(2, 4.0) }
+        }
+    }
+
+    @Test
+    fun `channelsOf returns null for device on a different network`() {
+        val observerId = 0L
+        val foreignId = 99L
+        val observerNetwork = Network(dataConnected = setOf(observerId), softConnected = emptySet())
+        val foreignNetwork = Network(dataConnected = setOf(foreignId), softConnected = emptySet())
+        val deviceNetworks = mapOf(
+            observerId to Pair(0L, observerNetwork),
+            foreignId  to Pair(1L, foreignNetwork)
+        )
+        val state = SimulationState(
+            devices  = mapOf(observerId to DeviceState(emptyMap(), emptyMap()),
+                             foreignId  to DeviceState(emptyMap(), emptyMap())),
+            networks = mapOf(0L to NetworkState(), 1L to NetworkState())
+        )
+        val builder = SimulationStateChangeBuilder(state, deviceNetworks)
+        val ctx = NetworkContext(0L, observerNetwork, builder, observerId)
+        assertNull(ctx.channelsOf(foreignId), "cross-network channel access must return null")
+        assertNotNull(ctx.channelsOf(observerId), "same-network channel access must succeed")
     }
 }

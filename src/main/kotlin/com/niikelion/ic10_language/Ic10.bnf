@@ -31,14 +31,14 @@ operation ::= operationName value* {
 }
 operationName ::= NAME
 
-value ::= channel | macro | number | enum | referenceName {
+value ::= networkRef | macro | number | enum | referenceName {
     methods=[getValue]
 }
-channel ::= referenceName COLON channelNumber {
-    mixin="com.niikelion.ic10_language.psi.elements.impl.Ic10ChannelImpl"
+networkRef ::= referenceName COLON portIndex {
+    mixin="com.niikelion.ic10_language.psi.elements.impl.Ic10NetworkRefImpl"
     implements="com.niikelion.ic10_language.psi.elements.Ic10ValueLikeElement"
 }
-channelNumber ::= DECIMAL
+portIndex ::= DECIMAL
 macro ::= macroName macroValue MACRO_END {
     mixin="com.niikelion.ic10_language.psi.elements.impl.Ic10MacroImpl"
     implements="com.niikelion.ic10_language.psi.elements.Ic10ValueLikeElement"

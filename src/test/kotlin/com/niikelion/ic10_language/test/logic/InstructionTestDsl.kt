@@ -3,6 +3,7 @@ package com.niikelion.ic10_language.test.logic
 import com.niikelion.ic10_language.logic.*
 import com.niikelion.ic10_language.logic.NetworkContext
 import com.niikelion.ic10_language.logic.Instructions
+import kotlin.test.assertFailsWith
 import com.niikelion.ic10_language.logic.aspects.Ic10DeviceMemoryAspect
 import com.niikelion.ic10_language.logic.aspects.Ic10MemoryAspect
 import com.niikelion.ic10_language.logic.aspects.Ic10ProgramAspect
@@ -18,6 +19,10 @@ import kotlin.test.assertTrue
 private const val TEST_DEVICE_ID = 0L
 private const val TEST_NETWORK_ID = 0L
 private const val STACK_SIZE = 512
+
+// Channel0–Channel7 are LogicType values 165–172.
+// We store network channels keyed by their LogicType value.
+private const val CHANNEL0_LOGIC_TYPE = 165
 
 /**
  * Entry point for instruction tests.
@@ -62,6 +67,16 @@ class InstructionTestBuilder {
     fun num(value: Int): IValue = NumberValue(value.toDouble())
     fun reg(name: String): IValue = RegisterValue(Registers.get(name) ?: error("Unknown register: $name"))
     fun device(name: String): IValue = DeviceValue(DeviceSlots.get(name) ?: error("Unknown device slot: $name"))
+    /** Network reference: device slot + port index, e.g. channel("db", 0) → db:0. */
+    fun channel(deviceName: String, portIndex: Int = 0): IValue =
+        NetworkRefValue(DeviceSlots.get(deviceName) ?: error("Unknown device slot: $deviceName"), portIndex)
+
+    /**
+     * The LogicType value for channel [index] (0–7).
+     * Use as the channel argument to `l`/`s` channel instructions:
+     * `exec("s", channel("db", 0), channelType(2), num(4.0))` → s db:0 Channel2 4
+     */
+    fun channelType(index: Int): IValue = NumberValue((CHANNEL0_LOGIC_TYPE + index).toDouble())
 
     // --- State setup ---
 
@@ -86,9 +101,13 @@ class InstructionTestBuilder {
             else this@InstructionTestBuilder.softConnectedExtra.add(id)
         }
 
-        /** Pre-set a channel value on the shared network. */
+        /**
+         * Pre-set a channel value on the shared network.
+         * [channelIndex] is 0–7; it maps to the LogicType key used by
+         * the `l`/`s` channel instructions (Channel0=165 … Channel7=172).
+         */
         fun networkChannel(channelIndex: Int, value: Double) {
-            this@InstructionTestBuilder.networkChannels[channelIndex] = value
+            this@InstructionTestBuilder.networkChannels[CHANNEL0_LOGIC_TYPE + channelIndex] = value
         }
     }
 
@@ -106,6 +125,18 @@ class InstructionTestBuilder {
         steps += { builder ->
             val (netId, net) = builder.networkFor(deviceId) ?: Pair(TEST_NETWORK_ID, Network.single(setOf(deviceId)))
             InstructionContext(builder, NetworkContext(netId, net, builder, deviceId), deviceId).action(args.toList().toTypedArray())
+        }
+    }
+
+    /** Asserts that executing [name] with [args] throws an exception (e.g. blocked access). */
+    fun execFails(name: String, vararg args: IValue) {
+        val instruction = Instructions.get(name) ?: error("Unknown instruction: $name")
+        val action = instruction.action ?: error("Instruction '${instruction.name}' is not implemented")
+        steps += { builder ->
+            val (netId, net) = builder.networkFor(deviceId) ?: Pair(TEST_NETWORK_ID, Network.single(setOf(deviceId)))
+            assertFailsWith<Exception> {
+                InstructionContext(builder, NetworkContext(netId, net, builder, deviceId), deviceId).action(args.toList().toTypedArray())
+            }
         }
     }
 
@@ -147,8 +178,9 @@ class InstructionTestBuilder {
         }
 
         fun networkChannel(channelIndex: Int, expected: Double) {
-            val actual = state.networks[TEST_NETWORK_ID]?.channels?.get(channelIndex)
-                ?: error("Network or channel $channelIndex not found")
+            val key = CHANNEL0_LOGIC_TYPE + channelIndex
+            val actual = state.networks[TEST_NETWORK_ID]?.channels?.get(key)
+                ?: error("Network or channel $channelIndex (key $key) not found")
             assertEquals(expected, actual, "Channel $channelIndex")
         }
 
@@ -190,7 +222,9 @@ class InstructionTestBuilder {
             )
         )
 
-        val initialChannels = (0..7).associateWith { networkChannels[it] ?: 0.0 }
+        val initialChannels = (0..7).associate { i ->
+            (CHANNEL0_LOGIC_TYPE + i) to (networkChannels[CHANNEL0_LOGIC_TYPE + i] ?: 0.0)
+        }
 
         val allData = (dataConnectedExtra + deviceId)
         val network = Network(dataConnected = allData, softConnected = softConnectedExtra)

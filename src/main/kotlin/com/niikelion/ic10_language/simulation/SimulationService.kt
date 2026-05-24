@@ -19,11 +19,13 @@ import com.niikelion.ic10_language.logic.CompilationError
 import com.niikelion.ic10_language.logic.Context
 import com.niikelion.ic10_language.logic.Network
 import com.niikelion.ic10_language.logic.ProgramCode
+import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.logic.devices.StructureCircuitHousing
-import com.niikelion.ic10_language.logic.state.IChange
 import com.niikelion.ic10_language.logic.state.SimulationState
-import com.niikelion.ic10_language.logic.state.SnapshotStateChange
 import com.niikelion.ic10_language.psi.Ic10File
+import com.niikelion.ic10_language.simulation.environment.DeviceFactory
+import com.niikelion.ic10_language.simulation.environment.EnvironmentConfig
+import com.niikelion.ic10_language.simulation.environment.applyPropertyOverrides
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.File
@@ -46,9 +48,9 @@ private class Terminated: ProcessHandler() {
 class SimulationService(private val project: Project) {
     private val process = MutableStateFlow<SimulationProcess?>(null)
 
-    private fun startNewProcess(context: Context): SimulationProcess {
+    private fun startNewProcess(context: Context, initialState: SimulationState? = null): SimulationProcess {
         process.value?.run { stop() }
-        return SimulationProcess(context).also {
+        return SimulationProcess(context, initialState).also {
             process.value = it
             it.addProcessListener(object: ProcessListener {
                 override fun processTerminated(event: ProcessEvent) {
@@ -102,19 +104,77 @@ class SimulationService(private val project: Project) {
         val network = Network.single(devices.map { it.id })
         return startNewProcess(Context(devices, mapOf(0L to network)))
     }
+
+    fun startFromEnvironment(console: ConsoleView, configFilePath: String): ProcessHandler {
+        if (configFilePath.isBlank()) {
+            console.print("ERROR: No environment config file configured.\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+            return Terminated()
+        }
+
+        val configFile = File(configFilePath)
+        if (!configFile.exists()) {
+            console.print("ERROR: Environment config not found: $configFilePath\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+            return Terminated()
+        }
+
+        val config = try {
+            EnvironmentConfig.load(configFile).resolveIds()
+        } catch (e: Exception) {
+            console.print("ERROR: Failed to parse environment config: ${e.message}\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+            return Terminated()
+        }
+
+        val baseDir = configFile.parentFile
+        val deviceById = mutableMapOf<Long, Device>()
+        val propertyOverrides = mutableMapOf<Long, Map<String, Double>>()
+
+        for (deviceConfig in config.devices) {
+            val id = deviceConfig.id!! // guaranteed by resolveIds()
+            val (device, overrides) = DeviceFactory.create(deviceConfig, id, baseDir, project, console) ?: continue
+            deviceById[id] = device
+            if (overrides.isNotEmpty()) propertyOverrides[id] = overrides
+        }
+
+        if (deviceById.isEmpty()) {
+            console.print("ERROR: No devices could be created.\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+            return Terminated()
+        }
+
+        val networks: Map<Long, Network> = if (config.networks.isEmpty()) {
+            mapOf(0L to Network.single(deviceById.keys))
+        } else {
+            config.networks.associate { nc ->
+                nc.id to Network(
+                    dataConnected = nc.dataConnected.filter { it in deviceById }.toSet(),
+                    softConnected = nc.softConnected.filter { it in deviceById }.toSet()
+                )
+            }
+        }
+
+        console.print("Starting environment simulation with ${deviceById.size} device(s)\n", ConsoleViewContentType.LOG_INFO_OUTPUT)
+        val context = Context(deviceById.values.toList(), networks)
+        var initialState = context.initialize()
+        for ((id, overrides) in propertyOverrides) {
+            initialState = initialState.applyPropertyOverrides(id, overrides, console)
+        }
+        return startNewProcess(context, initialState)
+    }
 }
 
-class SimulationProcess(val context: Context): ProcessHandler() {
-    private var simulationState: SimulationState = context.initialize()
+class SimulationProcess(val context: Context, initialState: SimulationState? = null): ProcessHandler() {
+    private var simulationState: SimulationState = initialState ?: context.initialize()
     private val _state = MutableStateFlow(simulationState)
     val state: StateFlow<SimulationState> = _state
     val currentState: SimulationState get() = simulationState
 
-    private val history = mutableListOf<IChange<SimulationState>>()
+    private val history = mutableListOf<SimulationState.StateChange>()
     val canGoBack get() = history.isNotEmpty() || tickStart != null
     val isInTick get() = stepIterator != null || tickStart != null
 
+    // tickStart is kept for instant within-tick revert (no recomputation needed).
     private var tickStart: SimulationState? = null
+    // Accumulated sparse change for the current tick, composed from per-instruction changes.
+    private var tickAccumulated: SimulationState.StateChange? = null
     private var stepIterator: Iterator<SimulationState.StateChange>? = null
 
     init {
@@ -124,6 +184,7 @@ class SimulationProcess(val context: Context): ProcessHandler() {
     fun step(): Iterator<SimulationState.StateChange> {
         if (stepIterator == null) {
             tickStart = simulationState
+            tickAccumulated = null
             stepIterator = context.step(simulationState).iterator()
         }
         return stepIterator!!
@@ -132,7 +193,9 @@ class SimulationProcess(val context: Context): ProcessHandler() {
     fun advanceStep() {
         val iter = step()
         if (iter.hasNext()) {
-            simulationState = iter.next().perform(simulationState)
+            val change = iter.next()
+            simulationState = change.perform(simulationState)
+            tickAccumulated = tickAccumulated?.let { it + change } ?: change
             _state.value = simulationState
             if (!iter.hasNext()) finalizeStep()
         }
@@ -141,7 +204,9 @@ class SimulationProcess(val context: Context): ProcessHandler() {
     fun advanceStepSilent() {
         val iter = step()
         if (iter.hasNext()) {
-            simulationState = iter.next().perform(simulationState)
+            val change = iter.next()
+            simulationState = change.perform(simulationState)
+            tickAccumulated = tickAccumulated?.let { it + change } ?: change
             if (!iter.hasNext()) finalizeStepSilent()
         }
     }
@@ -151,32 +216,45 @@ class SimulationProcess(val context: Context): ProcessHandler() {
     }
 
     private fun finalizeStep() {
-        val start = tickStart ?: return
-        simulationState = context.endTick(simulationState).perform(simulationState)
+        if (tickStart == null) return
+        val endChange = context.endTick(simulationState)
+        simulationState = endChange.perform(simulationState)
         _state.value = simulationState
-        history.add(SnapshotStateChange(start, simulationState))
+        history.add(tickAccumulated?.let { it + endChange } ?: endChange)
         stepIterator = null
         tickStart = null
+        tickAccumulated = null
         notifyTextAvailable("History at ${history.size}\n", ProcessOutputTypes.STDOUT)
     }
 
     private fun finalizeStepSilent() {
-        val start = tickStart ?: return
-        simulationState = context.endTick(simulationState).perform(simulationState)
-        history.add(SnapshotStateChange(start, simulationState))
+        if (tickStart == null) return
+        val endChange = context.endTick(simulationState)
+        simulationState = endChange.perform(simulationState)
+        history.add(tickAccumulated?.let { it + endChange } ?: endChange)
         stepIterator = null
         tickStart = null
+        tickAccumulated = null
     }
 
     fun tick() {
-        val start = tickStart ?: simulationState
+        if (stepIterator == null) {
+            tickStart = simulationState
+            tickAccumulated = null
+        }
         val iter = step()
-        while (iter.hasNext()) simulationState = iter.next().perform(simulationState)
-        simulationState = context.endTick(simulationState).perform(simulationState)
+        while (iter.hasNext()) {
+            val change = iter.next()
+            simulationState = change.perform(simulationState)
+            tickAccumulated = tickAccumulated?.let { it + change } ?: change
+        }
+        val endChange = context.endTick(simulationState)
+        simulationState = endChange.perform(simulationState)
         _state.value = simulationState
-        history.add(SnapshotStateChange(start, simulationState))
+        history.add(tickAccumulated?.let { it + endChange } ?: endChange)
         stepIterator = null
         tickStart = null
+        tickAccumulated = null
         notifyTextAvailable("History at ${history.size}\n", ProcessOutputTypes.STDOUT)
     }
 
@@ -184,9 +262,11 @@ class SimulationProcess(val context: Context): ProcessHandler() {
         val ts = tickStart
         stepIterator = null
         if (ts != null) {
-            simulationState = ts
+            // Within-tick: revert via accumulated change, or fall back to the snapshot.
+            simulationState = tickAccumulated?.revert(simulationState) ?: ts
             _state.value = simulationState
             tickStart = null
+            tickAccumulated = null
         } else {
             val change = history.removeLastOrNull() ?: return
             simulationState = change.revert(simulationState)
@@ -200,6 +280,7 @@ class SimulationProcess(val context: Context): ProcessHandler() {
         _state.value = simulationState
         history.clear()
         tickStart = null
+        tickAccumulated = null
         stepIterator = null
         notifyProcessTerminated(0)
     }

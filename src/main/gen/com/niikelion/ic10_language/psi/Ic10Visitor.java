@@ -10,14 +10,6 @@ import com.niikelion.ic10_language.psi.elements.Ic10ReferenceNameElement;
 
 public class Ic10Visitor extends PsiElementVisitor {
 
-  public void visitChannel(@NotNull Ic10Channel o) {
-    visitValueLikeElement(o);
-  }
-
-  public void visitChannelNumber(@NotNull Ic10ChannelNumber o) {
-    visitPsiElement(o);
-  }
-
   public void visitEnum(@NotNull Ic10Enum o) {
     visitValueLikeElement(o);
   }
@@ -54,6 +46,10 @@ public class Ic10Visitor extends PsiElementVisitor {
     visitPsiElement(o);
   }
 
+  public void visitNetworkRef(@NotNull Ic10NetworkRef o) {
+    visitValueLikeElement(o);
+  }
+
   public void visitNumber(@NotNull Ic10Number o) {
     visitValueLikeElement(o);
   }
@@ -63,6 +59,10 @@ public class Ic10Visitor extends PsiElementVisitor {
   }
 
   public void visitOperationName(@NotNull Ic10OperationName o) {
+    visitPsiElement(o);
+  }
+
+  public void visitPortIndex(@NotNull Ic10PortIndex o) {
     visitPsiElement(o);
   }
 

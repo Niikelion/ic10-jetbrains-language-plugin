@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.niikelion.ic10-plugin-jetbrains"
-version = "2.0"
+version = "2.1"
 
 java {
   toolchain {
@@ -33,6 +33,8 @@ dependencies {
   intellijPlatform {
     intellijIdeaUltimate("2025.3")
     testFramework(TestFrameworkType.Platform)
+    bundledPlugin("com.intellij.modules.json")
+    bundledPlugin("org.jetbrains.plugins.yaml")
   }
 
   testImplementation("junit:junit:4.13.2")

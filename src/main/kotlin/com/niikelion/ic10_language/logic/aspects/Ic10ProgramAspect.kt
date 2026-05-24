@@ -28,7 +28,7 @@ class Ic10ProgramAspect(
         device: DeviceStateChangeBuilder
     ) {
         if (waitingFor > 0) return
-        aspect.lineNumberPropertyId?.also { jump(device.property(it).toInt()) }
+        aspect.lineNumberPropertyId?.also { syncFromProperty(device.property(it).toInt()) }
         if (isOnFire) return
         val line = aspect.code.lines.elementAtOrNull(instructionIndex)
         val action = line?.instruction?.action
@@ -40,7 +40,7 @@ class Ic10ProgramAspect(
                 val (netId, net) = state.networkFor(deviceId) ?: Pair(0L, Network.single(setOf(deviceId)))
                 InstructionContext(state, NetworkContext(netId, net, state, get(DeviceSlots.db)), deviceId).action(args)
             }
-            jump((instructionIndex + 1) % 128)
+            if (!jumped) jump((instructionIndex + 1) % 128)
         } catch (_: Throwable) {
             lightOnFire()
         }
@@ -136,6 +136,23 @@ class Ic10ProgramAspect(
                 }
             }
 
+            override operator fun plus(other: DeviceAspect.State.Change): Change {
+                if (other !is Change) return this
+                return Change(
+                    registers.composeWith(other.registers),
+                    devices.composeWith(other.devices),
+                    composeNullable(onFire, other.onFire),
+                    composeNullable(instructionIndex, other.instructionIndex),
+                    composeNullable(waitingFor, other.waitingFor)
+                )
+            }
+
+            private fun <V> composeNullable(a: SimpleChange<V>?, b: SimpleChange<V>?): SimpleChange<V>? = when {
+                a == null -> b
+                b == null -> a
+                else -> a + b
+            }
+
             class Builder(
                 private val previousState: State
             ): DeviceAspect.State.Change.Builder, IProgramState {
@@ -156,11 +173,18 @@ class Ic10ProgramAspect(
                     val previous = previousState.registers[register] ?: return
                     registers[register] = SimpleChange(previous, value)
                 }
+                private var didJump = false
+                val jumped get() = didJump
+
                 fun lightOnFire() {
                     onFire = SimpleChange(previousState.onFire, true)
                 }
+                fun syncFromProperty(lineNumber: Int) {
+                    instructionIndexValue = SimpleChange(previousState.instructionIndex, lineNumber)
+                }
                 fun jump(lineNumber: Int) {
                     instructionIndexValue = SimpleChange(previousState.instructionIndex, lineNumber)
+                    didJump = true
                 }
 
                 fun waitFor(ticks: Int) {

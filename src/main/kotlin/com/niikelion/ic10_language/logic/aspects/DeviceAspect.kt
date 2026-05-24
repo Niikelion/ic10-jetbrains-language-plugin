@@ -20,6 +20,9 @@ interface DeviceAspect {
         fun debuggerEntries(): List<Pair<String, Double>> = emptyList()
 
         interface Change: IChange<State> {
+            /** Compose two changes for the same aspect: keeps this change's previousValue and [other]'s nextValue. */
+            operator fun plus(other: Change): Change
+
             interface Builder {
                 val result: Change
             }

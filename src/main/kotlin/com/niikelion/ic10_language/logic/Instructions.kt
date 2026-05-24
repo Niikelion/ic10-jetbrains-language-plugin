@@ -149,8 +149,8 @@ object Instructions {
 
                     if (shouldJump) {
                         val jumpTarget = program.getAsValue(args.last())
-                        val normalizedJumpTarget = if (relative) program.instructionIndex + jumpTarget - 1 else jumpTarget
-                        val returnAddress = program.instructionIndex
+                        val normalizedJumpTarget = if (relative) program.instructionIndex + jumpTarget else jumpTarget
+                        val returnAddress = program.instructionIndex + 1
                         program.jump(normalizedJumpTarget.toInt())
                         if (call)
                             program.set(Registers.ra, returnAddress.toDouble())
@@ -343,7 +343,7 @@ object Instructions {
         ) { args ->
             val targetLine = program.getAsValue(args[0]).toInt()
 
-            program.set(Registers.ra, program.instructionIndex.toDouble())
+            program.set(Registers.ra, (program.instructionIndex + 1).toDouble())
             program.jump(targetLine)
         },
         Instruction(
@@ -362,10 +362,14 @@ object Instructions {
         ) { args ->
             val result = args[0].asRegister
             when (val deviceArg = args[1]) {
-                is ChannelValue -> {
+                is NetworkRefValue -> {
+                    // db:0 is the network reference (device + port); args[2] is the channel
+                    // (e.g. Channel2 = LogicType 167). The port index is intentionally unused
+                    // while the simulation only supports one network per device.
                     val slotDeviceId = program.get(deviceArg.slot)
+                    val channelKey = program.getAsValue(args[2]).toInt()
                     val channels = network.channelsOf(slotDeviceId) ?: throw Exception("Device not on any network")
-                    program.set(result, channels.readChannel(deviceArg.channelIndex))
+                    program.set(result, channels.readChannel(channelKey))
                 }
                 else -> {
                     val targetId = program.getAsDeviceId(deviceArg)
@@ -526,11 +530,14 @@ object Instructions {
             listOf(targetDevice, propertyName, value("value"))
         ) { args ->
             when (val deviceArg = args[0]) {
-                is ChannelValue -> {
+                is NetworkRefValue -> {
+                    // db:0 is the network reference (device + port); args[1] is the channel
+                    // (e.g. Channel2 = LogicType 167) and args[2] is the value to write.
                     val slotDeviceId = program.get(deviceArg.slot)
-                    val value = program.getAsValue(args[1])
+                    val channelKey = program.getAsValue(args[1]).toInt()
+                    val value = program.getAsValue(args[2])
                     val channels = network.channelsOf(slotDeviceId) ?: throw Exception("Device not on any network")
-                    channels.writeChannel(deviceArg.channelIndex, value)
+                    channels.writeChannel(channelKey, value)
                 }
                 else -> {
                     val target = program.getAsDeviceId(deviceArg)
@@ -595,7 +602,7 @@ object Instructions {
             program.waitFor(ceil(max(time, 0.0) * TICK_PER_SECOND).toInt())
         },
         op("slez", "a <= 0 ? 1 : 0") { a -> select(a <= 0.0) },
-        op("sll", "a << b") { a, b -> (a.toValueBits() shl b.toInt()).toDouble() },
+        op("sll", "a << b") { a, b -> (a.toLong() shl b.toInt()).toDouble() },
         op("slt", "a < b ? 1 : 0") { a, b -> select(a < b) },
         op("sltz", "a < 0 ? 1 : 0") { a -> select(a < 0.0) },
         op("sna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8) ? 1 : 0") { a, b, c -> select(!ap(a, b, c)) },

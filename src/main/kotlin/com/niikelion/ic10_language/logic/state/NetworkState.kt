@@ -6,6 +6,8 @@ class NetworkStateChange(val channels: Map<Int, SimpleChange<Double>>) : Composi
     override fun compose(source: NetworkState, action: CompositeChangeAction) = action.compose {
         NetworkState(compose(source.channels, channels))
     }
+
+    operator fun plus(other: NetworkStateChange) = NetworkStateChange(channels.composeWith(other.channels))
 }
 
 class NetworkStateChangeBuilder(private val previousState: NetworkState) {
