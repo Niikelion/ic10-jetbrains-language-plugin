@@ -15,6 +15,7 @@ import com.niikelion.ic10_language.logic.DeviceDataRegistry
 import com.niikelion.ic10_language.logic.ProgramCode
 import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.logic.devices.DeviceAspectsBuilder
+import com.niikelion.ic10_language.logic.devices.DeviceState
 import com.niikelion.ic10_language.logic.devices.StructureCircuitHousing
 import com.niikelion.ic10_language.logic.devices.StructureCrafter
 import com.niikelion.ic10_language.logic.state.SimulationState
@@ -131,9 +132,11 @@ fun SimulationState.applyPropertyOverrides(
 ): SimulationState {
     if (overrides.isEmpty()) return this
 
-    val logicTypeIndex = com.niikelion.ic10_language.logic.devices.Device.properties
+    val deviceState = devices[deviceId] ?: return this
+    val logicTypeIndex = Device.properties
 
-    var state = this
+    // Resolve all overrides up front, logging warnings for unknowns, then apply in one pass.
+    val resolved = mutableMapOf<Int, Double>()
     for ((name, value) in overrides) {
         val propId = logicTypeIndex[name]
         if (propId == null) {
@@ -143,7 +146,6 @@ fun SimulationState.applyPropertyOverrides(
             )
             continue
         }
-        val deviceState = state.devices[deviceId] ?: continue
         if (!deviceState.properties.containsKey(propId)) {
             console.print(
                 "WARNING: Device $deviceId does not expose logic type \"$name\" — skipped\n",
@@ -151,11 +153,11 @@ fun SimulationState.applyPropertyOverrides(
             )
             continue
         }
-        val newProps = deviceState.properties + (propId to value)
-        state = SimulationState(
-            state.devices + (deviceId to com.niikelion.ic10_language.logic.devices.DeviceState(newProps, deviceState.aspects)),
-            state.networks
-        )
+        resolved[propId] = value
     }
-    return state
+
+    if (resolved.isEmpty()) return this
+
+    val newDeviceState = DeviceState(deviceState.properties + resolved, deviceState.aspects)
+    return SimulationState(devices + (deviceId to newDeviceState), networks)
 }
