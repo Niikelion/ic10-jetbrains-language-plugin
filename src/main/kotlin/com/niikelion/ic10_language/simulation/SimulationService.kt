@@ -19,12 +19,15 @@ import com.niikelion.ic10_language.logic.CompilationError
 import com.niikelion.ic10_language.logic.Context
 import com.niikelion.ic10_language.logic.Network
 import com.niikelion.ic10_language.logic.ProgramCode
+import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.logic.devices.StructureCircuitHousing
 import com.niikelion.ic10_language.logic.state.IChange
 import com.niikelion.ic10_language.logic.state.SimulationState
 import com.niikelion.ic10_language.logic.state.SnapshotStateChange
 import com.niikelion.ic10_language.psi.Ic10File
+import com.niikelion.ic10_language.simulation.environment.DeviceFactory
 import com.niikelion.ic10_language.simulation.environment.EnvironmentConfig
+import com.niikelion.ic10_language.simulation.environment.applyPropertyOverrides
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.File
@@ -47,9 +50,9 @@ private class Terminated: ProcessHandler() {
 class SimulationService(private val project: Project) {
     private val process = MutableStateFlow<SimulationProcess?>(null)
 
-    private fun startNewProcess(context: Context): SimulationProcess {
+    private fun startNewProcess(context: Context, initialState: SimulationState? = null): SimulationProcess {
         process.value?.run { stop() }
-        return SimulationProcess(context).also {
+        return SimulationProcess(context, initialState).also {
             process.value = it
             it.addProcessListener(object: ProcessListener {
                 override fun processTerminated(event: ProcessEvent) {
@@ -124,41 +127,18 @@ class SimulationService(private val project: Project) {
         }
 
         val baseDir = configFile.parentFile
-        val deviceById = mutableMapOf<Long, StructureCircuitHousing>()
+        val deviceById = mutableMapOf<Long, Device>()
+        val propertyOverrides = mutableMapOf<Long, Map<String, Double>>()
 
         for (deviceConfig in config.devices) {
             val id = deviceConfig.id!! // guaranteed by resolveIds()
-            val sourceFile = baseDir.resolve(deviceConfig.source)
-            val label = deviceConfig.name ?: deviceConfig.source
-
-            try {
-                val vf = LocalFileSystem.getInstance().findFileByPath(sourceFile.canonicalPath)
-                val psiFile = vf?.findPsiFile(project)
-                    ?: ReadAction.compute<PsiFile, Throwable> {
-                        val text = sourceFile.readText()
-                        PsiFileFactory.getInstance(project).createFileFromText("Program.ic10", Ic10FileType.Instance, text)
-                    }
-
-                if (psiFile !is Ic10File) {
-                    console.print("ERROR: $label is not an IC10 file\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
-                    continue
-                }
-
-                console.print("Compiling $label\n", ConsoleViewContentType.LOG_INFO_OUTPUT)
-                val code = ProgramCode.compile(psiFile)
-                deviceById[id] = StructureCircuitHousing(id, code)
-            } catch (t: Throwable) {
-                if (t is CompilationError) {
-                    val line = t.target?.let { Ic10PsiUtils.getLineNumber(it) }?.let { "($it)" } ?: ""
-                    console.print("Compilation error$line in $label: ${t.message}\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
-                } else {
-                    console.print("ERROR: Could not load $label: ${t.message}\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
-                }
-            }
+            val (device, overrides) = DeviceFactory.create(deviceConfig, id, baseDir, project, console) ?: continue
+            deviceById[id] = device
+            if (overrides.isNotEmpty()) propertyOverrides[id] = overrides
         }
 
         if (deviceById.isEmpty()) {
-            console.print("ERROR: No devices could be compiled.\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
+            console.print("ERROR: No devices could be created.\n", ConsoleViewContentType.LOG_ERROR_OUTPUT)
             return Terminated()
         }
 
@@ -174,12 +154,17 @@ class SimulationService(private val project: Project) {
         }
 
         console.print("Starting environment simulation with ${deviceById.size} device(s)\n", ConsoleViewContentType.LOG_INFO_OUTPUT)
-        return startNewProcess(Context(deviceById.values.toList(), networks))
+        val context = Context(deviceById.values.toList(), networks)
+        var initialState = context.initialize()
+        for ((id, overrides) in propertyOverrides) {
+            initialState = initialState.applyPropertyOverrides(id, overrides, console)
+        }
+        return startNewProcess(context, initialState)
     }
 }
 
-class SimulationProcess(val context: Context): ProcessHandler() {
-    private var simulationState: SimulationState = context.initialize()
+class SimulationProcess(val context: Context, initialState: SimulationState? = null): ProcessHandler() {
+    private var simulationState: SimulationState = initialState ?: context.initialize()
     private val _state = MutableStateFlow(simulationState)
     val state: StateFlow<SimulationState> = _state
     val currentState: SimulationState get() = simulationState
