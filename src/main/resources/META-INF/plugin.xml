@@ -14,7 +14,40 @@
        Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
        Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
   <description><![CDATA[
-    Stationeers Ic10 language support plugin.
+    <p>Full IDE support for the <b>IC10 MIPS-like scripting language</b> used in
+    <a href="https://store.steampowered.com/app/544550/Stationeers/">Stationeers</a>.</p>
+
+    <h3>Editor</h3>
+    <ul>
+      <li>Syntax highlighting for instructions, registers, device references, labels, numbers, and enums</li>
+      <li>Code completion for instructions, registers (<code>r0</code>–<code>r17</code>, <code>ra</code>, <code>sp</code>),
+          device slots (<code>db</code>, <code>d0</code>–<code>d5</code>), logic types, and enum values</li>
+      <li>Parameter info hints showing argument names and types for every instruction</li>
+      <li>Inlay parameter name hints</li>
+      <li>Error and warning annotations (unknown instructions, wrong argument count, undefined labels, etc.)</li>
+      <li>Go-to-definition and find usages for labels and named registers</li>
+      <li>Code formatting and smart Enter handler</li>
+      <li>Structure view and file outline</li>
+      <li>Status bar widget showing line count against the IC10 limit</li>
+    </ul>
+
+    <h3>Documentation</h3>
+    <ul>
+      <li>Quick-docs for all IC10 instructions with parameter descriptions</li>
+      <li>Quick-docs for registers, device references, and enum values</li>
+      <li>Stationpedia integration: game device data downloaded at build time, used for logic-property completions and docs</li>
+      <li>Deprecation notices for deprecated logic types</li>
+      <li>Enum value support: <code>LogicType.Activate</code> style literals with highlighting and completions</li>
+    </ul>
+
+    <h3>Debugger</h3>
+    <ul>
+      <li>IC10 run configurations — select which <code>.ic10</code> files to simulate</li>
+      <li>Full JetBrains XDebugger integration: breakpoints, variable inspection</li>
+      <li>Step-over (execute one instruction), full-tick (advance one game tick), and step-back</li>
+      <li>Complete IC10 instruction simulation engine with device model, network model, and stack memory</li>
+      <li>Slot instructions (<code>ls</code>, <code>ss</code>, <code>lbs</code>, <code>lbns</code>, <code>sbs</code>) are not yet simulated and will cause a compilation error if used in a run configuration</li>
+    </ul>
   ]]></description>
 
   <change-notes><![CDATA[
