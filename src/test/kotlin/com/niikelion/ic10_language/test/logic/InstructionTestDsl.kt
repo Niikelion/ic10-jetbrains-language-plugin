@@ -46,7 +46,7 @@ fun simulate(block: InstructionTestBuilder.() -> Unit) =
 annotation class InstructionTestDsl
 
 @InstructionTestDsl
-class InstructionTestBuilder {
+class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = null) {
     private val deviceId = TEST_DEVICE_ID
 
     private val registers = mutableMapOf<Register, Double>()
@@ -58,7 +58,7 @@ class InstructionTestBuilder {
     private val dataConnectedExtra = mutableSetOf<Long>()
     private val softConnectedExtra = mutableSetOf<Long>()
 
-    private val steps = mutableListOf<(SimulationStateChangeBuilder) -> Unit>()
+    private val steps = mutableListOf<(SimulationState, Map<Long, Pair<Long, Network>>) -> SimulationState>()
     private val assertions = mutableListOf<(SimulationState) -> Unit>()
 
     // --- Value factories ---
@@ -120,11 +120,24 @@ class InstructionTestBuilder {
         exec(instruction, *args)
     }
 
+    /**
+     * Executes one instruction with game-like error handling: exceptions are caught and
+     * translated to [Ic10ProgramAspect.State.icError], mirroring
+     * [Ic10ProgramAspect.executeOneInstruction]. Use `assert { hasError() }` to verify
+     * that the instruction faulted.
+     */
     fun exec(instruction: Instruction, vararg args: IValue) {
         val action = instruction.action ?: error("Instruction '${instruction.name}' is not implemented")
-        steps += { builder ->
+        steps += { state, deviceNetworks ->
+            val builder = SimulationStateChangeBuilder(state, deviceNetworks)
             val (netId, net) = builder.networkFor(deviceId) ?: Pair(TEST_NETWORK_ID, Network.single(setOf(deviceId)))
-            InstructionContext(builder, NetworkContext(netId, net, builder, deviceId), deviceId).action(args.toList().toTypedArray())
+            val ctx = InstructionContext(builder, NetworkContext(netId, net, builder, deviceId), deviceId)
+            try {
+                ctx.action(args.toList().toTypedArray())
+            } catch (e: Throwable) {
+                ctx.program.setIcError(e.message ?: "Unknown error")
+            }
+            builder.stateChange.perform(state)
         }
     }
 
@@ -132,11 +145,34 @@ class InstructionTestBuilder {
     fun execFails(name: String, vararg args: IValue) {
         val instruction = Instructions.get(name) ?: error("Unknown instruction: $name")
         val action = instruction.action ?: error("Instruction '${instruction.name}' is not implemented")
-        steps += { builder ->
+        steps += { state, deviceNetworks ->
+            val builder = SimulationStateChangeBuilder(state, deviceNetworks)
             val (netId, net) = builder.networkFor(deviceId) ?: Pair(TEST_NETWORK_ID, Network.single(setOf(deviceId)))
             assertFailsWith<Exception> {
                 InstructionContext(builder, NetworkContext(netId, net, builder, deviceId), deviceId).action(args.toList().toTypedArray())
             }
+            state
+        }
+    }
+
+    /**
+     * Compiles [code] as an IC10 source program and runs it through a full simulation tick
+     * (up to 128 instructions, same as the in-game IC housing).
+     *
+     * Requires a compiler to have been injected via the [simulate] overload that accepts one —
+     * typically the private wrapper in a [com.intellij.testFramework.fixtures.BasePlatformTestCase] subclass.
+     */
+    fun compile(code: String) {
+        val programCode = (compiler ?: error(
+            "compiled() needs a compiler; wrap simulate { } in a helper that passes one"
+        )).invoke(code)
+        steps += { state, deviceNetworks ->
+            val aspect = Ic10ProgramAspect(programCode)
+            var current = state
+            for (change in aspect.step(deviceId, current, deviceNetworks)) {
+                current = change.perform(current)
+            }
+            current
         }
     }
 
@@ -168,6 +204,7 @@ class InstructionTestBuilder {
             assertEquals(expected, programState.waitingFor, "waitingFor")
         fun onFire() = assertTrue(programState.onFire, "Expected device to be on fire")
         fun notOnFire() = assertFalse(programState.onFire, "Expected device not to be on fire")
+        fun hasError() = assertTrue(programState.icError != null, "Expected IC error")
         fun instructionIndex(expected: Int) =
             assertEquals(expected, programState.instructionIndex, "Instruction index")
 
@@ -236,9 +273,7 @@ class InstructionTestBuilder {
         )
 
         for (step in steps) {
-            val builder = SimulationStateChangeBuilder(state, deviceNetworks)
-            step(builder)
-            state = builder.stateChange.perform(state)
+            state = step(state, deviceNetworks)
         }
 
         for (assertion in assertions) {

@@ -468,7 +468,7 @@ object Instructions {
             val result = args[0].asRegister
             val stackPointer = program.get(Registers.sp).toInt()
 
-            program.set(result, memory.read(stackPointer))
+            program.set(result, memory.read(stackPointer - 1))
         },
         Instruction(
             "poke",
@@ -482,10 +482,10 @@ object Instructions {
         },
         Instruction("pop", "reads the value at the top of the stack and decrements sp", listOf(resultVariable)) { args ->
             val result = args[0].asRegister
-            val stackPointer = program.get(Registers.sp).toInt()
+            val stackPointer = program.get(Registers.sp).toInt() - 1
 
             program.set(result, memory.read(stackPointer))
-            program.set(Registers.sp, stackPointer - 1.0 )
+            program.set(Registers.sp, stackPointer.toDouble())
         },
         op("pow", "a to the power of b") { a, b -> a.pow(b) },
         Instruction("push", "Stores the provided value at the top of the stack and increments sp", listOf(value("value"))) { args ->

@@ -29,7 +29,7 @@ class Ic10ProgramAspect(
     ) {
         if (waitingFor > 0) return
         aspect.lineNumberPropertyId?.also { syncFromProperty(device.property(it).toInt()) }
-        if (isOnFire) return
+        if (isOnFire || isIcError != null) return
         val line = aspect.code.lines.elementAtOrNull(instructionIndex)
         val action = line?.instruction?.action
         try {
@@ -41,10 +41,10 @@ class Ic10ProgramAspect(
                 InstructionContext(state, NetworkContext(netId, net, state, get(DeviceSlots.db)), deviceId).action(args)
             }
             if (!jumped) jump((instructionIndex + 1) % 128)
-        } catch (_: Throwable) {
-            lightOnFire()
+        } catch (e: Throwable) {
+            setIcError(e.message ?: "Unknown error")
         }
-        aspect.errorPropertyId?.also { device.setProperty(it, if (isOnFire) 1.0 else 0.0) }
+        aspect.errorPropertyId?.also { device.setProperty(it, if (isIcError != null) 1.0 else 0.0) }
         aspect.lineNumberPropertyId?.also { device.setProperty(it, instructionIndex.toDouble()) }
     }
 
@@ -103,6 +103,7 @@ class Ic10ProgramAspect(
         val registers: Map<Register, Double> = Registers.all.associateWith { 0.0 },
         val devices: Map<DeviceSlot, Long> = DeviceSlots.all.associateWith { 0 },
         val onFire: Boolean = false,
+        val icError: String? = null,
         val instructionIndex: Int = 0,
         val waitingFor: Int = 0
     ): DeviceAspect.State {
@@ -119,6 +120,7 @@ class Ic10ProgramAspect(
             val registers: Map<Register, SimpleChange<Double>> = emptyMap(),
             val devices: Map<DeviceSlot, SimpleChange<Long>> = emptyMap(),
             val onFire: SimpleChange<Boolean>? = null,
+            val icError: SimpleChange<String?>? = null,
             val instructionIndex: SimpleChange<Int>? = null,
             val waitingFor: SimpleChange<Int>? = null
         ): DeviceAspect.State.Change, CompositeChange<DeviceAspect.State> {
@@ -130,6 +132,7 @@ class Ic10ProgramAspect(
                         compose(source.registers, registers),
                         compose(source.devices, devices),
                         compose(source.onFire, onFire),
+                        compose(source.icError, icError),
                         compose(source.instructionIndex, instructionIndex),
                         compose(source.waitingFor, waitingFor)
                     )
@@ -142,6 +145,7 @@ class Ic10ProgramAspect(
                     registers.composeWith(other.registers),
                     devices.composeWith(other.devices),
                     composeNullable(onFire, other.onFire),
+                    composeNullable(icError, other.icError),
                     composeNullable(instructionIndex, other.instructionIndex),
                     composeNullable(waitingFor, other.waitingFor)
                 )
@@ -159,12 +163,14 @@ class Ic10ProgramAspect(
                 private val registers = mutableMapOf<Register, SimpleChange<Double>>()
                 private val devices = mutableMapOf<DeviceSlot, SimpleChange<Long>>()
                 private var onFire: SimpleChange<Boolean>? = null
+                private var icError: SimpleChange<String?>? = null
                 private var instructionIndexValue: SimpleChange<Int>? = null
                 private var waitingForValue: SimpleChange<Int>? = null
 
                 override fun get(register: Register): Double = registers[register]?.nextValue ?: previousState.registers[register] ?: 0.0
                 fun get(deviceSlot: DeviceSlot): Long = devices[deviceSlot]?.nextValue ?: previousState.devices[deviceSlot] ?: 0
                 val isOnFire get() = onFire?.nextValue ?: previousState.onFire
+                val isIcError: String? get() = icError?.nextValue ?: previousState.icError
                 val instructionIndex get() = instructionIndexValue?.nextValue ?: previousState.instructionIndex
 
                 val waitingFor get() = waitingForValue?.nextValue ?: previousState.waitingFor
@@ -178,6 +184,9 @@ class Ic10ProgramAspect(
 
                 fun lightOnFire() {
                     onFire = SimpleChange(previousState.onFire, true)
+                }
+                fun setIcError(message: String) {
+                    icError = SimpleChange(previousState.icError, message)
                 }
                 fun syncFromProperty(lineNumber: Int) {
                     instructionIndexValue = SimpleChange(previousState.instructionIndex, lineNumber)
@@ -199,6 +208,7 @@ class Ic10ProgramAspect(
                     registers,
                     devices,
                     onFire,
+                    icError,
                     instructionIndexValue,
                     waitingForValue
                 )

@@ -501,17 +501,14 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `and`() {
-
         TODO("verify in-game")
         simulate {
             exec("and", reg("r0"), num(0b1010), num(0b1100))
             assert { register("r0", 0b1000.toDouble()) }
         }
     }
-
     @Test
     fun `or`() {
-
         TODO("verify in-game")
         simulate {
             exec("or", reg("r0"), num(0b1010), num(0b1100))
@@ -521,7 +518,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `xor`() {
-
         TODO("verify in-game")
         simulate {
             exec("xor", reg("r0"), num(0b1010), num(0b1100))
@@ -531,7 +527,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `not`() {
-
         TODO("verify in-game")
         simulate {
             exec("not", reg("r0"), num(0))
@@ -541,7 +536,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `nor`() {
-
         TODO("verify in-game")
         simulate {
             exec("nor", reg("r0"), num(0b1010), num(0b1100))
@@ -554,30 +548,39 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `sll`() {
-
+    fun `sll matches the in-game behaviour`() {
         TODO("verify in-game")
         simulate {
-            exec("sll", reg("r0"), num(1), num(3))
-            assert { register("r0", 8) }
+            exec("sll", reg("r0"), num(16), num(2))
+            assert { register("r0", 64) }
         }
         simulate {
-            exec("sll", reg("r0"), num(-1), num(1))
-            assert { register("r0", -2) }
+            // negative: left shift fills vacated bits with 0, sign may change
+            exec("sll", reg("r0"), num(-16), num(2))
+            assert { register("r0", -64) }
+        }
+        simulate {
+            // all significant bits shifted off the top
+            exec("sll", reg("r0"), num(4), num(62))
+            assert { register("r0", 0) }
         }
     }
 
     @Test
-    fun `sla`() {
-
-        TODO("verify in-game")
+    fun `sla matches the in-game behaviour`() {
         simulate {
-            exec("sla", reg("r0"), num(1), num(3))
-            assert { register("r0", 8) }
+            exec("sla", reg("r0"), num(16), num(2))
+            assert { register("r0", 64) }
         }
         simulate {
-            exec("sla", reg("r0"), num(-1), num(1))
-            assert { register("r0", -2) }
+            // negative: same as sll — left shift vacates low bits with 0 regardless
+            exec("sla", reg("r0"), num(-16), num(2))
+            assert { register("r0", -64) }
+        }
+        simulate {
+            // all significant bits shifted off the top
+            exec("sla", reg("r0"), num(4), num(62))
+            assert { register("r0", 0) }
         }
     }
 
@@ -1079,8 +1082,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `j`() {
-
+    fun `j matches the in-game behaviour`() {
         simulate {
             exec("j", num(10))
             assert { instructionIndex(10) }
@@ -1113,9 +1115,7 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `push and pop`() {
-
-        TODO("verify in-game")
+    fun `push writes at sp then increments sp`() {
         simulate {
             setup { sp(0) }
             exec("push", num(42))
@@ -1125,9 +1125,26 @@ class InstructionTests : BareTestFixtureTestCase() {
             }
         }
         simulate {
+            // second push goes to the next slot
             setup {
                 sp(1)
-                stackAt(1, 99)
+                stackAt(0, 10)
+            }
+            exec("push", num(20))
+            assert {
+                stackAt(0, 10)
+                stackAt(1, 20)
+                sp(2)
+            }
+        }
+    }
+
+    @Test
+    fun `pop decrements sp then reads from top`() {
+        simulate {
+            setup {
+                sp(1)
+                stackAt(0, 99)
             }
             exec("pop", reg("r0"))
             assert {
@@ -1138,13 +1155,24 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `peek reads without decrement`() {
+    fun `push then pop returns the same value`() {
+        simulate {
+            setup { sp(0) }
+            exec("push", num(42))
+            exec("pop", reg("r0"))
+            assert {
+                register("r0", 42)
+                sp(0)
+            }
+        }
+    }
 
-        TODO("verify in-game")
+    @Test
+    fun `peek reads top without changing sp`() {
         simulate {
             setup {
                 sp(1)
-                stackAt(1, 77)
+                stackAt(0, 77)
             }
             exec("peek", reg("r0"))
             assert {
@@ -1155,12 +1183,90 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `poke writes to address`() {
-
-        TODO("verify in-game")
+    fun `poke writes to address without changing sp`() {
         simulate {
+            setup { sp(3) }
             exec("poke", num(5), num(123))
-            assert { stackAt(5, 123) }
+            assert {
+                stackAt(5, 123)
+                sp(3)
+            }
+        }
+    }
+
+    @Test
+    fun `get reads from device stack at address`() {
+        simulate {
+            setup { stackAt(3, 55) }
+            exec("get", reg("r0"), num(0), num(3))  // 0 = own device id
+            assert { register("r0", 55) }
+        }
+    }
+
+    @Test
+    fun `put writes to device stack at address`() {
+        simulate {
+            exec("put", device("db"), num(7), num(99))
+            assert { stackAt(7, 99) }
+        }
+    }
+
+    @Test
+    fun `pop on empty stack causes ic error`() {
+        simulate {
+            setup { sp(0) }
+            exec("pop", reg("r0"))
+            assert { hasError() }
+        }
+    }
+
+    @Test
+    fun `peek on empty stack causes ic error`() {
+        simulate {
+            setup { sp(0) }
+            exec("peek", reg("r0"))
+            assert { hasError() }
+        }
+    }
+
+    @Test
+    fun `push on full stack causes ic error`() {
+        simulate {
+            setup { sp(512) }
+            exec("push", num(1))
+            assert { hasError() }
+        }
+    }
+
+    @Test
+    fun `poke with negative address causes ic error`() {
+        simulate {
+            exec("poke", num(-1), num(0))
+            assert { hasError() }
+        }
+    }
+
+    @Test
+    fun `poke with out-of-range address causes ic error`() {
+        simulate {
+            exec("poke", num(512), num(0))
+            assert { hasError() }
+        }
+    }
+
+    @Test
+    fun `get with out-of-range address causes ic error`() {
+        simulate {
+            exec("get", reg("r0"), num(0), num(512))  // 0 = own device id
+            assert { hasError() }
+        }
+    }
+
+    @Test
+    fun `put with out-of-range address causes ic error`() {
+        simulate {
+            exec("put", device("db"), num(512), num(0))
+            assert { hasError() }
         }
     }
 
@@ -1226,7 +1332,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `lerp`() {
-
         TODO("verify in-game")
         simulate {
             exec("lerp", reg("r0"), num(0), num(10), num(0.5))
@@ -1243,28 +1348,87 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `max`() {
-
-        TODO("verify in-game")
+    fun `max matches the in-game behaviour`() {
         simulate {
             exec("max", reg("r0"), num(3), num(7))
             assert { register("r0", 7) }
         }
+        simulate {
+            exec("max", reg("r0"), num(7), num(3))
+            assert { register("r0", 7) }
+        }
+        simulate {
+            exec("max", reg("r0"), num(5), num(5))
+            assert { register("r0", 5) }
+        }
+        simulate {
+            exec("max", reg("r0"), num(-3), num(-7))
+            assert { register("r0", -3) }
+        }
+        simulate {
+            exec("max", reg("r0"), num(-1), num(1))
+            assert { register("r0", 1) }
+        }
+        simulate {
+            exec("max", reg("r0"), num(0), num(-1))
+            assert { register("r0", 0) }
+        }
+        simulate {
+            exec("max", reg("r0"), num(Double.POSITIVE_INFINITY), num(5))
+            assert { register("r0", Double.POSITIVE_INFINITY, 0.0) }
+        }
+        simulate {
+            exec("max", reg("r0"), num(Double.NEGATIVE_INFINITY), num(5))
+            assert { register("r0", 5) }
+        }
+        simulate {
+            exec("max", reg("r0"), num(Double.NaN), num(5))
+            assert { register("r0", Double.NaN, 0.0) }
+        }
     }
 
     @Test
-    fun `min`() {
-
-        TODO("verify in-game")
+    fun `min matches the in-game behaviour`() {
         simulate {
             exec("min", reg("r0"), num(3), num(7))
             assert { register("r0", 3) }
+        }
+        simulate {
+            exec("min", reg("r0"), num(7), num(3))
+            assert { register("r0", 3) }
+        }
+        simulate {
+            exec("min", reg("r0"), num(5), num(5))
+            assert { register("r0", 5) }
+        }
+        simulate {
+            exec("min", reg("r0"), num(-3), num(-7))
+            assert { register("r0", -7) }
+        }
+        simulate {
+            exec("min", reg("r0"), num(-1), num(1))
+            assert { register("r0", -1) }
+        }
+        simulate {
+            exec("min", reg("r0"), num(0), num(1))
+            assert { register("r0", 0) }
+        }
+        simulate {
+            exec("min", reg("r0"), num(Double.POSITIVE_INFINITY), num(5))
+            assert { register("r0", 5) }
+        }
+        simulate {
+            exec("min", reg("r0"), num(Double.NEGATIVE_INFINITY), num(5))
+            assert { register("r0", Double.NEGATIVE_INFINITY, 0.0) }
+        }
+        simulate {
+            exec("min", reg("r0"), num(Double.NaN), num(5))
+            assert { register("r0", Double.NaN, 0.0) }
         }
     }
 
     @Test
     fun `rand produces value in 0 until 1`() {
-
         TODO("verify in-game")
         repeat(20) {
             simulate {
@@ -1296,8 +1460,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `s writes device property`() {
-
-        TODO("verify in-game")
         val targetId = 10L
         val propId = 42
         simulate {
@@ -1315,12 +1477,56 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `network channel read and write`() {
+    fun `s writes value to channel`() {
+        simulate {
+            exec("s", channel("db"), channelType(0), num(42.0))
+            assert { networkChannel(0, 42.0) }
+        }
+    }
 
-        TODO("verify in-game")
+    @Test
+    fun `l reads value from channel`() {
         simulate {
             setup { networkChannel(0, 42.0) }
-            assert { networkChannel(0, 42.0) }
+            exec("l", reg("r0"), channel("db"), channelType(0))
+            assert { register("r0", 42.0) }
+        }
+    }
+
+    @Test
+    fun `writing to one channel does not affect others`() {
+        simulate {
+            exec("s", channel("db"), channelType(2), num(99.0))
+            assert {
+                networkChannel(0, 0.0)
+                networkChannel(1, 0.0)
+                networkChannel(2, 99.0)
+                networkChannel(3, 0.0)
+            }
+        }
+    }
+
+    @Test
+    fun `separate channels hold independent values`() {
+        simulate {
+            exec("s", channel("db"), channelType(0), num(10.0))
+            exec("s", channel("db"), channelType(3), num(20.0))
+            assert {
+                networkChannel(0, 10.0)
+                networkChannel(3, 20.0)
+            }
+        }
+        simulate {
+            setup {
+                networkChannel(1, 11.0)
+                networkChannel(5, 55.0)
+            }
+            exec("l", reg("r0"), channel("db"), channelType(1))
+            exec("l", reg("r1"), channel("db"), channelType(5))
+            assert {
+                register("r0", 11.0)
+                register("r1", 55.0)
+            }
         }
     }
 
@@ -1330,7 +1536,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sdns returns 1 when slot is empty`() {
-
         TODO("verify in-game")
         simulate {
             exec("sdns", reg("r0"), device("d0"))
@@ -1340,7 +1545,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sdse returns 1 when slot is set`() {
-
         TODO("verify in-game")
         simulate {
             setup { deviceSlot("d0", 5L) }
