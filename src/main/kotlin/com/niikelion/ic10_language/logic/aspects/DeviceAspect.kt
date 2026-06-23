@@ -19,6 +19,13 @@ interface DeviceAspect {
         fun change(): Change.Builder
         fun debuggerEntries(): List<Pair<String, Double>> = emptyList()
 
+        /**
+         * A human-readable status line surfaced at the top of the device node in the debugger,
+         * or `null` when the aspect has nothing to report. Used to explain a halted device —
+         * e.g. an `hcf` self-destruct versus a runtime error and its reason.
+         */
+        fun debuggerStatus(): String? = null
+
         interface Change: IChange<State> {
             /** Compose two changes for the same aspect: keeps this change's previousValue and [other]'s nextValue. */
             operator fun plus(other: Change): Change
