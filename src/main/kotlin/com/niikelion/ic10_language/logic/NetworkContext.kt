@@ -22,7 +22,7 @@ class NetworkContext(
         canAccess(targetId) && (global.propertyDefinition(targetId, propId)?.enableWrite ?: false)
 
     fun device(targetId: Long): DeviceStateChangeBuilder {
-        if (!canAccess(targetId)) throw Exception("Device $targetId not accessible")
+        if (!canAccess(targetId)) throw DeviceNotAccessibleError(targetId)
         return global.device(targetId)
     }
 

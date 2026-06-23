@@ -368,7 +368,7 @@ object Instructions {
                     // while the simulation only supports one network per device.
                     val slotDeviceId = program.get(deviceArg.slot)
                     val channelKey = program.getAsValue(args[2]).toInt()
-                    val channels = network.channelsOf(slotDeviceId) ?: throw Exception("Device not on any network")
+                    val channels = network.channelsOf(slotDeviceId) ?: throw DeviceNotOnNetworkError(slotDeviceId)
                     program.set(result, channels.readChannel(channelKey))
                 }
                 else -> {
@@ -520,7 +520,7 @@ object Instructions {
             val result = args[0].asRegister
             val deviceId = program.getAsDeviceId(args[1])
             val reagentHash = program.getAsValue(args[2]).toLong()
-            val devicePrefabHash = global.prefabHash(deviceId) ?: throw Exception("Device $deviceId not found")
+            val devicePrefabHash = global.prefabHash(deviceId) ?: throw DeviceNotFoundError(deviceId)
             program.set(result, (Reagents.findSourcePrefabHash(devicePrefabHash, reagentHash) ?: 0L).toDouble())
         },
         op("round", "a rounded to the nearest integer") { a -> round(a) },
@@ -536,7 +536,7 @@ object Instructions {
                     val slotDeviceId = program.get(deviceArg.slot)
                     val channelKey = program.getAsValue(args[1]).toInt()
                     val value = program.getAsValue(args[2])
-                    val channels = network.channelsOf(slotDeviceId) ?: throw Exception("Device not on any network")
+                    val channels = network.channelsOf(slotDeviceId) ?: throw DeviceNotOnNetworkError(slotDeviceId)
                     channels.writeChannel(channelKey, value)
                 }
                 else -> {

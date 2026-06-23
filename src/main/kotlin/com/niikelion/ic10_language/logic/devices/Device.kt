@@ -1,7 +1,10 @@
 package com.niikelion.ic10_language.logic.devices
 
+import com.niikelion.ic10_language.logic.AspectNotFoundError
+import com.niikelion.ic10_language.logic.AspectTypeMismatchError
 import com.niikelion.ic10_language.logic.DeviceDataRegistry
 import com.niikelion.ic10_language.logic.Macros
+import com.niikelion.ic10_language.logic.PropertyNotFoundError
 import com.niikelion.ic10_language.logic.Network
 import com.niikelion.ic10_language.logic.StationeersEnumData
 import com.niikelion.ic10_language.logic.aspects.DeviceAspect
@@ -151,7 +154,7 @@ class DeviceStateChangeBuilder(
     private val aspects = mutableMapOf<KClass<out DeviceAspect.State>, DeviceAspect.State.Change.Builder>()
 
     fun aspect(stateClass: KClass<out DeviceAspect.State>): DeviceAspect.State.Change.Builder {
-        val state = previousState.aspects[stateClass] ?: throw IllegalArgumentException("Cannot access device aspect that does not exist")
+        val state = previousState.aspects[stateClass] ?: throw AspectNotFoundError()
         return aspects.computeIfAbsent(stateClass) { state.change() }
     }
 
@@ -159,7 +162,7 @@ class DeviceStateChangeBuilder(
         previousState.aspects[stateClass]?.let { state -> aspects.computeIfAbsent(stateClass) { state.change() } }
 
     inline fun <reified S: DeviceAspect.State, reified B: DeviceAspect.State.Change.Builder> aspect() =
-        aspect(S::class) as? B ?: throw IllegalArgumentException("Aspect state change builder type missmatch")
+        aspect(S::class) as? B ?: throw AspectTypeMismatchError()
 
     inline fun <reified S: DeviceAspect.State, reified B: DeviceAspect.State.Change.Builder> aspectOrNull() =
         aspectOrNull(S::class) as? B
@@ -171,14 +174,14 @@ class DeviceStateChangeBuilder(
     inline fun <reified S: DeviceAspect.State, reified B: DeviceAspect.State.Change.Builder, T>aspect(crossinline builder: B.() -> T): T {
         return aspect(S::class) {
             val target = this
-            if (target !is B) throw IllegalArgumentException("Aspect state change builder type missmatch")
+            if (target !is B) throw AspectTypeMismatchError()
             target.builder()
         }
     }
 
     fun property(id: Int): Double = properties[id]?.nextValue ?: previousState.properties[id] ?: 0.0
     fun setProperty(id: Int, value: Double) {
-        val previousValue = previousState.properties[id] ?: throw IllegalArgumentException("Cannot access device property that does not exist")
+        val previousValue = previousState.properties[id] ?: throw PropertyNotFoundError()
         properties[id] = SimpleChange(previousValue, value)
     }
 
