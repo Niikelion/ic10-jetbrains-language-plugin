@@ -12,12 +12,12 @@ import org.junit.Test
 class DebuggerStatusTests {
     @Test
     fun cleanStateHasNoStatus() {
-        assertNull(Ic10ProgramAspect.State().debuggerStatus())
+        assertNull(Ic10ProgramAspect.State().status)
     }
 
     @Test
     fun runtimeErrorStatusReportsReason() {
-        val status = Ic10ProgramAspect.State(icError = "Device 5 not found").debuggerStatus()
+        val status = Ic10ProgramAspect.State(icError = "Device 5 not found").status
         assertNotNull(status)
         assertTrue("status should mention it is an error", status!!.contains("error", ignoreCase = true))
         assertTrue("status should include the reason", status.contains("Device 5 not found"))
@@ -25,8 +25,8 @@ class DebuggerStatusTests {
 
     @Test
     fun hcfStatusIsDistinctFromRuntimeError() {
-        val onFire = Ic10ProgramAspect.State(onFire = true).debuggerStatus()
-        val error = Ic10ProgramAspect.State(icError = "boom").debuggerStatus()
+        val onFire = Ic10ProgramAspect.State(onFire = true).status
+        val error = Ic10ProgramAspect.State(icError = "boom").status
         assertNotNull(onFire)
         assertNotNull(error)
         assertTrue("hcf status should mention fire", onFire!!.contains("fire", ignoreCase = true))

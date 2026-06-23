@@ -32,9 +32,9 @@ class Ic10StackFrame(
         val list = XValueChildrenList()
 
         device.aspects.firstNotNullOfOrNull { aspectEntry ->
-            deviceState.aspects[aspectEntry.value.stateClass]?.debuggerStatus()
+            deviceState.aspects[aspectEntry.value.stateClass]?.status
         }?.let { status ->
-            list.add("Device status", Ic10TextValue(status, AllIcons.General.Error))
+            list.add("Status", Ic10TextValue(status, AllIcons.General.Error))
         }
 
         val propEntries = device.properties.mapNotNull { (propId, propDef) ->

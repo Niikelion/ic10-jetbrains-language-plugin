@@ -116,7 +116,7 @@ class Ic10ProgramAspect(
             name to value
         }
 
-        override fun debuggerStatus(): String? = when {
+        override val status: String? get() = when {
             icError != null -> "Runtime error: $icError"
             onFire -> "Halted: caught fire (hcf)"
             else -> null
