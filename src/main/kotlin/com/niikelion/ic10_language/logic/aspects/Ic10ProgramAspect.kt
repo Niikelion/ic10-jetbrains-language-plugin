@@ -40,7 +40,7 @@ class Ic10ProgramAspect(
                 val (netId, net) = state.networkFor(deviceId) ?: Pair(0L, Network.single(setOf(deviceId)))
                 InstructionContext(state, NetworkContext(netId, net, state, get(DeviceSlots.db)), deviceId).action(args)
             }
-            if (!jumped) jump((instructionIndex + 1) % 128)
+            if (!jumped) jump((instructionIndex + 1) % Constraints.MAX_LINES)
         } catch (e: Throwable) {
             setIcError(e.message ?: "Unknown error")
         }
@@ -52,7 +52,7 @@ class Ic10ProgramAspect(
         state.device(deviceId).alsoLet {
             val device = this
             aspect<State, State.Change.Builder, Unit> {
-                repeat(128) {
+                repeat(Constraints.MAX_LINES) {
                     executeOneInstruction(state, deviceId, this@Ic10ProgramAspect, device)
                 }
                 if (waitingFor > 0) decrementWaitFor()
@@ -76,7 +76,7 @@ class Ic10ProgramAspect(
     ): Sequence<SimulationState.StateChange> = sequence {
         var current = initial
         var slot = 0
-        while (slot < 128) {
+        while (slot < Constraints.MAX_LINES) {
             val change = current.change(deviceNetworks, deviceDefinitions) {
                 val simBuilder = this
                 device(deviceId).alsoLet {
