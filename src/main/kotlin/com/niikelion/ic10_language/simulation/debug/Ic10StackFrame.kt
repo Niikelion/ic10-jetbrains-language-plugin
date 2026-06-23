@@ -1,5 +1,6 @@
 package com.niikelion.ic10_language.simulation.debug
 
+import com.intellij.icons.AllIcons
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
@@ -29,6 +30,12 @@ class Ic10StackFrame(
     override fun computeChildren(node: XCompositeNode) {
         val deviceState = process.state.value.devices[device.id] ?: return
         val list = XValueChildrenList()
+
+        device.aspects.firstNotNullOfOrNull { aspectEntry ->
+            deviceState.aspects[aspectEntry.value.stateClass]?.status
+        }?.let { status ->
+            list.add("Status", Ic10TextValue(status, AllIcons.General.Error))
+        }
 
         val propEntries = device.properties.mapNotNull { (propId, propDef) ->
             deviceState.properties[propId]?.let { propDef.name to it }

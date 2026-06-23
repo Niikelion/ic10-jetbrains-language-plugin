@@ -19,6 +19,9 @@ interface DeviceAspect {
         fun change(): Change.Builder
         fun debuggerEntries(): List<Pair<String, Double>> = emptyList()
 
+        /** Human-readable status shown in the debugger, or `null` when there is nothing to report. */
+        val status: String? get() = null
+
         interface Change: IChange<State> {
             /** Compose two changes for the same aspect: keeps this change's previousValue and [other]'s nextValue. */
             operator fun plus(other: Change): Change

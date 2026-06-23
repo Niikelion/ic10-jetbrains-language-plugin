@@ -116,6 +116,12 @@ class Ic10ProgramAspect(
             name to value
         }
 
+        override val status: String? get() = when {
+            icError != null -> "Runtime error: $icError"
+            onFire -> "Halted: caught fire (hcf)"
+            else -> null
+        }
+
         class Change(
             val registers: Map<Register, SimpleChange<Double>> = emptyMap(),
             val devices: Map<DeviceSlot, SimpleChange<Long>> = emptyMap(),
