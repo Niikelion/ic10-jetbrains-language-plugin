@@ -116,8 +116,7 @@ class Ic10ProgramAspect(
             name to value
         }
 
-        /** Human-readable halt status shown in the debugger, or `null` while running normally. */
-        val status: String? get() = when {
+        override val status: String? get() = when {
             icError != null -> "Runtime error: $icError"
             onFire -> "Halted: caught fire (hcf)"
             else -> null

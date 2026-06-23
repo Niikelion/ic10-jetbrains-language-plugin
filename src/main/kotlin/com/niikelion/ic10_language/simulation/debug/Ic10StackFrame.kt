@@ -5,7 +5,6 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XValueChildrenList
-import com.niikelion.ic10_language.logic.aspects.Ic10ProgramAspect
 import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.simulation.SimulationProcess
 
@@ -32,7 +31,9 @@ class Ic10StackFrame(
         val deviceState = process.state.value.devices[device.id] ?: return
         val list = XValueChildrenList()
 
-        deviceState.aspect<Ic10ProgramAspect.State>()?.status?.let { status ->
+        device.aspects.firstNotNullOfOrNull { aspectEntry ->
+            deviceState.aspects[aspectEntry.value.stateClass]?.status
+        }?.let { status ->
             list.add("Status", Ic10TextValue(status, AllIcons.General.Error))
         }
 
