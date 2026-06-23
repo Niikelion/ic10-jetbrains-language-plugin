@@ -1,5 +1,6 @@
 package com.niikelion.ic10_language.simulation.debug
 
+import com.intellij.icons.AllIcons
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.frame.XExecutionStack
 import com.niikelion.ic10_language.logic.aspects.Ic10ProgramAspect
@@ -7,9 +8,9 @@ import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.simulation.SimulationProcess
 
 class Ic10ExecutionStack(
-    private val device: Device,
+    val device: Device,
     private val process: SimulationProcess
-) : XExecutionStack(device.name) {
+) : XExecutionStack("${device.name} (#${device.id})", AllIcons.Debugger.ThreadGroup) {
 
     // Stable instance — same object returned on every call so rebuildViews() can preserve tree state
     private val frame = Ic10StackFrame(device, process) {

@@ -22,6 +22,7 @@ import com.intellij.xdebugger.frame.XSuspendContext
 import com.niikelion.ic10_language.Ic10FileType
 import com.niikelion.ic10_language.Ic10Icons
 import com.niikelion.ic10_language.logic.aspects.Ic10ProgramAspect
+import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.simulation.SimulationProcess
 import java.util.concurrent.ConcurrentHashMap
 
@@ -76,6 +77,7 @@ class Ic10DebugProcess(
         isRunning = true
         application.executeOnPooledThread {
             var lastUpdate = System.currentTimeMillis()
+            var hitDevice: Device?
             do {
                 if (process.isProcessTerminated) {
                     isRunning = false
@@ -87,9 +89,11 @@ class Ic10DebugProcess(
                     process.publishCurrentState()
                     lastUpdate = now
                 }
-            } while (!isAtBreakpoint() && !pauseRequested)
+                hitDevice = deviceAtBreakpoint()
+            } while (hitDevice == null && !pauseRequested)
             isRunning = false
             process.publishCurrentState()
+            hitDevice?.let { suspendContext.setActiveDevice(it) }
             if (!process.isProcessTerminated) session.positionReached(suspendContext)
         }
     }
@@ -117,15 +121,15 @@ class Ic10DebugProcess(
         topToolbar.add(DebugTickAction())
     }
 
-    private fun isAtBreakpoint(): Boolean {
+    private fun deviceAtBreakpoint(): Device? {
         val state = process.currentState
-        return process.context.devices.any { device ->
-            val programAspect = device.aspect<Ic10ProgramAspect>() ?: return@any false
-            val deviceState = state.devices[device.id] ?: return@any false
-            val programState = deviceState.aspect<Ic10ProgramAspect.State>() ?: return@any false
+        return process.context.devices.firstOrNull { device ->
+            val programAspect = device.aspect<Ic10ProgramAspect>() ?: return@firstOrNull false
+            val deviceState = state.devices[device.id] ?: return@firstOrNull false
+            val programState = deviceState.aspect<Ic10ProgramAspect.State>() ?: return@firstOrNull false
             val sourceLine = programAspect.code.lines.getOrNull(programState.instructionIndex)
-                ?.sourceLine?.takeIf { it >= 0 } ?: return@any false
-            val fileUrl = programAspect.code.source.virtualFile?.url ?: return@any false
+                ?.sourceLine?.takeIf { it >= 0 } ?: return@firstOrNull false
+            val fileUrl = programAspect.code.source.virtualFile?.url ?: return@firstOrNull false
             breakpoints[fileUrl]?.contains(sourceLine) == true
         }
     }
