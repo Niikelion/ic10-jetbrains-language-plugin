@@ -58,6 +58,11 @@
           <li>Environment config supports IC10 circuit housings, passive stationpedia devices (e.g. StructureMemory), and fabricator-class devices (Autolathe, PipeBender, …) with initial property overrides.</li>
           <li>Networks can be declared explicitly or default to a single shared data network.</li>
           <li><code>.ic10env</code> files accept YAML or JSON, with full schema validation and autocompletion in the editor.</li>
+          <li><b>New &rarr; IC10 Environment Config</b> file template for scaffolding <code>.ic10env</code> files.</li>
+          <li>Multi-device debugger automatically switches focus to the device that hit a breakpoint.</li>
+          <li>Debugger shows a <b>Status</b> entry explaining why a device halted (runtime error reason or <code>hcf</code> caught-fire state).</li>
+          <li>Fixed validation of indirect device references (<code>drX</code>); register indirection is now capped at 10 levels.</li>
+          <li>Fixed jump execution (no spurious auto-advance after an explicit jump) and stack handling.</li>
         </ul>
       </li>
       <li><b>2.0</b>

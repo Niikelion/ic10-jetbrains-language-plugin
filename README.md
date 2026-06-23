@@ -139,6 +139,11 @@ src/main/kotlin/…/ic10_language/
 - Environment config supports IC10 circuit housings, passive stationpedia devices (e.g. `StructureMemory`), and fabricator-class devices (`StructureAutolathe`, `StructurePipeBender`, …) with initial property value overrides.
 - Network topology is fully configurable; defaults to a single shared data network when omitted.
 - `.ic10env` files accept YAML or JSON, with schema-based field completion, type checking, and validation in the editor.
+- **New → IC10 Environment Config** file template for scaffolding `.ic10env` files.
+- Multi-device debugger automatically switches focus to the device that hit a breakpoint.
+- Debugger shows a **Status** entry explaining why a device halted (runtime error reason or `hcf` caught-fire state).
+- Fixed validation of indirect device references (`drX`), which were incorrectly flagged as errors; register indirection is now capped at 10 levels to prevent stack overflow.
+- Fixed jump execution (no spurious auto-advance after an explicit jump) and stack handling.
 
 ### 2.0
 - IC10 debugger with breakpoints, step-over, full-tick, and step-back via JetBrains XDebugger.
