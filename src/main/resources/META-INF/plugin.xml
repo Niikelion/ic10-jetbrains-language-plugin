@@ -14,11 +14,52 @@
        Simple HTML elements (text formatting, paragraphs, and lists) can be added inside of <![CDATA[ ]]> tag.
        Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
   <description><![CDATA[
-    Stationeers Ic10 language support plugin.
+    <p>Full IDE support for the <b>IC10 MIPS-like scripting language</b> used in
+    <a href="https://store.steampowered.com/app/544550/Stationeers/">Stationeers</a>.</p>
+
+    <h3>Editor</h3>
+    <ul>
+      <li>Syntax highlighting for instructions, registers, device references, labels, numbers, and enums</li>
+      <li>Code completion for instructions, registers (<code>r0</code>–<code>r17</code>, <code>ra</code>, <code>sp</code>),
+          device slots (<code>db</code>, <code>d0</code>–<code>d5</code>), logic types, and enum values</li>
+      <li>Parameter info hints showing argument names and types for every instruction</li>
+      <li>Inlay parameter name hints</li>
+      <li>Error and warning annotations (unknown instructions, wrong argument count, undefined labels, etc.)</li>
+      <li>Go-to-definition and find usages for labels and named registers</li>
+      <li>Code formatting and smart Enter handler</li>
+      <li>Structure view and file outline</li>
+      <li>Status bar widget showing line count against the IC10 limit</li>
+    </ul>
+
+    <h3>Documentation</h3>
+    <ul>
+      <li>Quick-docs for all IC10 instructions with parameter descriptions</li>
+      <li>Quick-docs for registers, device references, and enum values</li>
+      <li>Stationpedia integration: game device data downloaded at build time, used for logic-property completions and docs</li>
+      <li>Deprecation notices for deprecated logic types</li>
+      <li>Enum value support: <code>LogicType.Activate</code> style literals with highlighting and completions</li>
+    </ul>
+
+    <h3>Debugger</h3>
+    <ul>
+      <li>IC10 run configurations — select which <code>.ic10</code> files to simulate</li>
+      <li>Full JetBrains XDebugger integration: breakpoints, variable inspection</li>
+      <li>Step-over (execute one instruction), full-tick (advance one game tick), and step-back</li>
+      <li>Complete IC10 instruction simulation engine with device model, network model, and stack memory</li>
+      <li>Slot instructions (<code>ls</code>, <code>ss</code>, <code>lbs</code>, <code>lbns</code>, <code>sbs</code>) are not yet simulated and will cause a compilation error if used in a run configuration</li>
+    </ul>
   ]]></description>
 
   <change-notes><![CDATA[
     <ul>
+      <li><b>2.1</b>
+        <ul>
+          <li>Multi-device simulation: new <b>IC10 Environment</b> run configuration driven by an <code>.ic10env</code> config file.</li>
+          <li>Environment config supports IC10 circuit housings, passive stationpedia devices (e.g. StructureMemory), and fabricator-class devices (Autolathe, PipeBender, …) with initial property overrides.</li>
+          <li>Networks can be declared explicitly or default to a single shared data network.</li>
+          <li><code>.ic10env</code> files accept YAML or JSON, with full schema validation and autocompletion in the editor.</li>
+        </ul>
+      </li>
       <li><b>2.0</b>
         <ul>
           <li>IC10 debugger: run configurations, breakpoints, step-over, full-tick, and step-back via JetBrains XDebugger.</li>
@@ -39,10 +80,18 @@
   <!-- Product and plugin compatibility requirements.
        Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
   <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.json</depends>
+  <depends>org.jetbrains.plugins.yaml</depends>
 
   <!-- Extension points defined by the plugin.
        Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
   <extensions defaultExtensionNs="com.intellij">
+    <!-- Associate .ic10env with the YAML file type so YAML editing features apply -->
+    <fileType name="YAML" extensions="ic10env"/>
+
+    <internalFileTemplate name="IC10 Environment Config"/>
+
+
     <fileType
             name="Ic10 File"
             implementationClass="com.niikelion.ic10_language.Ic10FileType"
@@ -141,11 +190,22 @@
     <configurationType
             implementation="com.niikelion.ic10_language.simulation.Ic10RunConfigurationType"
     />
+    <configurationType
+            implementation="com.niikelion.ic10_language.simulation.Ic10EnvironmentConfigurationType"
+    />
     <programRunner
             implementation="com.niikelion.ic10_language.simulation.debug.Ic10DebugProgramRunner"
+    />
+    <programRunner
+            implementation="com.niikelion.ic10_language.simulation.debug.Ic10EnvironmentDebugProgramRunner"
     />
     <xdebugger.breakpointType
             implementation="com.niikelion.ic10_language.simulation.debug.Ic10LineBreakpointType"
     />
+  </extensions>
+
+  <extensions defaultExtensionNs="JavaScript">
+    <JsonSchema.ProviderFactory
+            implementation="com.niikelion.ic10_language.simulation.environment.Ic10EnvSchemaProviderFactory"/>
   </extensions>
 </idea-plugin>

@@ -5,6 +5,7 @@ import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.logic.state.CompositeChange
 import com.niikelion.ic10_language.logic.state.CompositeChangeAction
 import com.niikelion.ic10_language.logic.state.SimpleChange
+import com.niikelion.ic10_language.logic.state.composeWith
 import com.niikelion.ic10_language.logic.state.SimulationStateChangeBuilder
 import kotlin.math.roundToLong
 import kotlin.reflect.KClass
@@ -42,9 +43,16 @@ class Ic10CraftingAspect : CraftingAspect {
         ) : CraftingAspect.State.Change, CompositeChange<DeviceAspect.State> {
             override fun compose(source: DeviceAspect.State, action: CompositeChangeAction): DeviceAspect.State {
                 if (source !is State) return source
-                return action.compose {
-                    State(source.contents + contents.mapValues { it.value.nextValue })
+                val newContents = source.contents.toMutableMap()
+                for ((hash, change) in contents) {
+                    newContents[hash] = action.compose(source.contents[hash] ?: 0.0, change)
                 }
+                return State(newContents)
+            }
+
+            override operator fun plus(other: DeviceAspect.State.Change): Change {
+                if (other !is Change) return this
+                return Change(contents.composeWith(other.contents))
             }
 
             class Builder(private val previousState: State) : CraftingAspect.State.Change.Builder {

@@ -1,8 +1,8 @@
 package com.niikelion.ic10_language.logic.state
 
 import com.niikelion.ic10_language.logic.Network
-import com.niikelion.ic10_language.logic.devices.DeviceState
 import com.niikelion.ic10_language.logic.devices.DeviceInfo
+import com.niikelion.ic10_language.logic.devices.DeviceState
 import com.niikelion.ic10_language.logic.devices.DeviceStateChangeBuilder
 import com.niikelion.ic10_language.logic.devices.PropertyDefinition
 
@@ -19,6 +19,32 @@ class SimulationState(
                 compose(source.devices, devices),
                 compose(source.networks, networks)
             )
+        }
+
+        operator fun plus(other: StateChange): StateChange {
+            val mergedDevices = buildMap {
+                for (key in devices.keys + other.devices.keys) {
+                    val a = devices[key]
+                    val b = other.devices[key]
+                    put(key, when {
+                        a == null -> b!!
+                        b == null -> a
+                        else -> a + b
+                    })
+                }
+            }
+            val mergedNetworks = buildMap {
+                for (key in networks.keys + other.networks.keys) {
+                    val a = networks[key]
+                    val b = other.networks[key]
+                    put(key, when {
+                        a == null -> b!!
+                        b == null -> a
+                        else -> a + b
+                    })
+                }
+            }
+            return StateChange(mergedDevices, mergedNetworks)
         }
     }
 }
@@ -57,14 +83,6 @@ class SimulationStateChangeBuilder(
         devices.mapValues { it.value.stateChange },
         networks.mapValues { it.value.result }
     )
-}
-
-class SnapshotStateChange(
-    private val before: SimulationState,
-    private val after: SimulationState
-) : IChange<SimulationState> {
-    override fun perform(previousState: SimulationState) = after
-    override fun revert(nextState: SimulationState) = before
 }
 
 fun SimulationState.change(

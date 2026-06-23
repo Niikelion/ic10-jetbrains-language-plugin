@@ -66,7 +66,7 @@ class Ic10Annotator: Annotator, DumbAware {
         expectsUnique: Boolean
     ) {
         return value.referenceName?.run { annotateReference(this, holder, expectsUnique) }
-            ?: value.channel?.run { annotateChannel(argument, this, holder) }
+            ?: value.networkRef?.run { annotateNetworkRef(argument, this, holder) }
             ?: value.enum?.run { annotateEnum(argument, this, holder) }
             ?: annotateNumericValue(argument, value, holder)
     }
@@ -101,9 +101,9 @@ class Ic10Annotator: Annotator, DumbAware {
         annotateMissingReference(element, holder)
     }
 
-    private fun annotateChannel(argument: Instruction.Arg, channel: Ic10Channel, holder: AnnotationHolder) {
+    private fun annotateNetworkRef(argument: Instruction.Arg, networkRef: Ic10NetworkRef, holder: AnnotationHolder) {
         annotateReference(
-            channel.referenceName,
+            networkRef.referenceName,
             holder,
             false
         )

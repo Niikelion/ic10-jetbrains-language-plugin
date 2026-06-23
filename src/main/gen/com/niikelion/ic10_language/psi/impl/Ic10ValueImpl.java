@@ -30,12 +30,6 @@ public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
 
   @Override
   @Nullable
-  public Ic10Channel getChannel() {
-    return findChildByClass(Ic10Channel.class);
-  }
-
-  @Override
-  @Nullable
   public Ic10Enum getEnum() {
     return findChildByClass(Ic10Enum.class);
   }
@@ -44,6 +38,12 @@ public class Ic10ValueImpl extends ASTWrapperPsiElement implements Ic10Value {
   @Nullable
   public Ic10Macro getMacro() {
     return findChildByClass(Ic10Macro.class);
+  }
+
+  @Override
+  @Nullable
+  public Ic10NetworkRef getNetworkRef() {
+    return findChildByClass(Ic10NetworkRef.class);
   }
 
   @Override

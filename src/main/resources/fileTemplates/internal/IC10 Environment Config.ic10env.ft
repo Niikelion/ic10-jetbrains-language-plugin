@@ -1,0 +1,8 @@
+devices:
+  - name: IC10
+    source: ${NAME}.ic10
+
+networks:
+  - id: 0
+    dataConnected:
+      - 1

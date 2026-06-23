@@ -17,7 +17,7 @@ val Entity.doc get(): Content = {
                             is RegisterReferenceValue -> "register reference"
                             is DeviceValue -> "device"
                             is DeviceReferenceValue -> "device reference"
-                            is ChannelValue -> "channel"
+                            is NetworkRefValue -> "network reference"
                             is NumberValue -> "constant"
                             is NameValue -> "label"
                         })
