@@ -23,7 +23,7 @@ class RegisterReferenceValue(val startingValue: Register, val hoops: Int): IUnre
 
         fun resolve(startingValue: Register, hoops: Int, state: IProgramState): RegisterValue? {
             if (hoops > MAX_INDIRECTION)
-                throw Exception("Register reference indirection depth $hoops exceeds maximum of $MAX_INDIRECTION")
+                throw IndirectionDepthError(hoops, MAX_INDIRECTION)
             if (hoops <= 0) return RegisterValue(startingValue)
             val id = state.get(startingValue)
             return Registers.get(id.toInt())?.let { resolve(it, hoops-1, state) }

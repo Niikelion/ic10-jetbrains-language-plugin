@@ -35,7 +35,7 @@ class Ic10ProgramAspect(
         try {
             if (action != null) {
                 val args = line.args
-                    .map { it.resolve(this) ?: throw Exception("Error resolving $it") }
+                    .map { it.resolve(this) ?: throw ValueResolutionError(it) }
                     .toTypedArray()
                 val (netId, net) = state.networkFor(deviceId) ?: Pair(0L, Network.single(setOf(deviceId)))
                 InstructionContext(state, NetworkContext(netId, net, state, get(DeviceSlots.db)), deviceId).action(args)
@@ -226,16 +226,16 @@ class Ic10ProgramAspect(
 val DeviceStateChangeBuilder.program get() =
     aspect<Ic10ProgramAspect.State, Ic10ProgramAspect.State.Change.Builder>()
 
-val IValue.asRegister get() = if (this is RegisterValue) this.value else throw Exception("Expected register")
-val IValue.asDevice get() = if (this is DeviceValue) this.value else throw Exception("Expected device slot")
+val IValue.asRegister get() = if (this is RegisterValue) this.value else throw OperandTypeError("register")
+val IValue.asDevice get() = if (this is DeviceValue) this.value else throw OperandTypeError("device slot")
 fun Ic10ProgramAspect.State.Change.Builder.getAsValue(value: IValue) = when (value) {
     is NumberValue -> value.value
     is RegisterValue -> get(value.value)
-    else -> throw Exception("Expected value")
+    else -> throw OperandTypeError("value")
 }
 fun Ic10ProgramAspect.State.Change.Builder.getAsDeviceId(value: IValue) = when (value) {
     is NumberValue -> value.value.toLong()
     is RegisterValue -> getAsValue(value).toLong()
     is DeviceValue -> get(value.value)
-    else -> throw Exception("Expected device slot or value")
+    else -> throw OperandTypeError("device slot or value")
 }

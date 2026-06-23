@@ -1,5 +1,6 @@
 package com.niikelion.ic10_language.logic.state
 
+import com.niikelion.ic10_language.logic.DeviceNotFoundError
 import com.niikelion.ic10_language.logic.Network
 import com.niikelion.ic10_language.logic.devices.DeviceInfo
 import com.niikelion.ic10_language.logic.devices.DeviceState
@@ -62,7 +63,7 @@ class SimulationStateChangeBuilder(
     private val networks = mutableMapOf<Long, NetworkStateChangeBuilder>()
 
     fun device(deviceId: Long): DeviceStateChangeBuilder {
-        val deviceState = previousState.devices[deviceId] ?: throw Exception("Device $deviceId not found")
+        val deviceState = previousState.devices[deviceId] ?: throw DeviceNotFoundError(deviceId)
         return devices.getOrPut(deviceId) { DeviceStateChangeBuilder(deviceState) }
     }
 

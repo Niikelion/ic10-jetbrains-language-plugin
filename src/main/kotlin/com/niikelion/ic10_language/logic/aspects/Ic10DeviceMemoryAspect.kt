@@ -1,5 +1,7 @@
 package com.niikelion.ic10_language.logic.aspects
 
+import com.niikelion.ic10_language.logic.MemoryAccess
+import com.niikelion.ic10_language.logic.MemoryBoundsError
 import com.niikelion.ic10_language.logic.state.CompositeChange
 import com.niikelion.ic10_language.logic.state.CompositeChangeAction
 import com.niikelion.ic10_language.logic.state.SimpleChange
@@ -58,11 +60,11 @@ class Ic10DeviceMemoryAspect(
                 override fun read(address: Int): Double =
                     contents[address]?.nextValue
                         ?: previousState.contents.elementAtOrNull(address)
-                        ?: throw Exception("Read outside stack bounds")
+                        ?: throw MemoryBoundsError(MemoryAccess.READ, address)
 
                 override fun write(address: Int, value: Double) {
                     if (address < 0 || address >= previousState.contents.size)
-                        throw Exception("Write outside stack bounds")
+                        throw MemoryBoundsError(MemoryAccess.WRITE, address)
                     contents[address] = SimpleChange(previousState.contents[address], value)
                 }
 
