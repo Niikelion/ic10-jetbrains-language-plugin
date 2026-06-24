@@ -94,9 +94,19 @@ class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = 
         fun sp(value: Int) = register("sp", value.toDouble())
         fun ra(value: Int) = register("ra", value.toDouble())
 
-        /** Add a secondary device on the test network. */
-        fun addDevice(id: Long, properties: Map<Int, Double>, dataConnected: Boolean = true) {
-            this@InstructionTestBuilder.extraDevices[id] = DeviceState(properties, emptyMap())
+        /**
+         * Add a secondary device on the test network.
+         *
+         * [slots] maps slotIndex → (slot logic type id → value); pass it to exercise the
+         * slot instructions (ls / ss / lbs / lbns / sbs).
+         */
+        fun addDevice(
+            id: Long,
+            properties: Map<Int, Double>,
+            dataConnected: Boolean = true,
+            slots: Map<Int, Map<Int, Double>> = emptyMap()
+        ) {
+            this@InstructionTestBuilder.extraDevices[id] = DeviceState(properties, slots, emptyMap())
             if (dataConnected) this@InstructionTestBuilder.dataConnectedExtra.add(id)
             else this@InstructionTestBuilder.softConnectedExtra.add(id)
         }
@@ -127,7 +137,7 @@ class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = 
      * that the instruction faulted.
      */
     fun exec(instruction: Instruction, vararg args: IValue) {
-        val action = instruction.action ?: error("Instruction '${instruction.name}' is not implemented")
+        val action = instruction.action
         steps += { state, deviceNetworks ->
             val builder = SimulationStateChangeBuilder(state, deviceNetworks)
             val (netId, net) = builder.networkFor(deviceId) ?: Pair(TEST_NETWORK_ID, Network.single(setOf(deviceId)))
@@ -144,7 +154,7 @@ class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = 
     /** Asserts that executing [name] with [args] throws an exception (e.g. blocked access). */
     fun execFails(name: String, vararg args: IValue) {
         val instruction = Instructions.get(name) ?: error("Unknown instruction: $name")
-        val action = instruction.action ?: error("Instruction '${instruction.name}' is not implemented")
+        val action = instruction.action
         steps += { state, deviceNetworks ->
             val builder = SimulationStateChangeBuilder(state, deviceNetworks)
             val (netId, net) = builder.networkFor(deviceId) ?: Pair(TEST_NETWORK_ID, Network.single(setOf(deviceId)))
@@ -219,6 +229,12 @@ class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = 
             val actual = state.devices[deviceId]?.properties?.get(propertyId)
                 ?: error("Device $deviceId or property $propertyId not found")
             assertEquals(expected, actual, "Device $deviceId property $propertyId")
+        }
+
+        fun deviceSlotProperty(deviceId: Long, slotIndex: Int, propertyId: Int, expected: Double) {
+            val actual = state.devices[deviceId]?.slots?.get(slotIndex)?.get(propertyId)
+                ?: error("Device $deviceId slot $slotIndex property $propertyId not found")
+            assertEquals(expected, actual, "Device $deviceId slot $slotIndex property $propertyId")
         }
 
         fun networkChannel(channelIndex: Int, expected: Double) {

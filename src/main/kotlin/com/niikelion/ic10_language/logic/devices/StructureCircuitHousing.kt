@@ -34,6 +34,7 @@ class StructureCircuitHousing(id: Long, code: ProgramCode): Device(
         val source = super.initialize()
         return DeviceState(
             source.properties + Pair(stackSizeId, STACK_SIZE.toDouble()),
+            source.slots,
             source.aspects
         )
     }

@@ -36,7 +36,7 @@ class Instruction(
     val arguments: List<Arg>,
     val isDeclaration: Boolean = false,
     val deprecationMessage: String? = null,
-    val action: InstructionAction? = null
+    val action: InstructionAction
 ) {
     class Arg(val name: String, val type: ArgType) {
         companion object {
@@ -119,15 +119,13 @@ object Instructions {
     private val slotPropertyName = slotProperty("property")
     private val batchMode = value("batchMode")
 
-    private fun rawOp(name: String, arguments: Int, description: String, action: ((args: List<Double>) -> Double)? = null) =
+    private fun rawOp(name: String, arguments: Int, description: String, action: (args: List<Double>) -> Double) =
         Instruction(
             name, "r = $description",
             listOf(resultVariable) + List(arguments) { inputValues[it] },
-            action = action?.let { func ->
-                { args ->
-                    val value = func(List(arguments) { i -> program.getAsValue(args[i + 1]) })
-                    program.set(args[0].asRegister, value)
-                }
+            action = { args ->
+                val value = action(List(arguments) { i -> program.getAsValue(args[i + 1]) })
+                program.set(args[0].asRegister, value)
             }
         )
     private fun opNoArgs(name: String, description: String, action: () -> Double) =
@@ -139,29 +137,25 @@ object Instructions {
     private fun op(name: String, description: String, action: (a: Double, b: Double, c: Double) -> Double) =
         rawOp(name, 3, description) { args -> action(args[0], args[1], args[2]) }
 
-    private fun branch(name: String, description: String, arguments: Int, relative: Boolean = false, call: Boolean = false, action: (InstructionContext.(args: List<Double>) -> Boolean)? = null) =
-        branch(name, description, inputValues.take(arguments), relative, call, action?.let { func ->
-            { args ->
-                func(args.map(program::getAsValue))
-            }
-        })
-    private fun branch(name: String, description: String, arguments: List<Instruction.Arg>, relative: Boolean, call: Boolean, action: (InstructionContext.(args: List<IValue>) -> Boolean)? = null) =
+    private fun branch(name: String, description: String, arguments: Int, relative: Boolean = false, call: Boolean = false, action: InstructionContext.(args: List<Double>) -> Boolean) =
+        branch(name, description, inputValues.take(arguments), relative, call) { args ->
+            action(args.map(program::getAsValue))
+        }
+    private fun branch(name: String, description: String, arguments: List<Instruction.Arg>, relative: Boolean, call: Boolean, action: InstructionContext.(args: List<IValue>) -> Boolean) =
         Instruction(
             name,
             "${if (relative) "Relative branch" else "Branch" } to line ${arguments.last().name} if $description${if (call) " and store return pointer in ra" else "" }",
             arguments,
-            action = action?.let { func ->
-                { args ->
-                    val shouldJump = func(args.take(arguments.size - 1))
+            action = { args ->
+                val shouldJump = action(args.take(arguments.size - 1))
 
-                    if (shouldJump) {
-                        val jumpTarget = program.getAsValue(args.last())
-                        val normalizedJumpTarget = if (relative) program.instructionIndex + jumpTarget else jumpTarget
-                        val returnAddress = program.instructionIndex + 1
-                        program.jump(normalizedJumpTarget.toInt())
-                        if (call)
-                            program.set(Registers.ra, returnAddress.toDouble())
-                    }
+                if (shouldJump) {
+                    val jumpTarget = program.getAsValue(args.last())
+                    val normalizedJumpTarget = if (relative) program.instructionIndex + jumpTarget else jumpTarget
+                    val returnAddress = program.instructionIndex + 1
+                    program.jump(normalizedJumpTarget.toInt())
+                    if (call)
+                        program.set(Registers.ra, returnAddress.toDouble())
                 }
             }
         )
@@ -412,20 +406,31 @@ object Instructions {
             val mode = program.getAsValue(args[4]).toInt()
             program.set(result, aggregate(mode, network.devicesByTypeAndName(typeHash, nameHash).map { it.property(property) }))
         },
-        /* TODO: implement */
         Instruction(
             "lbns",
             "Loads property from given slot index of all devices with given typeHash and nameHash and aggregates by batchMode: r = batchMode(findDevicesByTypeAndName(typeHash, nameHash).map(d -> d.slot[slotIndex].property))",
-            listOf(resultVariable, value("typeHash"), value("nameHash"), value("slotIndex"), slotPropertyName, batchMode),
-            action = null
-        ),
-        /* TODO: implement */
+            listOf(resultVariable, value("typeHash"), value("nameHash"), value("slotIndex"), slotPropertyName, batchMode)
+        ) { args ->
+            val result = args[0].asRegister
+            val typeHash = program.getAsValue(args[1]).toLong()
+            val nameHash = program.getAsValue(args[2]).toLong()
+            val slotIndex = program.getAsValue(args[3]).toInt()
+            val property = program.getAsValue(args[4]).toInt()
+            val mode = program.getAsValue(args[5]).toInt()
+            program.set(result, aggregate(mode, network.devicesByTypeAndName(typeHash, nameHash).map { it.slotProperty(slotIndex, property) }))
+        },
         Instruction(
             "lbs",
             "Loads property from given slot index of all devices with given typeHash and aggregates by batchMode: r = batchMode(findDevicesByType(typeHash).map(d -> d.slot[slotIndex].property))",
-            listOf(resultVariable, value("typeHash"), value("slotIndex"), slotPropertyName, batchMode),
-            action = null
-        ),
+            listOf(resultVariable, value("typeHash"), value("slotIndex"), slotPropertyName, batchMode)
+        ) { args ->
+            val result = args[0].asRegister
+            val typeHash = program.getAsValue(args[1]).toLong()
+            val slotIndex = program.getAsValue(args[2]).toInt()
+            val property = program.getAsValue(args[3]).toInt()
+            val mode = program.getAsValue(args[4]).toInt()
+            program.set(result, aggregate(mode, network.devicesByType(typeHash).map { it.slotProperty(slotIndex, property) }))
+        },
         Instruction(
             "ld",
             "Loads property from device indicated by id: r = getDevice(id).property",
@@ -463,10 +468,15 @@ object Instructions {
             }
             program.set(result, quantity)
         },
-        /* TODO: implement */
         Instruction("ls", "Loads property from given slot index of provided device: r = d.slot[slotIndex].property", listOf(
             resultVariable, targetDevice, value("slotIndex"), slotPropertyName
-        ), action = null),
+        )) { args ->
+            val result = args[0].asRegister
+            val targetId = program.getAsDeviceId(args[1])
+            val slotIndex = program.getAsValue(args[2]).toInt()
+            val property = program.getAsValue(args[3]).toInt()
+            program.set(result, network.device(targetId).slotProperty(slotIndex, property))
+        },
         op("max", "max of a or b") { a, b -> max(a, b) },
         op("min", "min of a or b") { a, b -> min(a, b) },
         op("mod", "a mod b(NOT the same as a % b)") { a, b -> if (a > 0 || b > 0) a.mod(b.absoluteValue) else a },
@@ -573,8 +583,13 @@ object Instructions {
             val value = program.getAsValue(args[3])
             network.devicesByTypeAndName(typeHash, nameHash).forEach { it.setProperty(property, value) }
         },
-        /* TODO: implement */
-        Instruction("sbs", "Writes value to property of given slot on all devices with given typeHash", listOf(value("typeHash"), value("slotIndex"), slotPropertyName, value("value")), action = null),
+        Instruction("sbs", "Writes value to property of given slot on all devices with given typeHash", listOf(value("typeHash"), value("slotIndex"), slotPropertyName, value("value"))) { args ->
+            val typeHash = program.getAsValue(args[0]).toLong()
+            val slotIndex = program.getAsValue(args[1]).toInt()
+            val property = program.getAsValue(args[2]).toInt()
+            val value = program.getAsValue(args[3])
+            network.devicesByType(typeHash).forEach { it.setSlotProperty(slotIndex, property, value) }
+        },
         Instruction(
             "sd",
             "Writes value to property of the device indicated by id: getDevice(id).property = value",
@@ -625,8 +640,13 @@ object Instructions {
         op("sqrt", "sqrt(a)") { a -> sqrt(a) },
         op("sra", "a >> b, vacated bits are filled with a copy of the sign bit") { a, b -> (a.toSignedValueBits() shr b.toInt()).toValueDouble() },
         op("srl", "a >> b") { a, b -> (a.toUnsignedValueBits() ushr b.toInt()).toValueDouble() },
-        /* TODO: implement */
-        Instruction("ss", "Writes value to property of given slot on the provided device", listOf(targetDevice, value("slotIndex"), slotPropertyName, value("value")), action = null),
+        Instruction("ss", "Writes value to property of given slot on the provided device", listOf(targetDevice, value("slotIndex"), slotPropertyName, value("value"))) { args ->
+            val targetId = program.getAsDeviceId(args[0])
+            val slotIndex = program.getAsValue(args[1]).toInt()
+            val property = program.getAsValue(args[2]).toInt()
+            val value = program.getAsValue(args[3])
+            network.device(targetId).setSlotProperty(slotIndex, property, value)
+        },
         op("sub", "a - b") { a, b -> a - b },
         op("tan", "tan(a)") { a -> tan(a) },
         op("trunc", "a with fractional part removed") { a -> truncate(a) },

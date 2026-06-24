@@ -41,7 +41,6 @@ class ProgramCode(val lines: Array<Line>, val source: Ic10File) {
 
             val operation = instructionElement.operation ?: return emptyLine
             val instruction = operation.instruction ?: throw CompilationError("Unknown operation ${operation.operationName.text}")
-            if (instruction.action == null) throw CompilationError("Instruction ${instruction.name} is not implemented yet")
             val args = operation.valueList.map(this::compileValue)
 
             return Line(instruction, args.toTypedArray())

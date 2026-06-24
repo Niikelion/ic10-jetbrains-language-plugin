@@ -8,9 +8,11 @@ import com.niikelion.ic10_language.logic.StationeersRegistryData
 import com.niikelion.ic10_language.logic.state.NetworkState
 import com.niikelion.ic10_language.logic.state.SimulationState
 import com.niikelion.ic10_language.logic.state.SimulationStateChangeBuilder
+import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.logic.devices.DeviceState
 import kotlin.math.*
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -28,12 +30,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
         val missing = scriptCommandNames - definedInstructions
         assertTrue(missing.isEmpty(), "Instructions in stationpedia.json but not defined: $missing")
-    }
-
-    @Test
-    fun `All instructions are implemented`() {
-        val notImplemented = Instructions.all.filter { it.action == null }.map { it.name }
-        assertTrue(notImplemented.isEmpty(), "Instructions defined, but not implemented: $notImplemented")
     }
 
     // -------------------------------------------------------------------------
@@ -1617,6 +1613,105 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     // -------------------------------------------------------------------------
+    // Slot read/write (ls / ss / lbs / lbns / sbs)
+    // -------------------------------------------------------------------------
+
+    private val prefabHashId = Device.properties["PrefabHash"]!!
+    private val nameHashId = Device.properties["NameHash"]!!
+    // Occupied = 1, Quantity = 3 in LogicSlotType.
+    private val occupiedSlotProp = Device.slotProperties["Occupied"]!!
+    private val quantitySlotProp = Device.slotProperties["Quantity"]!!
+
+    @Test
+    fun `ls reads slot property`() {
+        val targetId = 10L
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, emptyMap(), slots = mapOf(0 to mapOf(quantitySlotProp to 7.0)))
+            }
+            exec("ls", reg("r0"), device("d0"), num(0), num(quantitySlotProp))
+            assert { register("r0", 7.0) }
+        }
+    }
+
+    @Test
+    fun `ss writes slot property`() {
+        val targetId = 10L
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, emptyMap(), slots = mapOf(1 to mapOf(occupiedSlotProp to 0.0)))
+            }
+            exec("ss", device("d0"), num(1), num(occupiedSlotProp), num(1.0))
+            assert { deviceSlotProperty(targetId, 1, occupiedSlotProp, 1.0) }
+        }
+    }
+
+    @Test
+    fun `ss faults on an unknown slot`() {
+        val targetId = 10L
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(targetId, emptyMap(), slots = mapOf(0 to mapOf(occupiedSlotProp to 0.0)))
+            }
+            exec("ss", device("d0"), num(5), num(occupiedSlotProp), num(1.0))
+            assert { hasError() }
+        }
+    }
+
+    @Test
+    fun `lbs aggregates a slot property across devices of a type`() {
+        val typeHash = 1234L
+        simulate {
+            setup {
+                addDevice(11L, mapOf(prefabHashId to typeHash.toDouble()), slots = mapOf(0 to mapOf(quantitySlotProp to 2.0)))
+                addDevice(12L, mapOf(prefabHashId to typeHash.toDouble()), slots = mapOf(0 to mapOf(quantitySlotProp to 8.0)))
+            }
+            // batchMode 1 = Sum
+            exec("lbs", reg("r0"), num(typeHash.toDouble()), num(0), num(quantitySlotProp), num(1))
+            assert { register("r0", 10.0) }
+        }
+    }
+
+    @Test
+    fun `lbns aggregates a slot property across devices of a type and name`() {
+        val typeHash = 1234L
+        val nameHash = 5678L
+        simulate {
+            setup {
+                addDevice(11L, mapOf(prefabHashId to typeHash.toDouble(), nameHashId to nameHash.toDouble()),
+                    slots = mapOf(0 to mapOf(quantitySlotProp to 3.0)))
+                addDevice(12L, mapOf(prefabHashId to typeHash.toDouble(), nameHashId to nameHash.toDouble()),
+                    slots = mapOf(0 to mapOf(quantitySlotProp to 9.0)))
+                // Same type, different name — must be excluded.
+                addDevice(13L, mapOf(prefabHashId to typeHash.toDouble(), nameHashId to 1.0),
+                    slots = mapOf(0 to mapOf(quantitySlotProp to 100.0)))
+            }
+            // batchMode 3 = Maximum
+            exec("lbns", reg("r0"), num(typeHash.toDouble()), num(nameHash.toDouble()), num(0), num(quantitySlotProp), num(3))
+            assert { register("r0", 9.0) }
+        }
+    }
+
+    @Test
+    fun `sbs writes a slot property to every device of a type`() {
+        val typeHash = 1234L
+        simulate {
+            setup {
+                addDevice(11L, mapOf(prefabHashId to typeHash.toDouble()), slots = mapOf(0 to mapOf(occupiedSlotProp to 0.0)))
+                addDevice(12L, mapOf(prefabHashId to typeHash.toDouble()), slots = mapOf(0 to mapOf(occupiedSlotProp to 0.0)))
+            }
+            exec("sbs", num(typeHash.toDouble()), num(0), num(occupiedSlotProp), num(1.0))
+            assert {
+                deviceSlotProperty(11L, 0, occupiedSlotProp, 1.0)
+                deviceSlotProperty(12L, 0, occupiedSlotProp, 1.0)
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // Channels
     // -------------------------------------------------------------------------
 
@@ -1812,5 +1907,35 @@ class InstructionTests : BareTestFixtureTestCase() {
         val ctx = NetworkContext(0L, observerNetwork, builder, observerId)
         assertNull(ctx.channelsOf(foreignId), "cross-network channel access must return null")
         assertNotNull(ctx.channelsOf(observerId), "same-network channel access must succeed")
+    }
+
+    // -------------------------------------------------------------------------
+    // Slot mutation from an aspect tick (item transfer / removal)
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `moveSlot transfers item contents between slots and clears the source`() {
+        val deviceId = 0L
+        val occupied = Device.slotProperties["Occupied"]!!
+        val quantity = Device.slotProperties["Quantity"]!!
+        val device = DeviceState(
+            properties = emptyMap(),
+            slots = mapOf(
+                0 to mapOf(occupied to 1.0, quantity to 5.0),
+                1 to mapOf(occupied to 0.0, quantity to 0.0)
+            )
+        )
+        val state = SimulationState(devices = mapOf(deviceId to device))
+
+        val builder = SimulationStateChangeBuilder(state)
+        builder.device(deviceId).moveSlot(0, 1)
+        val next = builder.stateChange.perform(state)
+
+        val slot0 = next.devices.getValue(deviceId).slots.getValue(0)
+        val slot1 = next.devices.getValue(deviceId).slots.getValue(1)
+        assertEquals(0.0, slot0[occupied], "source occupied cleared")
+        assertEquals(0.0, slot0[quantity], "source quantity cleared")
+        assertEquals(1.0, slot1[occupied], "destination occupied set")
+        assertEquals(5.0, slot1[quantity], "destination quantity set")
     }
 }
