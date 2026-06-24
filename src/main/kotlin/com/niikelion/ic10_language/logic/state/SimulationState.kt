@@ -70,6 +70,9 @@ class SimulationStateChangeBuilder(
     fun propertyDefinition(deviceId: Long, propId: Int): PropertyDefinition? =
         deviceDefinitions[deviceId]?.properties?.get(propId)
 
+    fun slotDefinition(deviceId: Long, slotIndex: Int, propId: Int): PropertyDefinition? =
+        deviceDefinitions[deviceId]?.slots?.get(slotIndex)?.properties?.get(propId)
+
     fun prefabHash(deviceId: Long): Long? = deviceDefinitions[deviceId]?.prefabHash
 
     fun network(networkId: Long): NetworkStateChangeBuilder {

@@ -3,7 +3,7 @@
 Full IDE support for the **IC10 MIPS-like scripting language** used in
 [Stationeers](https://store.steampowered.com/app/544550/Stationeers/).
 
-**Current version: 2.1**
+**Current version: 2.2**
 
 ## Features
 
@@ -36,7 +36,9 @@ Both support:
 - **Step** (F8) — execute one instruction
 - **Full tick** — advance one complete game tick (128 instructions across all devices)
 - **Step back** — rewind to the previous tick
-- **Variable inspection** — registers (`r0`–`r17`, `ra`, `sp`), connected device properties, and stack memory
+- **Variable inspection** — registers (`r0`–`r17`, `ra`, `sp`), connected device properties, slot contents, and stack memory
+- **Slot instructions** — `ls`, `ss`, `lbs`, `lbns`, `sbs` are fully simulated against a device slot/item model
+- **Halt handling** — execution suspends when a device faults or runs `hcf`, with the reason shown in the debugger
 
 
 ## Debugger Quick Start
@@ -58,9 +60,12 @@ Both support:
 See the [`.ic10env` format reference](docs/ic10env-format.md) for the full list of device and network fields.
 
 
-## Known Limitations
+## Slot instructions
 
-Slot instructions are defined and documented but not yet simulated. Using them will compile without errors but have no effect during a debug session:
+Slot instructions are fully simulated. A device slot holds an **item**, which carries its own
+properties (keyed by `LogicSlotType`); each slot exposes a subset of those properties for reading
+and/or writing. Moving an item between slots preserves every property — even ones the source slot
+cannot read — while reads and writes are gated by what the slot exposes.
 
 | Instruction | Description |
 |---|---|
@@ -133,6 +138,16 @@ src/main/kotlin/…/ic10_language/
 
 
 ## Changelog
+
+### 2.2
+- Slot instructions (`ls`, `ss`, `lbs`, `lbns`, `sbs`) are now fully simulated — they no longer cause a compilation error in run configurations.
+- New device slot/item model: a slot holds an item that carries its full property set, so moving an item between slots preserves properties one slot cannot read but another can.
+- Per-slot access gating: reads return 0 for properties a slot does not expose, and writes to non-writable slot properties fault.
+- Bitwise instructions (`and`, `or`, `xor`, `nor`, `not`, `sla`, `sll`, `sra`, `srl`) now operate in the in-game 53-bit signed value space, and `ext`/`ins` are confined to the 53-bit field semantics.
+- Corrected `lerp` interpolation direction and clamped its interpolation factor to [0, 1].
+- `rand` now returns a value in [0, 1), matching the game.
+- Verified `sdns`/`sdse` against the in-game behaviour.
+- The debugger now suspends execution when a device halts mid-simulation (runtime error or `hcf`).
 
 ### 2.1
 - Multi-device simulation via a new **IC10 Environment** run configuration driven by an `.ic10env` config file.

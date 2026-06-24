@@ -31,6 +31,14 @@ class IndirectionDepthError(val depth: Int, val max: Int) :
 /** An operand was not of the [expected] kind (e.g. register, device slot, value). */
 class OperandTypeError(val expected: String) : SimulationError("Expected $expected")
 
+/**
+ * A bit-field instruction (ext/ins) was given an invalid [start] or [length].
+ * In-game the field must lie within the lower 53 bits: 0 < length <= 53,
+ * 0 <= start < 53 and start + length <= 53.
+ */
+class BitFieldBoundsError(val start: Int, val length: Int) :
+    SimulationError("Bit field at start $start for length $length exceeds the 53-bit value range")
+
 /** An unresolved [value] could not be resolved against the current program state. */
 class ValueResolutionError(val value: IUnresolvedValue) : SimulationError("Error resolving $value")
 
@@ -42,3 +50,10 @@ class AspectTypeMismatchError : SimulationError("Aspect state change builder typ
 
 /** Tried to access a property that the device does not have. */
 class PropertyNotFoundError : SimulationError("Cannot access device property that does not exist")
+
+/** Tried to access a slot that the device does not have. */
+class SlotNotFoundError(val slotIndex: Int) : SimulationError("Device has no slot at index $slotIndex")
+
+/** Tried to write a slot property that the slot does not expose for writing. */
+class SlotPropertyNotWritableError(val slotIndex: Int, val propId: Int) :
+    SimulationError("Slot $slotIndex does not allow writing property $propId")

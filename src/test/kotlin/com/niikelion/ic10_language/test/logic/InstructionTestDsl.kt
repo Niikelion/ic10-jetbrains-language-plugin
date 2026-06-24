@@ -7,7 +7,12 @@ import kotlin.test.assertFailsWith
 import com.niikelion.ic10_language.logic.aspects.Ic10DeviceMemoryAspect
 import com.niikelion.ic10_language.logic.aspects.Ic10MemoryAspect
 import com.niikelion.ic10_language.logic.aspects.Ic10ProgramAspect
+import com.niikelion.ic10_language.logic.devices.Device
+import com.niikelion.ic10_language.logic.devices.DeviceInfo
 import com.niikelion.ic10_language.logic.devices.DeviceState
+import com.niikelion.ic10_language.logic.devices.Item
+import com.niikelion.ic10_language.logic.devices.PropertyDefinition
+import com.niikelion.ic10_language.logic.devices.SlotDefinition
 import com.niikelion.ic10_language.logic.state.NetworkState
 import com.niikelion.ic10_language.logic.state.SimulationState
 import com.niikelion.ic10_language.logic.state.SimulationStateChangeBuilder
@@ -54,6 +59,7 @@ class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = 
     private val stackContents = Array(STACK_SIZE) { 0.0 }
 
     private val extraDevices = mutableMapOf<Long, DeviceState>()
+    private val deviceDefinitions = mutableMapOf<Long, DeviceInfo>()
     private val networkChannels = mutableMapOf<Int, Double>()
     private val dataConnectedExtra = mutableSetOf<Long>()
     private val softConnectedExtra = mutableSetOf<Long>()
@@ -94,9 +100,32 @@ class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = 
         fun sp(value: Int) = register("sp", value.toDouble())
         fun ra(value: Int) = register("ra", value.toDouble())
 
-        /** Add a secondary device on the test network. */
-        fun addDevice(id: Long, properties: Map<Int, Double>, dataConnected: Boolean = true) {
-            this@InstructionTestBuilder.extraDevices[id] = DeviceState(properties, emptyMap())
+        /**
+         * Add a secondary device on the test network.
+         *
+         * [slots] maps slotIndex → the item it holds, given as its slot-property values; a `null`
+         * value declares an existing but empty slot. Use it to exercise the slot instructions
+         * (ls / ss / lbs / lbns / sbs).
+         *
+         * [slotDefinitions] supplies the slot access maps that gate ls/ss; when omitted, a permissive
+         * definition is derived from [slots] (every present property is readable and writable).
+         */
+        fun addDevice(
+            id: Long,
+            properties: Map<Int, Double>,
+            dataConnected: Boolean = true,
+            slots: Map<Int, Map<Int, Double>?> = emptyMap(),
+            slotDefinitions: Map<Int, SlotDefinition>? = null
+        ) {
+            val itemSlots = slots.mapValues { (_, props) -> props?.let { Item(it) } }
+            val definitions = slotDefinitions ?: slots.mapValues { (index, props) ->
+                SlotDefinition(index, "", "", (props ?: emptyMap()).keys.associateWith {
+                    PropertyDefinition("", enableRead = true, enableWrite = true)
+                })
+            }
+            this@InstructionTestBuilder.extraDevices[id] = DeviceState(properties, itemSlots, emptyMap())
+            this@InstructionTestBuilder.deviceDefinitions[id] =
+                DeviceInfo(properties[Device.properties["PrefabHash"]]?.toLong() ?: 0L, emptyMap(), definitions)
             if (dataConnected) this@InstructionTestBuilder.dataConnectedExtra.add(id)
             else this@InstructionTestBuilder.softConnectedExtra.add(id)
         }
@@ -127,9 +156,9 @@ class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = 
      * that the instruction faulted.
      */
     fun exec(instruction: Instruction, vararg args: IValue) {
-        val action = instruction.action ?: error("Instruction '${instruction.name}' is not implemented")
+        val action = instruction.action
         steps += { state, deviceNetworks ->
-            val builder = SimulationStateChangeBuilder(state, deviceNetworks)
+            val builder = SimulationStateChangeBuilder(state, deviceNetworks, deviceDefinitions)
             val (netId, net) = builder.networkFor(deviceId) ?: Pair(TEST_NETWORK_ID, Network.single(setOf(deviceId)))
             val ctx = InstructionContext(builder, NetworkContext(netId, net, builder, deviceId), deviceId)
             try {
@@ -144,9 +173,9 @@ class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = 
     /** Asserts that executing [name] with [args] throws an exception (e.g. blocked access). */
     fun execFails(name: String, vararg args: IValue) {
         val instruction = Instructions.get(name) ?: error("Unknown instruction: $name")
-        val action = instruction.action ?: error("Instruction '${instruction.name}' is not implemented")
+        val action = instruction.action
         steps += { state, deviceNetworks ->
-            val builder = SimulationStateChangeBuilder(state, deviceNetworks)
+            val builder = SimulationStateChangeBuilder(state, deviceNetworks, deviceDefinitions)
             val (netId, net) = builder.networkFor(deviceId) ?: Pair(TEST_NETWORK_ID, Network.single(setOf(deviceId)))
             assertFailsWith<Exception> {
                 InstructionContext(builder, NetworkContext(netId, net, builder, deviceId), deviceId).action(args.toList().toTypedArray())
@@ -195,6 +224,13 @@ class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = 
         }
 
         fun register(name: String, expected: Number) = register(name, expected.toDouble())
+        /** Asserts the register holds a value in the half-open range [[lo], [hi]). */
+        fun registerInRange(name: String, lo: Double, hi: Double) {
+            val register = Registers.get(name) ?: error("Unknown register: $name")
+            val actual = programState.registers[register] ?: 0.0
+            assertTrue(actual >= lo && actual < hi,
+                "Register $name: expected value in [$lo, $hi) but was $actual")
+        }
         fun sp(expected: Int) = register("sp", expected.toDouble())
         fun ra(expected: Int) = register("ra", expected.toDouble())
         fun stackAt(address: Int, expected: Double) =
@@ -212,6 +248,12 @@ class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = 
             val actual = state.devices[deviceId]?.properties?.get(propertyId)
                 ?: error("Device $deviceId or property $propertyId not found")
             assertEquals(expected, actual, "Device $deviceId property $propertyId")
+        }
+
+        fun deviceSlotProperty(deviceId: Long, slotIndex: Int, propertyId: Int, expected: Double) {
+            val actual = state.devices[deviceId]?.slots?.get(slotIndex)?.properties?.get(propertyId)
+                ?: error("Device $deviceId slot $slotIndex property $propertyId not found")
+            assertEquals(expected, actual, "Device $deviceId slot $slotIndex property $propertyId")
         }
 
         fun networkChannel(channelIndex: Int, expected: Double) {
