@@ -1331,18 +1331,34 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `lerp`() {
-        TODO("verify in-game")
+    fun `lerp matches the in-game behaviour`() {
         simulate {
             exec("lerp", reg("r0"), num(0), num(10), num(0.5))
             assert { register("r0", 5.0) }
         }
         simulate {
+            // c = 0 returns a
             exec("lerp", reg("r0"), num(0), num(10), num(0.0))
+            assert { register("r0", 0.0) }
+        }
+        simulate {
+            // c = 1 returns b
+            exec("lerp", reg("r0"), num(0), num(10), num(1.0))
             assert { register("r0", 10.0) }
         }
         simulate {
-            exec("lerp", reg("r0"), num(0), num(10), num(1.0))
+            // interpolation runs from a to b
+            exec("lerp", reg("r0"), num(10), num(20), num(0.25))
+            assert { register("r0", 12.5) }
+        }
+        simulate {
+            // c is clamped above 1
+            exec("lerp", reg("r0"), num(0), num(10), num(2.0))
+            assert { register("r0", 10.0) }
+        }
+        simulate {
+            // c is clamped below 0
+            exec("lerp", reg("r0"), num(0), num(10), num(-1.0))
             assert { register("r0", 0.0) }
         }
     }

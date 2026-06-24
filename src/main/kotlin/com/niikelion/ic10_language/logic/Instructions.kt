@@ -425,7 +425,7 @@ object Instructions {
             val property = program.getAsValue(args[2]).toInt()
             program.set(result, network.device(targetId).property(property))
         }.deprecate("Use l instead."),
-        op("lerp", "a * c + (1 - c) * b") { a, b, c -> a * c + (1 - c) * b },
+        op("lerp", "linearly interpolates from a to b by c, with c clamped to [0, 1]") { a, b, c -> a + c.coerceIn(0.0, 1.0) * (b - a) },
         op("log", "log(a)") { a -> ln(a) },
         Instruction("lr", "Loads given reagent count from device based on reagentMode(Contents(0) - currently in the device, Required(1) - missing from the recipe, Recipe(2) - required by the recipe): r = d.reagentMode.count(reagentId)", listOf(
             resultVariable, targetDevice, value("reagentMode"), value("reagentId")
