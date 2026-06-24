@@ -23,6 +23,13 @@ private fun ap(a: Double, b: Double, c: Double): Boolean {
     return abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)
 }
 
+// Bit-field instructions (ext/ins) operate within the lower 53 bits of the value space.
+private fun requireBitField(start: Int, length: Int) {
+    if (length <= 0 || start < 0 || start >= 53 || length > 53 || start + length > 53)
+        throw BitFieldBoundsError(start, length)
+}
+private fun bitFieldMask(length: Int): Long = if (length >= 53) GAME_VALUE_MASK else (1L shl length) - 1L
+
 class Instruction(
     val name: String,
     val description: String,
@@ -280,11 +287,11 @@ object Instructions {
         op("div", "a / b") { a, b -> a / b },
         op("exp", "exp(a)") { a -> exp(a) },
         rawOp("ext", 3, "bit field from a, beginning at b for c length") { args ->
-            val a = args[0].toLong()
-            val b = args[1].toInt()
-            val c = args[2].toInt()
-            val mask = if (c >= 64) -1L else (1L shl c) - 1L
-            ((a ushr b) and mask).toDouble()
+            val start = args[1].toInt()
+            val length = args[2].toInt()
+            requireBitField(start, length)
+            val source = args[0].toUnsignedValueBits() and GAME_VALUE_MASK
+            ((source ushr start) and bitFieldMask(length)).toValueDouble()
         },
         op("floor", "largest integer less than a") { a -> floor(a) },
         Instruction(
@@ -321,13 +328,17 @@ object Instructions {
             "Inserts a bit field of a into r, beginning at b for c length",
             listOf(resultVariable, value("a"), value("b"), value("c"))
         ) { args ->
-            val current = program.get(args[0].asRegister).toLong()
-            val a = program.getAsValue(args[1]).toLong()
-            val b = program.getAsValue(args[2]).toInt()
-            val c = program.getAsValue(args[3]).toInt()
-            val mask = if (c >= 64) -1L else (1L shl c) - 1L
-            val result = (current and (mask shl b).inv()) or ((a and mask) shl b)
-            program.set(args[0].asRegister, result.toDouble())
+            val register = args[0].asRegister
+            val insertValue = program.getAsValue(args[1])
+            val start = program.getAsValue(args[2]).toInt()
+            val length = program.getAsValue(args[3]).toInt()
+            requireBitField(start, length)
+            val widthMask = bitFieldMask(length)
+            val regionMask = widthMask shl start
+            val base = program.get(register).toUnsignedValueBits() and GAME_VALUE_MASK
+            val field = ((insertValue.toUnsignedValueBits() and widthMask) shl start) and regionMask
+            val result = ((base and regionMask.inv()) or field) and GAME_VALUE_MASK
+            program.set(register, result.toValueDouble())
         },
         Instruction(
             "j",

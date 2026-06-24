@@ -670,6 +670,83 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     // -------------------------------------------------------------------------
+    // Bit fields (ext / ins)
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `ext matches the in-game behaviour`() {
+        simulate {
+            // bits [1, 5) of 0b11010110 -> 0b1011
+            exec("ext", reg("r0"), num(0b11010110), num(1), num(4))
+            assert { register("r0", 0b1011) }
+        }
+        simulate {
+            exec("ext", reg("r0"), num(0xFF), num(0), num(8))
+            assert { register("r0", 255) }
+        }
+        simulate {
+            exec("ext", reg("r0"), num(0xF0), num(4), num(4))
+            assert { register("r0", 15) }
+        }
+        simulate {
+            // full 53-bit field of -1 reads back as 2^53 - 1
+            exec("ext", reg("r0"), num(-1), num(0), num(53))
+            assert { register("r0", 9007199254740991.0, 0.0) }
+        }
+    }
+
+    @Test
+    fun `ext with an out-of-range field causes ic error`() {
+        simulate {
+            // start must be < 53
+            exec("ext", reg("r0"), num(5), num(53), num(1))
+            assert { hasError() }
+        }
+        simulate {
+            // length must be > 0
+            exec("ext", reg("r0"), num(5), num(0), num(0))
+            assert { hasError() }
+        }
+        simulate {
+            // start + length must not exceed 53
+            exec("ext", reg("r0"), num(5), num(50), num(4))
+            assert { hasError() }
+        }
+    }
+
+    @Test
+    fun `ins matches the in-game behaviour`() {
+        simulate {
+            // insert 0b111 at bit 4 -> 0b1110000
+            exec("ins", reg("r0"), num(0b111), num(4), num(3))
+            assert { register("r0", 0b1110000) }
+        }
+        simulate {
+            // inserting 0 clears the targeted field, leaving the rest of r0 intact
+            setup { register("r0", 0xFF.toDouble()) }
+            exec("ins", reg("r0"), num(0), num(0), num(4))
+            assert { register("r0", 0xF0) }
+        }
+        simulate {
+            // a value wider than the field is truncated to the field length
+            exec("ins", reg("r0"), num(0xFFFF), num(2), num(4))
+            assert { register("r0", 60) }
+        }
+    }
+
+    @Test
+    fun `ins with an out-of-range field causes ic error`() {
+        simulate {
+            exec("ins", reg("r0"), num(1), num(0), num(54))
+            assert { hasError() }
+        }
+        simulate {
+            exec("ins", reg("r0"), num(1), num(-1), num(4))
+            assert { hasError() }
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // Approximate comparison
     // -------------------------------------------------------------------------
 
