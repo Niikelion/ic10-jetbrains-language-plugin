@@ -24,7 +24,7 @@ class Context(
     }
 
     private val deviceDefinitions by lazy {
-        devices.associate { it.id to DeviceInfo(it.prefabId, it.properties) }
+        devices.associate { it.id to DeviceInfo(it.prefabId, it.properties, it.slots) }
     }
 
     fun step(state: SimulationState): Sequence<SimulationState.StateChange> = sequence {

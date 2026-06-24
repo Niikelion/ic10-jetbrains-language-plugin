@@ -5,6 +5,7 @@ import com.niikelion.ic10_language.logic.AspectTypeMismatchError
 import com.niikelion.ic10_language.logic.DeviceDataRegistry
 import com.niikelion.ic10_language.logic.Macros
 import com.niikelion.ic10_language.logic.PropertyNotFoundError
+import com.niikelion.ic10_language.logic.SlotNotFoundError
 import com.niikelion.ic10_language.logic.Network
 import com.niikelion.ic10_language.logic.StationeersEnumData
 import com.niikelion.ic10_language.logic.aspects.DeviceAspect
@@ -21,10 +22,27 @@ class PropertyDefinition(
 
 data class DeviceInfo(
     val prefabHash: Long,
+    val properties: Map<Int, PropertyDefinition>,
+    val slots: Map<Int, SlotDefinition> = emptyMap()
+)
+
+/**
+ * Describes a single slot of a device: its [index], display [name], item [type] and the set of
+ * slot logic properties it exposes (keyed by their `LogicSlotType` enum value).
+ */
+class SlotDefinition(
+    val index: Int,
+    val name: String,
+    val type: String,
     val properties: Map<Int, PropertyDefinition>
 )
 
-//class SlotDefinition //TODO: do
+/**
+ * An item occupying a slot. It carries its full set of properties (keyed by `LogicSlotType` value),
+ * independent of which subset the holding slot exposes — so moving an item between slots preserves
+ * properties that one slot cannot read but another can.
+ */
+data class Item(val properties: Map<Int, Double> = emptyMap())
 
 class DeviceAspectsBuilder {
     private var aspects: MutableList<Device.AspectEntry> = mutableListOf()
@@ -45,6 +63,7 @@ class DeviceAspectsBuilder {
 open class Device(
     val id: Long,
     val properties: Map<Int, PropertyDefinition>,
+    val slots: Map<Int, SlotDefinition>,
     val aspects: List<AspectEntry>,
     val prefabId: Long,
     val customName: String? = null,
@@ -55,11 +74,16 @@ open class Device(
             val propDefs = StationeersEnumData.data.scriptEnums["LogicType"]?.values ?: emptyMap()
             propDefs.mapValues { (_, propDef) -> propDef.value.toInt() }
         }
+        val slotProperties by lazy {
+            val propDefs = StationeersEnumData.data.scriptEnums["LogicSlotType"]?.values ?: emptyMap()
+            propDefs.mapValues { (_, propDef) -> propDef.value.toInt() }
+        }
     }
 
     constructor(id: Long, data: DeviceDataRegistry.Entry, aspects: List<AspectEntry>, customName: String? = null, networkId: Long = 0L) : this(
         id,
         data.logicInfo.properties,
+        data.logicInfo.slots,
         aspects,
         data.hash,
         customName,
@@ -102,6 +126,7 @@ open class Device(
                 else -> null
             } ?: it.value.defaultValue
         },
+        slots.mapValues { _ -> null as Item? },
         aspects.associate { Pair(it.value.stateClass, it.value.initialize()) }
     )
 
@@ -115,17 +140,24 @@ open class Device(
 
 class DeviceState(
     val properties: Map<Int, Double>,
-    val aspects: Map<KClass<out DeviceAspect.State>, DeviceAspect.State>
+    /** slotIndex → the item it holds, or null when empty. The key set is the device's fixed slots. */
+    val slots: Map<Int, Item?> = emptyMap(),
+    val aspects: Map<KClass<out DeviceAspect.State>, DeviceAspect.State> = emptyMap()
 ) {
     inline fun <reified T: DeviceAspect.State> aspect() = aspects[T::class] as? T
 
     class StateChange(
         val properties: Map<Int, SimpleChange<Double>>,
+        /** Whole-item replacement per slot: previous item ↔ next item (either may be null). */
+        val slots: Map<Int, SimpleChange<Item?>>,
         val aspects: Map<KClass<out DeviceAspect.State>, DeviceAspect.State.Change>
     ): CompositeChange<DeviceState> {
         override fun compose(source: DeviceState, action: CompositeChangeAction) = action.compose {
             DeviceState(
                 compose(source.properties, properties),
+                // Per-slot single-value compose: emptying a slot produces a null item, which the
+                // map-level perform helper would mistake for "no change", so apply changes by key.
+                source.slots.mapValues { (index, item) -> compose(item, slots[index]) },
                 compose(source.aspects, aspects)
             )
         }
@@ -142,7 +174,11 @@ class DeviceState(
                     })
                 }
             }
-            return StateChange(properties.composeWith(other.properties), mergedAspects)
+            return StateChange(
+                properties.composeWith(other.properties),
+                slots.composeWith(other.slots),
+                mergedAspects
+            )
         }
     }
 }
@@ -151,6 +187,7 @@ class DeviceStateChangeBuilder(
     private val previousState: DeviceState
 ) {
     private val properties = mutableMapOf<Int, SimpleChange<Double>>()
+    private val slots = mutableMapOf<Int, SimpleChange<Item?>>()
     private val aspects = mutableMapOf<KClass<out DeviceAspect.State>, DeviceAspect.State.Change.Builder>()
 
     fun aspect(stateClass: KClass<out DeviceAspect.State>): DeviceAspect.State.Change.Builder {
@@ -185,5 +222,53 @@ class DeviceStateChangeBuilder(
         properties[id] = SimpleChange(previousValue, value)
     }
 
-    val stateChange get() = DeviceState.StateChange(properties, aspects.mapValues { it.value.result })
+    private fun hasSlot(slotIndex: Int) =
+        slots.containsKey(slotIndex) || previousState.slots.containsKey(slotIndex)
+
+    private fun putSlot(slotIndex: Int, item: Item?) {
+        slots[slotIndex] = SimpleChange(previousState.slots[slotIndex], item)
+    }
+
+    /**
+     * The item currently in [slotIndex] (pending changes applied), or null when the slot is empty or
+     * the device has no such slot. Intended for aspect ticks that inspect or move whole items.
+     */
+    fun slot(slotIndex: Int): Item? =
+        if (slots.containsKey(slotIndex)) slots[slotIndex]!!.nextValue else previousState.slots[slotIndex]
+
+    /** Reads a single property of the item held by [slotIndex]; 0 when the slot is empty. */
+    fun slotProperty(slotIndex: Int, propId: Int): Double =
+        slot(slotIndex)?.properties?.get(propId) ?: 0.0
+
+    /**
+     * Writes a single property of the item in [slotIndex], materialising an item if the slot was
+     * empty. The slot must exist on the device. Any property may be set so aspects can populate item
+     * attributes that are not exposed as readable slot logic types.
+     */
+    fun setSlotProperty(slotIndex: Int, propId: Int, value: Double) {
+        if (!hasSlot(slotIndex)) throw SlotNotFoundError(slotIndex)
+        val item = slot(slotIndex) ?: Item()
+        putSlot(slotIndex, Item(item.properties + (propId to value)))
+    }
+
+    /** Empties [slotIndex], removing whatever item it holds. */
+    fun clearSlot(slotIndex: Int) {
+        if (!hasSlot(slotIndex)) throw SlotNotFoundError(slotIndex)
+        putSlot(slotIndex, null)
+    }
+
+    /** Moves the item in slot [from] into slot [to], leaving [from] empty. */
+    fun moveSlot(from: Int, to: Int) {
+        if (!hasSlot(from)) throw SlotNotFoundError(from)
+        if (!hasSlot(to)) throw SlotNotFoundError(to)
+        val item = slot(from)
+        putSlot(to, item)
+        putSlot(from, null)
+    }
+
+    val stateChange get() = DeviceState.StateChange(
+        properties,
+        slots.toMap(),
+        aspects.mapValues { it.value.result }
+    )
 }

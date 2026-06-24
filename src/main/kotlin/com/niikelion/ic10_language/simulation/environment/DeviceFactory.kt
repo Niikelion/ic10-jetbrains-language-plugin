@@ -158,6 +158,6 @@ fun SimulationState.applyPropertyOverrides(
 
     if (resolved.isEmpty()) return this
 
-    val newDeviceState = DeviceState(deviceState.properties + resolved, deviceState.aspects)
+    val newDeviceState = DeviceState(deviceState.properties + resolved, deviceState.slots, deviceState.aspects)
     return SimulationState(devices + (deviceId to newDeviceState), networks)
 }

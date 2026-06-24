@@ -50,3 +50,10 @@ class AspectTypeMismatchError : SimulationError("Aspect state change builder typ
 
 /** Tried to access a property that the device does not have. */
 class PropertyNotFoundError : SimulationError("Cannot access device property that does not exist")
+
+/** Tried to access a slot that the device does not have. */
+class SlotNotFoundError(val slotIndex: Int) : SimulationError("Device has no slot at index $slotIndex")
+
+/** Tried to write a slot property that the slot does not expose for writing. */
+class SlotPropertyNotWritableError(val slotIndex: Int, val propId: Int) :
+    SimulationError("Slot $slotIndex does not allow writing property $propId")

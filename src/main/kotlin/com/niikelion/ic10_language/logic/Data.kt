@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.logic.devices.PropertyDefinition
+import com.niikelion.ic10_language.logic.devices.SlotDefinition
 import kotlin.reflect.KClass
 
 data class StationeersEnumData(
@@ -52,10 +53,17 @@ data class StationeersRegistryData(
         val PrefabHash: Long?,
         val LogicInfo: StationeersLogicInfo?,
         val ResourceConsumer: StationeersResourceConsumer?,
-        val Device: StationeersDeviceInfo?
+        val Device: StationeersDeviceInfo?,
+        val SlotInserts: List<StationeersSlotInsert>?
     ) {
         data class StationeersLogicInfo(
-            val LogicTypes: Map<String, String>
+            val LogicTypes: Map<String, String>,
+            val LogicSlotTypes: Map<String, Map<String, String>> = emptyMap()
+        )
+        data class StationeersSlotInsert(
+            val SlotName: String?,
+            val SlotType: String?,
+            val SlotIndex: String?
         )
         data class StationeersResourceConsumer(
             val ConsumedResources: List<String>,
@@ -86,7 +94,8 @@ object DeviceDataRegistry {
     )
 
     class LogicInfo(
-        val properties: Map<Int, PropertyDefinition>
+        val properties: Map<Int, PropertyDefinition>,
+        val slots: Map<Int, SlotDefinition> = emptyMap()
     )
 
     val devices: Map<String, Entry> by lazy {
@@ -95,19 +104,44 @@ object DeviceDataRegistry {
             return@mapNotNull Entry(
                 page.PrefabName,
                 page.PrefabHash,
-                page.LogicInfo?.let { info ->
-                    LogicInfo(
-                        info.LogicTypes.mapNotNull { (name, mode) ->
-                            Device.properties[name]?.let {
-                                Pair(it, PropertyDefinition(name, mode.contains("Read"), mode.contains("Write")))
-                            }
-                        }.associate { it },
-                    )
-                } ?: LogicInfo(emptyMap())
+                LogicInfo(
+                    page.LogicInfo?.LogicTypes?.mapNotNull { (name, mode) ->
+                        Device.properties[name]?.let {
+                            Pair(it, PropertyDefinition(name, mode.contains("Read"), mode.contains("Write")))
+                        }
+                    }?.associate { it } ?: emptyMap(),
+                    buildSlots(page)
+                )
             )
         }
 
         pages.associateBy { it.name }
+    }
+
+    /**
+     * Builds the slot table for [page] by combining the per-slot logic types
+     * (`LogicInfo.LogicSlotTypes`, keyed by slot index) with the slot names and item types
+     * declared in `SlotInserts`.
+     */
+    private fun buildSlots(page: StationeersRegistryData.StationpediaPage): Map<Int, SlotDefinition> {
+        val logicSlots = page.LogicInfo?.LogicSlotTypes ?: emptyMap()
+        val inserts = page.SlotInserts ?: emptyList()
+        val insertsByIndex = inserts.mapNotNull { insert ->
+            insert.SlotIndex?.toIntOrNull()?.let { it to insert }
+        }.toMap()
+
+        val indices = logicSlots.keys.mapNotNull { it.toIntOrNull() } + insertsByIndex.keys
+        if (indices.isEmpty()) return emptyMap()
+
+        return indices.toSortedSet().associateWith { index ->
+            val properties = logicSlots[index.toString()]?.mapNotNull { (name, mode) ->
+                Device.slotProperties[name]?.let { id ->
+                    id to PropertyDefinition(name, mode.contains("Read"), mode.contains("Write"))
+                }
+            }?.toMap() ?: emptyMap()
+            val insert = insertsByIndex[index]
+            SlotDefinition(index, insert?.SlotName ?: "", insert?.SlotType ?: "", properties)
+        }
     }
 
     fun deviceFor(cls: KClass<*>) = cls.simpleName?.let { devices[it] }
