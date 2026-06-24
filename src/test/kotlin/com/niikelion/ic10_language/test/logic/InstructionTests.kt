@@ -500,46 +500,79 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `and`() {
-        TODO("verify in-game")
+    fun `and matches the in-game behaviour`() {
         simulate {
             exec("and", reg("r0"), num(0b1010), num(0b1100))
-            assert { register("r0", 0b1000.toDouble()) }
+            assert { register("r0", 0b1000) }
         }
-    }
-    @Test
-    fun `or`() {
-        TODO("verify in-game")
         simulate {
-            exec("or", reg("r0"), num(0b1010), num(0b1100))
-            assert { register("r0", 0b1110.toDouble()) }
+            // negative operand keeps its sign through the 53-bit projection
+            exec("and", reg("r0"), num(-1), num(6))
+            assert { register("r0", 6) }
         }
-    }
-
-    @Test
-    fun `xor`() {
-        TODO("verify in-game")
         simulate {
-            exec("xor", reg("r0"), num(0b1010), num(0b1100))
-            assert { register("r0", 0b0110.toDouble()) }
-        }
-    }
-
-    @Test
-    fun `not`() {
-        TODO("verify in-game")
-        simulate {
-            exec("not", reg("r0"), num(0))
+            exec("and", reg("r0"), num(-1), num(-1))
             assert { register("r0", -1) }
         }
     }
 
     @Test
-    fun `nor`() {
-        TODO("verify in-game")
+    fun `or matches the in-game behaviour`() {
+        simulate {
+            exec("or", reg("r0"), num(0b1010), num(0b1100))
+            assert { register("r0", 0b1110) }
+        }
+        simulate {
+            exec("or", reg("r0"), num(-1), num(0))
+            assert { register("r0", -1) }
+        }
+    }
+
+    @Test
+    fun `xor matches the in-game behaviour`() {
+        simulate {
+            exec("xor", reg("r0"), num(0b1010), num(0b1100))
+            assert { register("r0", 0b0110) }
+        }
+        simulate {
+            exec("xor", reg("r0"), num(-1), num(-1))
+            assert { register("r0", 0) }
+        }
+        simulate {
+            exec("xor", reg("r0"), num(-1), num(0))
+            assert { register("r0", -1) }
+        }
+    }
+
+    @Test
+    fun `not matches the in-game behaviour`() {
+        simulate {
+            exec("not", reg("r0"), num(0))
+            assert { register("r0", -1) }
+        }
+        simulate {
+            exec("not", reg("r0"), num(1))
+            assert { register("r0", -2) }
+        }
+        simulate {
+            exec("not", reg("r0"), num(-1))
+            assert { register("r0", 0) }
+        }
+    }
+
+    @Test
+    fun `nor matches the in-game behaviour`() {
         simulate {
             exec("nor", reg("r0"), num(0b1010), num(0b1100))
-            assert { register("r0", 0b1110.toLong().inv().toDouble()) }  // nor(a,b) = ~(a|b) in signed 64-bit
+            assert { register("r0", -15) }  // ~(0b1110)
+        }
+        simulate {
+            exec("nor", reg("r0"), num(0), num(0))
+            assert { register("r0", -1) }
+        }
+        simulate {
+            exec("nor", reg("r0"), num(-1), num(0))
+            assert { register("r0", 0) }
         }
     }
 
@@ -549,7 +582,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sll matches the in-game behaviour`() {
-        TODO("verify in-game")
         simulate {
             exec("sll", reg("r0"), num(16), num(2))
             assert { register("r0", 64) }
@@ -563,6 +595,11 @@ class InstructionTests : BareTestFixtureTestCase() {
             // all significant bits shifted off the top
             exec("sll", reg("r0"), num(4), num(62))
             assert { register("r0", 0) }
+        }
+        simulate {
+            // shifting into bit 53 makes the result read back as negative
+            exec("sll", reg("r0"), num(1), num(53))
+            assert { register("r0", -9007199254740992.0, 0.0) }
         }
     }
 
@@ -582,6 +619,11 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sla", reg("r0"), num(4), num(62))
             assert { register("r0", 0) }
         }
+        simulate {
+            // shifting into bit 53 makes the result read back as negative
+            exec("sla", reg("r0"), num(1), num(53))
+            assert { register("r0", -9007199254740992.0, 0.0) }
+        }
     }
 
     @Test
@@ -598,6 +640,11 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sra", reg("r0"), num(-4), num(60))
             assert { register("r0", -1) }
         }
+        simulate {
+            // operand is reduced modulo 2^53 before the shift: (2^53 + 2) -> 2, then >> 1
+            exec("sra", reg("r0"), num(9007199254740994.0), num(1))
+            assert { register("r0", 1) }
+        }
     }
 
     @Test
@@ -607,12 +654,18 @@ class InstructionTests : BareTestFixtureTestCase() {
             assert { register("r0", 4) }
         }
         simulate {
+            // -16 is read as its low 54 bits before the logical shift
             exec("srl", reg("r0"), num(-16), num(2))
-            assert { register("r0", 4503599627370490.0, 10.0) }
+            assert { register("r0", 4503599627370492.0, 0.0) }
         }
         simulate {
             exec("srl", reg("r0"), num(-4), num(60))
             assert { register("r0", 0) }
+        }
+        simulate {
+            // shift of 0 leaves bit 53 set, so the result reads back as -1
+            exec("srl", reg("r0"), num(-1), num(0))
+            assert { register("r0", -1) }
         }
     }
 
