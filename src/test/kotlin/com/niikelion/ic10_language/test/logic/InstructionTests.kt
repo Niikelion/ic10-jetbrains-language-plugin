@@ -10,6 +10,9 @@ import com.niikelion.ic10_language.logic.state.SimulationState
 import com.niikelion.ic10_language.logic.state.SimulationStateChangeBuilder
 import com.niikelion.ic10_language.logic.devices.Device
 import com.niikelion.ic10_language.logic.devices.DeviceState
+import com.niikelion.ic10_language.logic.devices.Item
+import com.niikelion.ic10_language.logic.devices.PropertyDefinition
+import com.niikelion.ic10_language.logic.devices.SlotDefinition
 import kotlin.math.*
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -1649,6 +1652,50 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
+    fun `ls returns 0 for a property the slot does not expose`() {
+        val targetId = 10L
+        val charge = Device.slotProperties["Charge"]!!
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                // The item physically carries a Charge, but the slot only exposes Quantity.
+                addDevice(
+                    targetId, emptyMap(),
+                    slots = mapOf(0 to mapOf(quantitySlotProp to 7.0, charge to 42.0)),
+                    slotDefinitions = mapOf(0 to SlotDefinition(0, "", "", mapOf(
+                        quantitySlotProp to PropertyDefinition("Quantity", enableRead = true, enableWrite = false)
+                    )))
+                )
+            }
+            exec("ls", reg("r0"), device("d0"), num(0), num(quantitySlotProp))
+            exec("ls", reg("r1"), device("d0"), num(0), num(charge))
+            assert {
+                register("r0", 7.0)
+                register("r1", 0.0)
+            }
+        }
+    }
+
+    @Test
+    fun `ss faults on a read-only slot property`() {
+        val targetId = 10L
+        simulate {
+            setup {
+                deviceSlot("d0", targetId)
+                addDevice(
+                    targetId, emptyMap(),
+                    slots = mapOf(0 to mapOf(quantitySlotProp to 7.0)),
+                    slotDefinitions = mapOf(0 to SlotDefinition(0, "", "", mapOf(
+                        quantitySlotProp to PropertyDefinition("Quantity", enableRead = true, enableWrite = false)
+                    )))
+                )
+            }
+            exec("ss", device("d0"), num(0), num(quantitySlotProp), num(99.0))
+            assert { hasError() }
+        }
+    }
+
+    @Test
     fun `ss faults on an unknown slot`() {
         val targetId = 10L
         simulate {
@@ -1914,15 +1961,18 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `moveSlot transfers item contents between slots and clears the source`() {
+    fun `moveSlot transfers the whole item into an empty slot and empties the source`() {
         val deviceId = 0L
         val occupied = Device.slotProperties["Occupied"]!!
         val quantity = Device.slotProperties["Quantity"]!!
+        val charge = Device.slotProperties["Charge"]!!
         val device = DeviceState(
             properties = emptyMap(),
             slots = mapOf(
-                0 to mapOf(occupied to 1.0, quantity to 5.0),
-                1 to mapOf(occupied to 0.0, quantity to 0.0)
+                // The source holds an item with a Charge the source slot would not expose;
+                // it must survive the move.
+                0 to Item(mapOf(occupied to 1.0, quantity to 5.0, charge to 42.0)),
+                1 to null
             )
         )
         val state = SimulationState(devices = mapOf(deviceId to device))
@@ -1933,9 +1983,9 @@ class InstructionTests : BareTestFixtureTestCase() {
 
         val slot0 = next.devices.getValue(deviceId).slots.getValue(0)
         val slot1 = next.devices.getValue(deviceId).slots.getValue(1)
-        assertEquals(0.0, slot0[occupied], "source occupied cleared")
-        assertEquals(0.0, slot0[quantity], "source quantity cleared")
-        assertEquals(1.0, slot1[occupied], "destination occupied set")
-        assertEquals(5.0, slot1[quantity], "destination quantity set")
+        assertNull(slot0, "source slot emptied")
+        assertEquals(5.0, slot1?.properties?.get(quantity), "quantity transferred")
+        assertEquals(1.0, slot1?.properties?.get(occupied), "occupied transferred")
+        assertEquals(42.0, slot1?.properties?.get(charge), "hidden charge preserved")
     }
 }

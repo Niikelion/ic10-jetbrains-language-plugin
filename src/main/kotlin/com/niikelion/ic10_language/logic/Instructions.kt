@@ -417,7 +417,7 @@ object Instructions {
             val slotIndex = program.getAsValue(args[3]).toInt()
             val property = program.getAsValue(args[4]).toInt()
             val mode = program.getAsValue(args[5]).toInt()
-            program.set(result, aggregate(mode, network.devicesByTypeAndName(typeHash, nameHash).map { it.slotProperty(slotIndex, property) }))
+            program.set(result, aggregate(mode, network.readSlotsByTypeAndName(typeHash, nameHash, slotIndex, property)))
         },
         Instruction(
             "lbs",
@@ -429,7 +429,7 @@ object Instructions {
             val slotIndex = program.getAsValue(args[2]).toInt()
             val property = program.getAsValue(args[3]).toInt()
             val mode = program.getAsValue(args[4]).toInt()
-            program.set(result, aggregate(mode, network.devicesByType(typeHash).map { it.slotProperty(slotIndex, property) }))
+            program.set(result, aggregate(mode, network.readSlotsByType(typeHash, slotIndex, property)))
         },
         Instruction(
             "ld",
@@ -475,7 +475,7 @@ object Instructions {
             val targetId = program.getAsDeviceId(args[1])
             val slotIndex = program.getAsValue(args[2]).toInt()
             val property = program.getAsValue(args[3]).toInt()
-            program.set(result, network.device(targetId).slotProperty(slotIndex, property))
+            program.set(result, network.readSlot(targetId, slotIndex, property))
         },
         op("max", "max of a or b") { a, b -> max(a, b) },
         op("min", "min of a or b") { a, b -> min(a, b) },
@@ -588,7 +588,7 @@ object Instructions {
             val slotIndex = program.getAsValue(args[1]).toInt()
             val property = program.getAsValue(args[2]).toInt()
             val value = program.getAsValue(args[3])
-            network.devicesByType(typeHash).forEach { it.setSlotProperty(slotIndex, property, value) }
+            network.writeSlotsByType(typeHash, slotIndex, property, value)
         },
         Instruction(
             "sd",
@@ -645,7 +645,7 @@ object Instructions {
             val slotIndex = program.getAsValue(args[1]).toInt()
             val property = program.getAsValue(args[2]).toInt()
             val value = program.getAsValue(args[3])
-            network.device(targetId).setSlotProperty(slotIndex, property, value)
+            network.writeSlot(targetId, slotIndex, property, value)
         },
         op("sub", "a - b") { a, b -> a - b },
         op("tan", "tan(a)") { a -> tan(a) },
