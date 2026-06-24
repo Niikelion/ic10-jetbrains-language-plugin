@@ -40,7 +40,8 @@ class Ic10ProgramAspect(
                 val (netId, net) = state.networkFor(deviceId) ?: Pair(0L, Network.single(setOf(deviceId)))
                 InstructionContext(state, NetworkContext(netId, net, state, get(DeviceSlots.db)), deviceId).action(args)
             }
-            if (!jumped) jump((instructionIndex + 1) % Constraints.MAX_LINES)
+            // A device that caught fire halts on this line, so don't advance the pointer past it.
+            if (!jumped && !isOnFire) jump((instructionIndex + 1) % Constraints.MAX_LINES)
         } catch (e: Throwable) {
             setIcError(e.message ?: "Unknown error")
         }

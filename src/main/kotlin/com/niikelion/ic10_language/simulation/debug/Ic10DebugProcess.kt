@@ -2,16 +2,25 @@ package com.niikelion.ic10_language.simulation.debug
 
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleView
+import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.icons.AllIcons
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.application
+import java.awt.Point
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XSourcePosition
@@ -36,6 +45,8 @@ class Ic10DebugProcess(
     @Volatile private var pauseRequested = false
     @Volatile var isRunning = false
         private set
+
+    @Volatile private var haltBalloon: Balloon? = null
 
     private val suspendContext = Ic10SuspendContext(process, process.context.devices)
 
@@ -75,9 +86,12 @@ class Ic10DebugProcess(
     override fun resume(context: XSuspendContext?) {
         pauseRequested = false
         isRunning = true
+        hideHaltPopup()
         application.executeOnPooledThread {
             var lastUpdate = System.currentTimeMillis()
+            val knownHalts = haltedDeviceIds()
             var hitDevice: Device?
+            var haltedDevice: Device?
             do {
                 if (process.isProcessTerminated) {
                     isRunning = false
@@ -90,18 +104,20 @@ class Ic10DebugProcess(
                     lastUpdate = now
                 }
                 hitDevice = deviceAtBreakpoint()
-            } while (hitDevice == null && !pauseRequested)
+                haltedDevice = reportNewHalts(knownHalts)
+            } while (hitDevice == null && haltedDevice == null && !pauseRequested)
             isRunning = false
             process.publishCurrentState()
-            hitDevice?.let { suspendContext.setActiveDevice(it) }
+            // A halt takes focus over a breakpoint so the user lands on it.
+            (haltedDevice ?: hitDevice)?.let { suspendContext.setActiveDevice(it) }
             if (!process.isProcessTerminated) session.positionReached(suspendContext)
+            haltedDevice?.let { showHaltPopup(it) }
         }
     }
 
     override fun startStepOver(context: XSuspendContext?) {
         application.executeOnPooledThread {
-            process.advanceStep()
-            if (!process.isProcessTerminated) session.positionReached(suspendContext)
+            advanceAndSuspend { process.advanceStep() }
         }
     }
 
@@ -119,6 +135,83 @@ class Ic10DebugProcess(
         topToolbar.add(DebugPauseAction())
         topToolbar.add(DebugStepBackAction())
         topToolbar.add(DebugTickAction())
+    }
+
+    /** Advances the simulation via [advance], then suspends, focusing any newly halted device. */
+    private fun advanceAndSuspend(advance: () -> Unit) {
+        hideHaltPopup()
+        val knownHalts = haltedDeviceIds()
+        advance()
+        val haltedDevice = reportNewHalts(knownHalts)
+        haltedDevice?.let { suspendContext.setActiveDevice(it) }
+        if (!process.isProcessTerminated) session.positionReached(suspendContext)
+        haltedDevice?.let { showHaltPopup(it) }
+    }
+
+    private fun haltedDeviceIds(): Set<Long> {
+        val state = process.currentState
+        return process.context.devices
+            .filter { device -> state.devices[device.id]?.aspect<Ic10ProgramAspect.State>()?.status != null }
+            .map { it.id }
+            .toSet()
+    }
+
+    /** Logs each device halted since [previous] and returns the first one, or null if none. */
+    private fun reportNewHalts(previous: Set<Long>): Device? {
+        val state = process.currentState
+        var focus: Device? = null
+        for (device in process.context.devices) {
+            if (device.id in previous) continue
+            val programState = state.devices[device.id]?.aspect<Ic10ProgramAspect.State>() ?: continue
+            val status = programState.status ?: continue
+            val programAspect = device.aspect<Ic10ProgramAspect>()
+            val sourceLine = programAspect?.code?.lines?.getOrNull(programState.instructionIndex)
+                ?.sourceLine?.takeIf { it >= 0 }
+            val where = sourceLine?.let { " at line ${it + 1}" } ?: ""
+            console.print(
+                "${device.name} (#${device.id})$where: $status\n",
+                ConsoleViewContentType.LOG_ERROR_OUTPUT
+            )
+            if (focus == null) focus = device
+        }
+        return focus
+    }
+
+    /** Shows an error balloon anchored over the line that halted [device]. */
+    private fun showHaltPopup(device: Device) {
+        val programState = process.currentState.devices[device.id]?.aspect<Ic10ProgramAspect.State>() ?: return
+        val status = programState.status ?: return
+        val programAspect = device.aspect<Ic10ProgramAspect>() ?: return
+        val line = programAspect.code.lines.getOrNull(programState.instructionIndex)
+            ?.sourceLine?.takeIf { it >= 0 } ?: return
+        val virtualFile = programAspect.code.source.virtualFile ?: return
+        val project = session.project
+
+        application.invokeLater {
+            if (process.isProcessTerminated) return@invokeLater
+            val editor = FileEditorManager.getInstance(project)
+                .openTextEditor(OpenFileDescriptor(project, virtualFile, line, 0), true) ?: return@invokeLater
+            if (line >= editor.document.lineCount) return@invokeLater
+
+            val xy = editor.offsetToXY(editor.document.getLineStartOffset(line))
+            val anchor = RelativePoint(editor.contentComponent, Point(xy.x, xy.y + editor.lineHeight))
+            val text = StringUtil.escapeXmlEntities(status)
+
+            haltBalloon?.hide()
+            haltBalloon = JBPopupFactory.getInstance()
+                .createHtmlTextBalloonBuilder(text, MessageType.ERROR, null)
+                .setHideOnClickOutside(true)
+                .setHideOnKeyOutside(true)
+                .setHideOnAction(false)
+                .createBalloon()
+                .also { it.show(anchor, Balloon.Position.below) }
+        }
+    }
+
+    private fun hideHaltPopup() {
+        val balloon = haltBalloon ?: return
+        haltBalloon = null
+        application.invokeLater { balloon.hide() }
     }
 
     private fun deviceAtBreakpoint(): Device? {
@@ -153,8 +246,7 @@ class Ic10DebugProcess(
     ) {
         override fun actionPerformed(e: AnActionEvent) {
             application.executeOnPooledThread {
-                process.tick()
-                if (!process.isProcessTerminated) session.positionReached(suspendContext)
+                advanceAndSuspend { process.tick() }
             }
         }
 

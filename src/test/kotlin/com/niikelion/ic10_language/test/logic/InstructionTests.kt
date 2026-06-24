@@ -1629,7 +1629,7 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `channel write via db slot writes to own network`() {
-        // s db:0 Channel2 4 â€” db holds the IC10's own device ID; db:0 identifies the
+        // s db:0 Channel2 4 - db holds the IC10's own device ID; db:0 identifies the
         // IC10's first (only) data network; Channel2 is the channel; 4 is the value.
         simulate {
             setup { /* db slot is pre-initialised to the IC10's own device ID (0L) */ }
