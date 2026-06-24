@@ -1498,13 +1498,11 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `rand produces value in 0 until 1`() {
-        TODO("verify in-game")
-        repeat(20) {
+        // In-game rand mirrors C#'s Random.NextDouble(), which yields a value in [0, 1).
+        repeat(100) {
             simulate {
                 exec("rand", reg("r0"))
-                assert {
-                    notOnFire()
-                }
+                assert { registerInRange("r0", 0.0, 1.0) }
             }
         }
     }
