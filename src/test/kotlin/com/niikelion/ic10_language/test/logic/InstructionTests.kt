@@ -1602,21 +1602,32 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `sdns returns 1 when slot is empty`() {
-        TODO("verify in-game")
+    fun `sdns matches the in-game behaviour`() {
         simulate {
+            // empty slot -> not set -> 1
             exec("sdns", reg("r0"), device("d0"))
             assert { register("r0", 1) }
+        }
+        simulate {
+            // slot holds a device id -> set -> 0
+            setup { deviceSlot("d0", 5L) }
+            exec("sdns", reg("r0"), device("d0"))
+            assert { register("r0", 0) }
         }
     }
 
     @Test
-    fun `sdse returns 1 when slot is set`() {
-        TODO("verify in-game")
+    fun `sdse matches the in-game behaviour`() {
         simulate {
+            // slot holds a device id -> set -> 1
             setup { deviceSlot("d0", 5L) }
             exec("sdse", reg("r0"), device("d0"))
             assert { register("r0", 1) }
+        }
+        simulate {
+            // empty slot -> not set -> 0
+            exec("sdse", reg("r0"), device("d0"))
+            assert { register("r0", 0) }
         }
     }
 
