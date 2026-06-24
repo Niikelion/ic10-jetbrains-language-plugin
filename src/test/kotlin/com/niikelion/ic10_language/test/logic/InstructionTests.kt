@@ -500,46 +500,79 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `and`() {
-        TODO("verify in-game")
+    fun `and matches the in-game behaviour`() {
         simulate {
             exec("and", reg("r0"), num(0b1010), num(0b1100))
-            assert { register("r0", 0b1000.toDouble()) }
+            assert { register("r0", 0b1000) }
         }
-    }
-    @Test
-    fun `or`() {
-        TODO("verify in-game")
         simulate {
-            exec("or", reg("r0"), num(0b1010), num(0b1100))
-            assert { register("r0", 0b1110.toDouble()) }
+            // negative operand keeps its sign through the 53-bit projection
+            exec("and", reg("r0"), num(-1), num(6))
+            assert { register("r0", 6) }
         }
-    }
-
-    @Test
-    fun `xor`() {
-        TODO("verify in-game")
         simulate {
-            exec("xor", reg("r0"), num(0b1010), num(0b1100))
-            assert { register("r0", 0b0110.toDouble()) }
-        }
-    }
-
-    @Test
-    fun `not`() {
-        TODO("verify in-game")
-        simulate {
-            exec("not", reg("r0"), num(0))
+            exec("and", reg("r0"), num(-1), num(-1))
             assert { register("r0", -1) }
         }
     }
 
     @Test
-    fun `nor`() {
-        TODO("verify in-game")
+    fun `or matches the in-game behaviour`() {
+        simulate {
+            exec("or", reg("r0"), num(0b1010), num(0b1100))
+            assert { register("r0", 0b1110) }
+        }
+        simulate {
+            exec("or", reg("r0"), num(-1), num(0))
+            assert { register("r0", -1) }
+        }
+    }
+
+    @Test
+    fun `xor matches the in-game behaviour`() {
+        simulate {
+            exec("xor", reg("r0"), num(0b1010), num(0b1100))
+            assert { register("r0", 0b0110) }
+        }
+        simulate {
+            exec("xor", reg("r0"), num(-1), num(-1))
+            assert { register("r0", 0) }
+        }
+        simulate {
+            exec("xor", reg("r0"), num(-1), num(0))
+            assert { register("r0", -1) }
+        }
+    }
+
+    @Test
+    fun `not matches the in-game behaviour`() {
+        simulate {
+            exec("not", reg("r0"), num(0))
+            assert { register("r0", -1) }
+        }
+        simulate {
+            exec("not", reg("r0"), num(1))
+            assert { register("r0", -2) }
+        }
+        simulate {
+            exec("not", reg("r0"), num(-1))
+            assert { register("r0", 0) }
+        }
+    }
+
+    @Test
+    fun `nor matches the in-game behaviour`() {
         simulate {
             exec("nor", reg("r0"), num(0b1010), num(0b1100))
-            assert { register("r0", 0b1110.toLong().inv().toDouble()) }  // nor(a,b) = ~(a|b) in signed 64-bit
+            assert { register("r0", -15) }  // ~(0b1110)
+        }
+        simulate {
+            exec("nor", reg("r0"), num(0), num(0))
+            assert { register("r0", -1) }
+        }
+        simulate {
+            exec("nor", reg("r0"), num(-1), num(0))
+            assert { register("r0", 0) }
         }
     }
 
@@ -549,7 +582,6 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `sll matches the in-game behaviour`() {
-        TODO("verify in-game")
         simulate {
             exec("sll", reg("r0"), num(16), num(2))
             assert { register("r0", 64) }
@@ -563,6 +595,11 @@ class InstructionTests : BareTestFixtureTestCase() {
             // all significant bits shifted off the top
             exec("sll", reg("r0"), num(4), num(62))
             assert { register("r0", 0) }
+        }
+        simulate {
+            // shifting into bit 53 makes the result read back as negative
+            exec("sll", reg("r0"), num(1), num(53))
+            assert { register("r0", -9007199254740992.0, 0.0) }
         }
     }
 
@@ -582,6 +619,11 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sla", reg("r0"), num(4), num(62))
             assert { register("r0", 0) }
         }
+        simulate {
+            // shifting into bit 53 makes the result read back as negative
+            exec("sla", reg("r0"), num(1), num(53))
+            assert { register("r0", -9007199254740992.0, 0.0) }
+        }
     }
 
     @Test
@@ -598,6 +640,11 @@ class InstructionTests : BareTestFixtureTestCase() {
             exec("sra", reg("r0"), num(-4), num(60))
             assert { register("r0", -1) }
         }
+        simulate {
+            // operand is reduced modulo 2^53 before the shift: (2^53 + 2) -> 2, then >> 1
+            exec("sra", reg("r0"), num(9007199254740994.0), num(1))
+            assert { register("r0", 1) }
+        }
     }
 
     @Test
@@ -607,12 +654,95 @@ class InstructionTests : BareTestFixtureTestCase() {
             assert { register("r0", 4) }
         }
         simulate {
+            // -16 is read as its low 54 bits before the logical shift
             exec("srl", reg("r0"), num(-16), num(2))
-            assert { register("r0", 4503599627370490.0, 10.0) }
+            assert { register("r0", 4503599627370492.0, 0.0) }
         }
         simulate {
             exec("srl", reg("r0"), num(-4), num(60))
             assert { register("r0", 0) }
+        }
+        simulate {
+            // shift of 0 leaves bit 53 set, so the result reads back as -1
+            exec("srl", reg("r0"), num(-1), num(0))
+            assert { register("r0", -1) }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Bit fields (ext / ins)
+    // -------------------------------------------------------------------------
+
+    @Test
+    fun `ext matches the in-game behaviour`() {
+        simulate {
+            // bits [1, 5) of 0b11010110 -> 0b1011
+            exec("ext", reg("r0"), num(0b11010110), num(1), num(4))
+            assert { register("r0", 0b1011) }
+        }
+        simulate {
+            exec("ext", reg("r0"), num(0xFF), num(0), num(8))
+            assert { register("r0", 255) }
+        }
+        simulate {
+            exec("ext", reg("r0"), num(0xF0), num(4), num(4))
+            assert { register("r0", 15) }
+        }
+        simulate {
+            // full 53-bit field of -1 reads back as 2^53 - 1
+            exec("ext", reg("r0"), num(-1), num(0), num(53))
+            assert { register("r0", 9007199254740991.0, 0.0) }
+        }
+    }
+
+    @Test
+    fun `ext with an out-of-range field causes ic error`() {
+        simulate {
+            // start must be < 53
+            exec("ext", reg("r0"), num(5), num(53), num(1))
+            assert { hasError() }
+        }
+        simulate {
+            // length must be > 0
+            exec("ext", reg("r0"), num(5), num(0), num(0))
+            assert { hasError() }
+        }
+        simulate {
+            // start + length must not exceed 53
+            exec("ext", reg("r0"), num(5), num(50), num(4))
+            assert { hasError() }
+        }
+    }
+
+    @Test
+    fun `ins matches the in-game behaviour`() {
+        simulate {
+            // insert 0b111 at bit 4 -> 0b1110000
+            exec("ins", reg("r0"), num(0b111), num(4), num(3))
+            assert { register("r0", 0b1110000) }
+        }
+        simulate {
+            // inserting 0 clears the targeted field, leaving the rest of r0 intact
+            setup { register("r0", 0xFF.toDouble()) }
+            exec("ins", reg("r0"), num(0), num(0), num(4))
+            assert { register("r0", 0xF0) }
+        }
+        simulate {
+            // a value wider than the field is truncated to the field length
+            exec("ins", reg("r0"), num(0xFFFF), num(2), num(4))
+            assert { register("r0", 60) }
+        }
+    }
+
+    @Test
+    fun `ins with an out-of-range field causes ic error`() {
+        simulate {
+            exec("ins", reg("r0"), num(1), num(0), num(54))
+            assert { hasError() }
+        }
+        simulate {
+            exec("ins", reg("r0"), num(1), num(-1), num(4))
+            assert { hasError() }
         }
     }
 
@@ -1331,18 +1461,34 @@ class InstructionTests : BareTestFixtureTestCase() {
     }
 
     @Test
-    fun `lerp`() {
-        TODO("verify in-game")
+    fun `lerp matches the in-game behaviour`() {
         simulate {
             exec("lerp", reg("r0"), num(0), num(10), num(0.5))
             assert { register("r0", 5.0) }
         }
         simulate {
+            // c = 0 returns a
             exec("lerp", reg("r0"), num(0), num(10), num(0.0))
+            assert { register("r0", 0.0) }
+        }
+        simulate {
+            // c = 1 returns b
+            exec("lerp", reg("r0"), num(0), num(10), num(1.0))
             assert { register("r0", 10.0) }
         }
         simulate {
-            exec("lerp", reg("r0"), num(0), num(10), num(1.0))
+            // interpolation runs from a to b
+            exec("lerp", reg("r0"), num(10), num(20), num(0.25))
+            assert { register("r0", 12.5) }
+        }
+        simulate {
+            // c is clamped above 1
+            exec("lerp", reg("r0"), num(0), num(10), num(2.0))
+            assert { register("r0", 10.0) }
+        }
+        simulate {
+            // c is clamped below 0
+            exec("lerp", reg("r0"), num(0), num(10), num(-1.0))
             assert { register("r0", 0.0) }
         }
     }
@@ -1429,13 +1575,11 @@ class InstructionTests : BareTestFixtureTestCase() {
 
     @Test
     fun `rand produces value in 0 until 1`() {
-        TODO("verify in-game")
-        repeat(20) {
+        // In-game rand mirrors C#'s Random.NextDouble(), which yields a value in [0, 1).
+        repeat(100) {
             simulate {
                 exec("rand", reg("r0"))
-                assert {
-                    notOnFire()
-                }
+                assert { registerInRange("r0", 0.0, 1.0) }
             }
         }
     }
@@ -1535,21 +1679,32 @@ class InstructionTests : BareTestFixtureTestCase() {
     // -------------------------------------------------------------------------
 
     @Test
-    fun `sdns returns 1 when slot is empty`() {
-        TODO("verify in-game")
+    fun `sdns matches the in-game behaviour`() {
         simulate {
+            // empty slot -> not set -> 1
             exec("sdns", reg("r0"), device("d0"))
             assert { register("r0", 1) }
+        }
+        simulate {
+            // slot holds a device id -> set -> 0
+            setup { deviceSlot("d0", 5L) }
+            exec("sdns", reg("r0"), device("d0"))
+            assert { register("r0", 0) }
         }
     }
 
     @Test
-    fun `sdse returns 1 when slot is set`() {
-        TODO("verify in-game")
+    fun `sdse matches the in-game behaviour`() {
         simulate {
+            // slot holds a device id -> set -> 1
             setup { deviceSlot("d0", 5L) }
             exec("sdse", reg("r0"), device("d0"))
             assert { register("r0", 1) }
+        }
+        simulate {
+            // empty slot -> not set -> 0
+            exec("sdse", reg("r0"), device("d0"))
+            assert { register("r0", 0) }
         }
     }
 

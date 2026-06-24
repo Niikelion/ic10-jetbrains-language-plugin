@@ -23,6 +23,13 @@ private fun ap(a: Double, b: Double, c: Double): Boolean {
     return abs(a - b) <= max(c * max(abs(a), abs(b)), epsilon * 8)
 }
 
+// Bit-field instructions (ext/ins) operate within the lower 53 bits of the value space.
+private fun requireBitField(start: Int, length: Int) {
+    if (length <= 0 || start < 0 || start >= 53 || length > 53 || start + length > 53)
+        throw BitFieldBoundsError(start, length)
+}
+private fun bitFieldMask(length: Int): Long = if (length >= 53) GAME_VALUE_MASK else (1L shl length) - 1L
+
 class Instruction(
     val name: String,
     val description: String,
@@ -181,7 +188,7 @@ object Instructions {
             listOf(alias, variable("originalName")),
             isDeclaration = true
         ) {},
-        op("and", "a & b") { a, b -> (a.toValueBits() and b.toValueBits()).toDouble() },
+        op("and", "a & b") { a, b -> (a.toSignedValueBits() and b.toSignedValueBits()).toValueDouble() },
         op("asin", "arc sine of a in radians") { a -> asin(a) },
         op("atan", "arc tangent of a in radians") { a -> atan(a) },
         op("atan2", "counter-clockwise angle between positive x axis and ray from (0,0) to (b, a)") { a, b -> atan2(a, b) },
@@ -280,11 +287,11 @@ object Instructions {
         op("div", "a / b") { a, b -> a / b },
         op("exp", "exp(a)") { a -> exp(a) },
         rawOp("ext", 3, "bit field from a, beginning at b for c length") { args ->
-            val a = args[0].toLong()
-            val b = args[1].toInt()
-            val c = args[2].toInt()
-            val mask = if (c >= 64) -1L else (1L shl c) - 1L
-            ((a ushr b) and mask).toDouble()
+            val start = args[1].toInt()
+            val length = args[2].toInt()
+            requireBitField(start, length)
+            val source = args[0].toUnsignedValueBits() and GAME_VALUE_MASK
+            ((source ushr start) and bitFieldMask(length)).toValueDouble()
         },
         op("floor", "largest integer less than a") { a -> floor(a) },
         Instruction(
@@ -321,13 +328,17 @@ object Instructions {
             "Inserts a bit field of a into r, beginning at b for c length",
             listOf(resultVariable, value("a"), value("b"), value("c"))
         ) { args ->
-            val current = program.get(args[0].asRegister).toLong()
-            val a = program.getAsValue(args[1]).toLong()
-            val b = program.getAsValue(args[2]).toInt()
-            val c = program.getAsValue(args[3]).toInt()
-            val mask = if (c >= 64) -1L else (1L shl c) - 1L
-            val result = (current and (mask shl b).inv()) or ((a and mask) shl b)
-            program.set(args[0].asRegister, result.toDouble())
+            val register = args[0].asRegister
+            val insertValue = program.getAsValue(args[1])
+            val start = program.getAsValue(args[2]).toInt()
+            val length = program.getAsValue(args[3]).toInt()
+            requireBitField(start, length)
+            val widthMask = bitFieldMask(length)
+            val regionMask = widthMask shl start
+            val base = program.get(register).toUnsignedValueBits() and GAME_VALUE_MASK
+            val field = ((insertValue.toUnsignedValueBits() and widthMask) shl start) and regionMask
+            val result = ((base and regionMask.inv()) or field) and GAME_VALUE_MASK
+            program.set(register, result.toValueDouble())
         },
         Instruction(
             "j",
@@ -425,7 +436,7 @@ object Instructions {
             val property = program.getAsValue(args[2]).toInt()
             program.set(result, network.device(targetId).property(property))
         }.deprecate("Use l instead."),
-        op("lerp", "a * c + (1 - c) * b") { a, b, c -> a * c + (1 - c) * b },
+        op("lerp", "linearly interpolates from a to b by c, with c clamped to [0, 1]") { a, b, c -> a + c.coerceIn(0.0, 1.0) * (b - a) },
         op("log", "log(a)") { a -> ln(a) },
         Instruction("lr", "Loads given reagent count from device based on reagentMode(Contents(0) - currently in the device, Required(1) - missing from the recipe, Recipe(2) - required by the recipe): r = d.reagentMode.count(reagentId)", listOf(
             resultVariable, targetDevice, value("reagentMode"), value("reagentId")
@@ -461,9 +472,9 @@ object Instructions {
         op("mod", "a mod b(NOT the same as a % b)") { a, b -> if (a > 0 || b > 0) a.mod(b.absoluteValue) else a },
         op("move", "a") { a -> a },
         op("mul", "a * b") { a, b -> a * b },
-        op("nor", "!(a || b)") { a, b -> (a.toValueBits() or b.toValueBits()).inv().toDouble() },
-        op("not", "!a") { a -> a.toValueBits().inv().toDouble() },
-        op("or", "a || b") { a, b -> (a.toValueBits() or b.toValueBits()).toDouble() },
+        op("nor", "!(a || b)") { a, b -> (a.toSignedValueBits() or b.toSignedValueBits()).inv().toValueDouble() },
+        op("not", "!a") { a -> a.toSignedValueBits().inv().toValueDouble() },
+        op("or", "a || b") { a, b -> (a.toSignedValueBits() or b.toSignedValueBits()).toValueDouble() },
         Instruction("peek", "reads the value at the top of the stack", listOf(resultVariable)) { args ->
             val result = args[0].asRegister
             val stackPointer = program.get(Registers.sp).toInt()
@@ -594,7 +605,7 @@ object Instructions {
         op("sgt", "a > b ? 1 : 0") { a, b -> select(a > b) },
         op("sgtz", "a > 0 ? 1 : 0") { a -> select(a > 0.0) },
         op("sin", "sin(a)") { a -> sin(a) },
-        op("sla", "a << b, vacated bits are filled with a copy of the sign bit") { a, b -> (a.toLong() shl b.toInt()).toDouble() },
+        op("sla", "a << b, vacated bits are filled with a copy of the sign bit") { a, b -> (a.toSignedValueBits() shl b.toInt()).toValueDouble() },
         op("sle", "a <= b ? 1 : 0") { a, b -> select(a <= b) },
         Instruction("sleep", "Pauses execution on the IC for time seconds", listOf(value("time"))) { args ->
             val time = program.getAsValue(args[0])
@@ -602,7 +613,7 @@ object Instructions {
             program.waitFor(ceil(max(time, 0.0) * TICK_PER_SECOND).toInt())
         },
         op("slez", "a <= 0 ? 1 : 0") { a -> select(a <= 0.0) },
-        op("sll", "a << b") { a, b -> (a.toLong() shl b.toInt()).toDouble() },
+        op("sll", "a << b") { a, b -> (a.toSignedValueBits() shl b.toInt()).toValueDouble() },
         op("slt", "a < b ? 1 : 0") { a, b -> select(a < b) },
         op("sltz", "a < 0 ? 1 : 0") { a -> select(a < 0.0) },
         op("sna", "abs(a - b) > max(c * max(abs(a), abs(b)), epsilon * 8) ? 1 : 0") { a, b, c -> select(!ap(a, b, c)) },
@@ -612,14 +623,14 @@ object Instructions {
         op("sne", "a != b ? 1 : 0") { a, b -> select(a != b) },
         op("snez", "a != 0 ? 1 : 0") { a -> select(a != 0.0) },
         op("sqrt", "sqrt(a)") { a -> sqrt(a) },
-        op("sra", "a >> b, vacated bits are filled with a copy of the sign bit") { a, b -> (a.toLong() shr b.toInt()).toDouble() },
-        op("srl", "a >> b") { a, b -> (a.toValueBits() ushr b.toInt()).toDouble() },
+        op("sra", "a >> b, vacated bits are filled with a copy of the sign bit") { a, b -> (a.toSignedValueBits() shr b.toInt()).toValueDouble() },
+        op("srl", "a >> b") { a, b -> (a.toUnsignedValueBits() ushr b.toInt()).toValueDouble() },
         /* TODO: implement */
         Instruction("ss", "Writes value to property of given slot on the provided device", listOf(targetDevice, value("slotIndex"), slotPropertyName, value("value")), action = null),
         op("sub", "a - b") { a, b -> a - b },
         op("tan", "tan(a)") { a -> tan(a) },
         op("trunc", "a with fractional part removed") { a -> truncate(a) },
-        op("xor", "a ^ b") { a, b -> (a.toValueBits() xor b.toValueBits()).toDouble() },
+        op("xor", "a ^ b") { a, b -> (a.toSignedValueBits() xor b.toSignedValueBits()).toValueDouble() },
         Instruction("yield", "Pauses execution for 1 tick", listOf()) {
             program.waitFor(1)
         }
@@ -628,4 +639,14 @@ object Instructions {
     val all get() = operations.values.toList()
 }
 
-private fun Double.toValueBits(): Long = toLong() and ((1L shl 54) - 1L)
+// In-game, bitwise instructions operate on a 53-bit signed integer space: the
+// operand is reduced modulo 2^53 and the result is projected back so that bit 53
+// acts as the sign bit (range [-2^53, 2^53 - 1]). Unsigned instructions (srl)
+// instead read the low 54 bits of the operand before projecting the result back.
+private const val GAME_SIGN_BIT = 1L shl 53
+private const val GAME_VALUE_MASK = (1L shl 53) - 1L
+
+private fun Double.toSignedValueBits(): Long = toLong() % GAME_SIGN_BIT
+private fun Double.toUnsignedValueBits(): Long = toLong() and ((1L shl 54) - 1L)
+private fun Long.toValueDouble(): Double =
+    (if (this and GAME_SIGN_BIT != 0L) (this and GAME_VALUE_MASK) - GAME_SIGN_BIT else this and GAME_VALUE_MASK).toDouble()

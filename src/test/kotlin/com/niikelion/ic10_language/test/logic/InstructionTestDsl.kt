@@ -195,6 +195,13 @@ class InstructionTestBuilder(private val compiler: ((String) -> ProgramCode)? = 
         }
 
         fun register(name: String, expected: Number) = register(name, expected.toDouble())
+        /** Asserts the register holds a value in the half-open range [[lo], [hi]). */
+        fun registerInRange(name: String, lo: Double, hi: Double) {
+            val register = Registers.get(name) ?: error("Unknown register: $name")
+            val actual = programState.registers[register] ?: 0.0
+            assertTrue(actual >= lo && actual < hi,
+                "Register $name: expected value in [$lo, $hi) but was $actual")
+        }
         fun sp(expected: Int) = register("sp", expected.toDouble())
         fun ra(expected: Int) = register("ra", expected.toDouble())
         fun stackAt(address: Int, expected: Double) =

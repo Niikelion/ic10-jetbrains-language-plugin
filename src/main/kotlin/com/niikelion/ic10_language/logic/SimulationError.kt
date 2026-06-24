@@ -31,6 +31,14 @@ class IndirectionDepthError(val depth: Int, val max: Int) :
 /** An operand was not of the [expected] kind (e.g. register, device slot, value). */
 class OperandTypeError(val expected: String) : SimulationError("Expected $expected")
 
+/**
+ * A bit-field instruction (ext/ins) was given an invalid [start] or [length].
+ * In-game the field must lie within the lower 53 bits: 0 < length <= 53,
+ * 0 <= start < 53 and start + length <= 53.
+ */
+class BitFieldBoundsError(val start: Int, val length: Int) :
+    SimulationError("Bit field at start $start for length $length exceeds the 53-bit value range")
+
 /** An unresolved [value] could not be resolved against the current program state. */
 class ValueResolutionError(val value: IUnresolvedValue) : SimulationError("Error resolving $value")
 
