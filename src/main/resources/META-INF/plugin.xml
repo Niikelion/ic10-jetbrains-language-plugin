@@ -45,13 +45,25 @@
       <li>IC10 run configurations — select which <code>.ic10</code> files to simulate</li>
       <li>Full JetBrains XDebugger integration: breakpoints, variable inspection</li>
       <li>Step-over (execute one instruction), full-tick (advance one game tick), and step-back</li>
-      <li>Complete IC10 instruction simulation engine with device model, network model, and stack memory</li>
-      <li>Slot instructions (<code>ls</code>, <code>ss</code>, <code>lbs</code>, <code>lbns</code>, <code>sbs</code>) are not yet simulated and will cause a compilation error if used in a run configuration</li>
+      <li>Complete IC10 instruction simulation engine with device model, network model, slot/item model, and stack memory</li>
+      <li>Slot instructions (<code>ls</code>, <code>ss</code>, <code>lbs</code>, <code>lbns</code>, <code>sbs</code>) are fully simulated, with per-slot read/write access gating</li>
     </ul>
   ]]></description>
 
   <change-notes><![CDATA[
     <ul>
+      <li><b>2.2</b>
+        <ul>
+          <li>Slot instructions (<code>ls</code>, <code>ss</code>, <code>lbs</code>, <code>lbns</code>, <code>sbs</code>) are now fully simulated — they no longer cause a compilation error in run configurations.</li>
+          <li>New device slot/item model: a slot holds an item that carries its full property set, so moving an item between slots preserves properties one slot cannot read but another can.</li>
+          <li>Slot access is gated per slot: reads return 0 for properties a slot does not expose, and writes to non-writable slot properties fault.</li>
+          <li>Bitwise instructions (<code>and</code>, <code>or</code>, <code>xor</code>, <code>nor</code>, <code>not</code>, <code>sla</code>, <code>sll</code>, <code>sra</code>, <code>srl</code>) now operate in the in-game 53-bit signed value space, and <code>ext</code>/<code>ins</code> are confined to the 53-bit field semantics.</li>
+          <li>Corrected <code>lerp</code> interpolation direction and clamped its interpolation factor to [0, 1].</li>
+          <li><code>rand</code> now returns a value in [0, 1), matching the game.</li>
+          <li>Verified <code>sdns</code>/<code>sdse</code> against the in-game behaviour.</li>
+          <li>The debugger now suspends execution when a device halts mid-simulation (runtime error or <code>hcf</code>), surfacing the halt instead of silently continuing.</li>
+        </ul>
+      </li>
       <li><b>2.1</b>
         <ul>
           <li>Multi-device simulation: new <b>IC10 Environment</b> run configuration driven by an <code>.ic10env</code> config file.</li>

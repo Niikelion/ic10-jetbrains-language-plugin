@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.niikelion.ic10-plugin-jetbrains"
-version = "2.1"
+version = "2.2"
 
 java {
   toolchain {
